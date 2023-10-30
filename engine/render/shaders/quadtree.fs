@@ -7,7 +7,7 @@ out vec4 fsout_frag_color;
 in vec2 fsin_texcoord;
 
 
-#define QUADTREE_BUFFER_SIZE 128
+#define QUADTREE_BUFFER_SIZE 256
 #define QUADTREE_SCREEN_SIZE 1024
 
 uniform sampler2D un_quadtree;

@@ -87,31 +87,31 @@ class QuadNode_Allocator
             this.bufferdata[node_idx + 2] = 0.5; // z
             this.bufferdata[node_idx + 3] = 1.0; // w
         }
+
     };
 
 
     create()
     {
-        let group_id = -1;
+        let group_id = undefined;
 
         if (this.unused_group_ids.length > 0)
         {
             group_id = this.unused_group_ids.pop();
-            this.clearNodeGroup(group_id);
         }
 
         else
         {
             group_id = this.nodegroups_allocated;
-            this.clearNodeGroup(group_id);
             this.nodegroups_allocated += 1;
         }
 
-        if (group_id == -1)
+        if (group_id == undefined)
         {
             console.log("[QuadNode_Allocator::create] WTF???????????????");
         }
 
+        this.clearNodeGroup(group_id);
         return group_id;
     };
 
@@ -147,8 +147,8 @@ class QuadNode_Allocator
 
     destroyGroup( group_id )
     {
-        this.unused_ids.push(group_id);
         this.clearNodeGroup(group_id);
+        this.unused_group_ids.push(group_id);
     };
 };
 
@@ -208,15 +208,66 @@ class Quadtree
     };
 
 
+    _children_same( children_id )
+    {
+        // If any children have children, return false
+        for (let i=0; i<4; i++)
+        {
+            if (this.nodegroups.get_children_id(children_id, i) > 0)
+            {
+                return false;
+            }
+        }
+
+        // If any two children are not the same, return false
+        for (let i=0; i<3; i++)
+        {
+            const b1 = this.nodegroups.get_blocktype(children_id, i);
+            const b2 = this.nodegroups.get_blocktype(children_id, i+1);
+
+            if (b1 != b2)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+
+    _remove_group( group_id )
+    {
+        for (let i=0; i<4; i++)
+        {
+            const child_id = this.nodegroups.get_children_id(group_id, i);
+
+            if (child_id > 0)
+            {
+                this._remove_group(child_id);
+                this.nodegroups.destroyGroup(child_id);
+            }
+        }
+    };
+
+
     _insert( group_id, x, y, cx, cy, blocktype, current_span, min_span )
     {
         const quadrant = this._get_quadrant(x, y, cx, cy);
 
-        if (current_span <= this.MIN_SPAN || current_span < min_span)
+        if (this.nodegroups.get_blocktype(group_id, quadrant) == blocktype)
         {
+            return;
+        }
+
+        if (current_span < min_span)
+        {
+            if (this.nodegroups.get_children_id(group_id, quadrant) > 0)
+            {
+                this._remove_group(this.nodegroups.get_children_id(group_id, quadrant));
+            }
+
             this.nodegroups.set_blocktype(group_id, quadrant, blocktype);
             this.nodegroups.set_children_id(group_id, quadrant, 0);
-
             return;
         }
 
@@ -230,7 +281,15 @@ class Quadtree
         const ncx = this._shift_center_x(quadrant, cx, current_span);
         const ncy = this._shift_center_y(quadrant, cy, current_span);
 
+        this.nodegroups.set_blocktype(group_id, quadrant, 0);
         this._insert(children_id, x, y, ncx, ncy, blocktype, current_span/2.0, min_span);
+
+        if (this._children_same(children_id))
+        {
+            this.nodegroups.destroyGroup(children_id);
+            this.nodegroups.set_children_id(group_id, quadrant, 0.0);
+            this.nodegroups.set_blocktype(group_id, quadrant, blocktype);
+        }
     };
 
 
@@ -273,13 +332,6 @@ class Quadtree
     {
         const half_span = current_span / 2.0;
 
-        if (current_span <= this.MIN_SPAN)
-        {
-            // stroke(2);
-            rect(cx, cy, current_span, current_span);
-            return;
-        }
-
         for (let i=0; i<4; i++)
         {
             const ncx = this._shift_center_x(i, cx, current_span);
@@ -292,15 +344,15 @@ class Quadtree
             }
             else
             {
-                // stroke(255, 0, 0);
-                // noFill();
-                // rect(ncx, ncy, half_span, half_span);
+                stroke(255, 0, 0);
+                noFill();
+                rect(ncx, ncy, half_span, half_span);
             }
         }
 
-        // stroke(255, 0, 0);
-        // noFill();
-        // rect(cx, cy, current_span, current_span);
+        stroke(255, 0, 0);
+        noFill();
+        rect(cx, cy, current_span, current_span);
     };
 
 

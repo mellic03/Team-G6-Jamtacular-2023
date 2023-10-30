@@ -11,6 +11,9 @@ function approxEqual( a, b, epsilon )
     }
 }
 
+let span = 32.0;
+
+
 
 class RenderSystem
 {
@@ -40,10 +43,10 @@ class RenderSystem
     setup()
     {
         createCanvas(this.res_x, this.res_y, WEBGL);
-        frameRate(60);
+        frameRate(122);
         textureWrap(CLAMP);
 
-        this.quadtree = new Quadtree(this.res_x, 2.0, 128);
+        this.quadtree = new Quadtree(this.res_x, 2.0, 256);
 
         this.quadtree.nodegroups.mapBuffer();
         // this.quadtree.insert(+60, -60, 1.0);
@@ -54,17 +57,18 @@ class RenderSystem
         // this.quadtree.insert(286, 266, 1.0);
         // this.quadtree.insert(386, 266, 1.0);
 
-        // for (let i=0; i<1000; i++)
-        // {
-        //     const x = random(0, this.res_x) - this.res_x/2;
-        //     const y = random(0, this.res_y) - this.res_y/2;
+        for (let i=0; i<10000; i++)
+        {
+            const x = random(0, this.res_x) - this.res_x/2;
+            const y = random(0, this.res_y) - this.res_y/2;
 
-        //     this.quadtree.insert(x, y, 1);
-        // }
+            this.quadtree.insert(x, y, 1, 16.0);
+        }
         this.quadtree.nodegroups.unmapBuffer();
 
         // this.quadtree.print();
     };
+
 
 
     draw()
@@ -98,15 +102,23 @@ class RenderSystem
         //     line(x, -512, 0.1, x, 512, 0.1);
         // }
 
-        console.log(frameRate());
 
-
-        this.quadtree.nodegroups.mapBuffer();
-        this.quadtree.insert(mouseX-512, mouseY-512, 1, 32.0);
-        this.quadtree.nodegroups.unmapBuffer();
-
+        // this.quadtree.nodegroups.mapBuffer();
+        // this.quadtree.insert(mouseX-512, mouseY-512, 1, span);
+        // this.quadtree.nodegroups.unmapBuffer();
     };
 };
 
 
+function keyPressed()
+{
+    if (keyIsDown(38))
+    {
+        span *= 2.0;
+    }
 
+    if (keyIsDown(40))
+    {
+        span /= 2.0;
+    }
+}
