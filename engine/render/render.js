@@ -41,26 +41,70 @@ class RenderSystem
     {
         createCanvas(this.res_x, this.res_y, WEBGL);
         frameRate(60);
-        textureWrap(REPEAT);
+        textureWrap(CLAMP);
 
-        this.quadtree = new Quadtree(32.0, 1.0);
+        this.quadtree = new Quadtree(this.res_x, 2.0, 128);
+
         this.quadtree.nodegroups.mapBuffer();
-        this.quadtree.insert(new vec2(500, 500), 2.0);
+        // this.quadtree.insert(+60, -60, 1.0);
+        // this.quadtree.insert(-60, +60, 1.0);
+        // this.quadtree.insert(-60, -60, 1.0);
+        // this.quadtree.insert(+60, +60, 1.0);
+
+        // this.quadtree.insert(286, 266, 1.0);
+        // this.quadtree.insert(386, 266, 1.0);
+
+        // for (let i=0; i<1000; i++)
+        // {
+        //     const x = random(0, this.res_x) - this.res_x/2;
+        //     const y = random(0, this.res_y) - this.res_y/2;
+
+        //     this.quadtree.insert(x, y, 1);
+        // }
         this.quadtree.nodegroups.unmapBuffer();
+
+        // this.quadtree.print();
     };
 
 
-    first = 0;
-
     draw()
     {
-        translate(-500, -500);
         background(200);
+        noStroke();
 
         shader(this.quadtree_shader);
-        this.quadtree_shader.setUniform("un_mouse", [mouseX, mouseY]);
-        this.quadtree_shader.setUniform("un_quadtree", this.quadtree.nodegroups.computebuffer.p5data().color);
+        this.quadtree_shader.setUniform("un_quadtree", this.quadtree.buffer());
+        this.quadtree_shader.setUniform("mouseX", mouseX-512);
+        this.quadtree_shader.setUniform("mouseY", mouseY-512);
         rect(0, 0, this.res_x, this.res_y);
+    
+        // this.quadtree.draw();
+
+        // stroke(155);
+        // strokeWeight(1);
+        // for (let y=-512; y<512; y+=1024/16)
+        // {
+        //     line(-512, y, 0.1, 512, y, 0.1);
+        // }
+        // for (let x=-512; x<512; x+=1024/16)
+        // {
+        //     line(x, -512, 0.1, x, 512, 0.1);
+        // }
+
+        // stroke(255);
+        // strokeWeight(4);
+        // for (let x=-512; x<512; x+=1024/4)
+        // {
+        //     line(x, -512, 0.1, x, 512, 0.1);
+        // }
+
+        console.log(frameRate());
+
+
+        this.quadtree.nodegroups.mapBuffer();
+        this.quadtree.insert(mouseX-512, mouseY-512, 1, 32.0);
+        this.quadtree.nodegroups.unmapBuffer();
+
     };
 };
 

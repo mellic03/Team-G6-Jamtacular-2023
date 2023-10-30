@@ -26,6 +26,5 @@ function draw()
 {
     engine.draw();
     
-    // QOBJ.draw();
 }
 
