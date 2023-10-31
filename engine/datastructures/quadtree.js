@@ -35,13 +35,15 @@ class QuadNode_Allocator
     nodegroups_allocated = 0;
     unused_group_ids = [];
 
-    constructor( buffer_size )
+    constructor( compute_buffer )
     {
-        this.buffer_size = buffer_size;
-        this.computebuffer = new ComputeBuffer(
-            buffer_size, buffer_size, COMPUTEBUFFER_FLOAT
-        );
-        
+        this.computebuffer = compute_buffer;
+
+        // this.buffer_size = buffer_size;
+        // this.computebuffer = new ComputeBuffer(
+        //     buffer_size, buffer_size, COMPUTEBUFFER_FLOAT
+        // );
+
         // Initialize all nodes
         this.mapBuffer();
     
@@ -54,7 +56,7 @@ class QuadNode_Allocator
             this.bufferdata[idx+0] = 0.0;
             this.bufferdata[idx+1] = 0.0;
             this.bufferdata[idx+2] = 0.0;
-            this.bufferdata[idx+3] = 0.0;
+            this.bufferdata[idx+3] = 1.0;
         }
 
         this.unmapBuffer();
@@ -158,18 +160,14 @@ class QuadNode_Allocator
 class Quadtree
 {
     nodegroups;
-
-    MIN_SPAN;
     MAX_SPAN;
-
     root_id;
 
-    constructor( max_span, min_span, buffer_size )
+    constructor( max_span, compute_buffer )
     {
         this.MAX_SPAN = max_span;
-        this.MIN_SPAN = min_span;
 
-        this.nodegroups = new QuadNode_Allocator(buffer_size);
+        this.nodegroups = new QuadNode_Allocator(compute_buffer);
 
         this.nodegroups.mapBuffer();
         this.root_id = this.nodegroups.create();
@@ -263,7 +261,10 @@ class Quadtree
         {
             if (this.nodegroups.get_children_id(group_id, quadrant) > 0)
             {
-                this._remove_group(this.nodegroups.get_children_id(group_id, quadrant));
+                let child_id = this.nodegroups.get_children_id(group_id, quadrant);
+                this._remove_group(child_id);
+                this.nodegroups.destroyGroup(child_id);
+                this.nodegroups.set_children_id(group_id, quadrant, 0.0);
             }
 
             this.nodegroups.set_blocktype(group_id, quadrant, blocktype);
@@ -286,6 +287,7 @@ class Quadtree
 
         if (this._children_same(children_id))
         {
+            this._remove_group(children_id);
             this.nodegroups.destroyGroup(children_id);
             this.nodegroups.set_children_id(group_id, quadrant, 0.0);
             this.nodegroups.set_blocktype(group_id, quadrant, blocktype);
@@ -295,36 +297,7 @@ class Quadtree
 
     insert( x, y, blocktype, min_span )
     {
-        const cx = this.MAX_SPAN/2;
         this._insert( this.root_id, x, y, 0, 0, blocktype, this.MAX_SPAN, min_span);
-    };
-
-
-    __print( group_id, current_span )
-    {
-        if (current_span / 2.0 <= this.MIN_SPAN)
-        {
-            return;
-        }
-
-        for (let i=0; i<4; i++)
-        {
-            let children_id = this.nodegroups.get_children_id(group_id, i);
-            console.log(children_id);
-            if (children_id != 0)
-            {
-                this.__print(children_id, current_span/2.0)
-                console.log("group " + group_id + ", quadrant " + i + ":")
-                console.log("blocktype: " + this.nodegroups.get_blocktype(group_id, i));
-            }
-        }
-        
-    };
-
-
-    print()
-    {
-        this.__print(this.root_id, this.MAX_SPAN);
     };
 
 
@@ -344,15 +317,12 @@ class Quadtree
             }
             else
             {
-                stroke(255, 0, 0);
+                stroke(this.nodegroups.get_blocktype(group_id, i)*255, 0, 0);
                 noFill();
                 rect(ncx, ncy, half_span, half_span);
             }
         }
 
-        stroke(255, 0, 0);
-        noFill();
-        rect(cx, cy, current_span, current_span);
     };
 
 

@@ -3,7 +3,6 @@ const COMPUTEBUFFER_UNSIGNED_BYTE  = 0;
 const COMPUTEBUFFER_FLOAT          = 1;
 const COMPUTEBUFFER_HALF_FLOAT     = 2;
 
-
 class ComputeBuffer
 {
     w; h;
@@ -11,7 +10,7 @@ class ComputeBuffer
     buffer = null;
 
 
-    constructor( w, h, dtype=COMPUTEBUFFER_FLOAT )
+    constructor( w, h, render_context, dtype=COMPUTEBUFFER_FLOAT )
     {
         console.log("[ComputeBuffer::ComputeBuffer] wxh = " + w + "x" + h);
 
@@ -21,7 +20,7 @@ class ComputeBuffer
 
         if (dtype == COMPUTEBUFFER_FLOAT)
         {
-            this.buffer = createFramebuffer(
+            this.buffer = render_context.createFramebuffer(
                 {
                     width: w,
                     height: h,
@@ -34,7 +33,7 @@ class ComputeBuffer
 
         else if (dtype == COMPUTEBUFFER_UNSIGNED_BYTE)
         {
-            this.buffer = createFramebuffer(
+            this.buffer = render_context.createFramebuffer(
                 {
                     width: w,
                     height: h,
@@ -46,7 +45,6 @@ class ComputeBuffer
         }
 
     };
-
 
     mapBuffer()
     {
@@ -63,4 +61,12 @@ class ComputeBuffer
     {
         this.buffer.updatePixels();
     };
+
+    toFile( filename )
+    {
+        // this.buffer.loadPixels();
+        // saveJSON(JSON.stringify(this.buffer.pixels), "ree.json");
+        // this.buffer.updatePixels();
+    };
 };
+

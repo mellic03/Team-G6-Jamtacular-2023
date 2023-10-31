@@ -32,6 +32,7 @@ class Allocator
         return object_id;
     };
 
+
     __create_from_constructor( args )
     {
         let object_id = -1;

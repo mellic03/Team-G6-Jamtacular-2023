@@ -1,38 +1,24 @@
 
-const KEYCODES = {
-  
-    LEFT: 37, RIGHT: 39,
-    UP: 38, DOWN: 40,
-    SPACE: 32,
-    ESC: 27, TAB: 9,
-  
-    A: 65, B: 66, C: 67, D: 68,
-    E: 69, F: 70, G: 71, H: 72,
-    I: 73, J: 74, K: 75, L: 76,
-    M: 77, N: 78, O: 79, P: 80,
-    Q: 81, R: 82, S: 83, T: 84,
-    U: 85, V: 86, W: 87, X: 88,
-    Y: 89, Z: 90,
-
-};
 
 
 
 class Engine
 {
     system_instances = [  ];
+    system_IDs       = [  ];
 
     constructor()
     {
 
     };
 
+
     /** Add a system to the system manager.
      * If the object passed is not a valid system an error will explain why.
      * 
      * @param {*} system Object instance.
      */
-    addSystem( system )
+    addSystem( system, name )
     {
         let valid = true;
 
@@ -56,34 +42,44 @@ class Engine
             console.log("\n\nINVALID SYSTEM OBJECT!!!\n");
         }
 
+        const ID = this.system_instances.length;
         this.system_instances.push(system);
+        this.system_IDs[name] = ID;
     };
+
+
+    getSystem( name )
+    {
+        const ID = this.system_IDs[name];
+        return this.system_instances[ID];
+    }
 
 
     preload()
     {
-        for (let instance of this.system_instances)
+        for (let i=0; i<this.system_instances.length; i++)
         {
-            instance.preload();
+            this.system_instances[i].preload(this);
         }
     };
 
 
     setup()
     {
-        for (let instance of this.system_instances)
+        for (let i=0; i<this.system_instances.length; i++)
         {
-            instance.setup();
+            this.system_instances[i].setup(this);
         }
     };
 
 
     draw()
     {
-        for (let instance of this.system_instances)
+        for (let i=0; i<this.system_instances.length; i++)
         {
-            instance.draw();
+            this.system_instances[i].draw(this);
         }
     };
+
 };
 

@@ -1,11 +1,13 @@
 
 let engine = new Engine();
 
-engine.addSystem(new RenderSystem(1024, 1024));
-engine.addSystem(new UISystem());
+engine.addSystem(new RenderSystem(1024, 1024), "render");
+engine.addSystem(new Keylog(), "keylog");
+engine.addSystem(new TerrainSystem(), "terrain");
+engine.addSystem(new UISystem(), "ui");
+engine.addSystem(new Player(), "player");
 
 
-let g = new Graph();
 
 function preload()
 {
@@ -15,9 +17,6 @@ function preload()
 
 function setup()
 {
-    g.add(15, 21, 0.25);
-    g.add(2, 4, 1.25);
-
     engine.setup();
 }
 
@@ -25,6 +24,5 @@ function setup()
 function draw()
 {
     engine.draw();
-    
 }
 

@@ -35,9 +35,20 @@ class Graph
         }
     };
 
+
     dijkstra( a, b )
     {
+        let path = [ ];
+        let q    = [ ];
 
+        while (q.length > 0)
+        {
+            let u = q.pop();
+
+            
+        }
+
+        return path;
     };
 
 
