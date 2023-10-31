@@ -21,6 +21,13 @@ const KEY_UP     = 0;
 const KEY_DOWN   = 1;
 const KEY_TAPPED = 2;
 
+
+const MOUSE_UP      = 0;
+const MOUSE_DOWN    = 1;
+const MOUSE_CLICKED = 2;
+let   mouse_state   = 0;
+
+
 class Keylog
 {
     key_state   = [  ];
@@ -37,6 +44,24 @@ class Keylog
 
     draw()
     {
+        if (mouseIsPressed)
+        {
+            mouse_state = MOUSE_DOWN;
+        }
+
+        else if (mouseIsPressed == false)
+        {
+            if (mouse_state == MOUSE_DOWN)
+            {
+                mouse_state = MOUSE_CLICKED;
+            }
+
+            else
+            {
+                mouse_state = MOUSE_UP;
+            }
+        }
+
         for (let i=8; i<=222; i++)
         {
             let state = KEY_UP;
@@ -58,6 +83,7 @@ class Keylog
 
             this.key_state[i] = state;
         }
+
     };
 
 
@@ -76,4 +102,15 @@ class Keylog
         return this.key_state[keycode] == KEY_TAPPED;
     };
 
+    mouseDown()
+    {
+        return mouse_state == MOUSE_DOWN;
+    };
+
+    mouseClicked()
+    {
+        return mouse_state == MOUSE_CLICKED;
+    };
+
 };
+

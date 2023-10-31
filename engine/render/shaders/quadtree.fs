@@ -7,10 +7,13 @@ in vec2 fsin_texcoord;
 
 
 #define QUADTREE_BUFFER_WIDTH 256
-#define QUADTREE_SPAN 4096
-#define VIEWPORT_SIZE 1024
+#define QUADTREE_SPAN 1024
+#define QUADTREE_HALF_SPAN (QUADTREE_SPAN / 2)
+#define VIEWPORT_W 1024
+#define VIEWPORT_H 1024
 
 uniform sampler2D un_quadtree;
+uniform vec2 un_quadtree_pos;
 uniform vec2 un_view_pos;
 
 
@@ -18,9 +21,10 @@ uniform vec2 un_view_pos;
 #define BLOCK_GRASS 1
 #define BLOCK_DIRT  2
 
-#define COLOR_AIR   vec3(0.8)
-#define COLOR_GRASS vec3(92.0/255.0, 103.0/255.0, 86.0/255.0)
+#define COLOR_AIR   vec3(0.05)
+#define COLOR_GRASS vec3(100.0/255.0, 155.0/255.0, 86.0/255.0)
 #define COLOR_DIRT  vec3(177.0/255.0, 127.0/255.0, 88.0/255.0)
+
 
 vec3 blocktype_color( int blocktype )
 {
@@ -34,9 +38,22 @@ vec3 blocktype_color( int blocktype )
 }
 
 
+float blocktype_variation( int blocktype )
+{
+    switch (blocktype)
+    {
+        default:           return 0.0;
+        case BLOCK_AIR:    return 0.05;
+        case BLOCK_DIRT:   return 0.1;
+        case BLOCK_GRASS:  return 0.02;
+    }
+}
+
+
 struct QuadNode
 {
     int children_id, blocktype;
+    float variation;
 };
 
 
@@ -51,7 +68,7 @@ vec2 uv_to_screen( vec2 uv )
     uv.y = 1.0 - uv.y;
     uv -= 0.5;
 
-    return float(VIEWPORT_SIZE) * uv;
+    return vec2(VIEWPORT_W, VIEWPORT_H) * uv;
 }
 
 
@@ -70,6 +87,7 @@ QuadNode node_from_texture( int group_id, int quadrant, sampler2D tex )
 
     node.blocktype   = int(data.x);
     node.children_id = int(data.y);
+    node.variation   = data.z;
 
     return node;
 }
@@ -128,10 +146,20 @@ QuadNode get_quadnode( vec2 pos )
 }
 
 
+float rand( vec2 seed )
+{
+    return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+
 vec3 render_quadtree( vec2 position )
 {
     QuadNode node = get_quadnode(position);
-    return blocktype_color(node.blocktype);
+    
+    float intensity = rand(vec2(ivec2(0.2*position)));
+    float variation = blocktype_variation(node.blocktype);
+
+    return blocktype_color(node.blocktype) + intensity*variation;
 }
 
 
@@ -142,33 +170,32 @@ vec3 render_buffer( vec2 uv )
 }
 
 
-
-
 void main()
 {
     vec2 uv = fsin_texcoord.xy;
 
-    vec2 position = uv_to_screen(uv) + un_view_pos;
-
-
+    vec2 position = uv_to_screen(uv) + un_view_pos - un_quadtree_pos;
     vec3 color = render_quadtree(position);
 
 
+    float half_span = float(QUADTREE_HALF_SPAN);
 
-    if (position.x < float(-1024) || position.x > float(1024))
+    if (position.x < -half_span || position.x > half_span)
     {
-        color = vec3(0.0);
+        // color = vec3(0.0);
+        discard;
     }
-    if (position.y < float(-1024) || position.y > float(1024))
+    if (position.y < -half_span || position.y > half_span)
     {
-        color = vec3(0.0);
+        // color = vec3(0.0);
+        discard;
     }
 
-    vec3 color2 = render_buffer(uv);
-    if (color2.x + color2.y + color2.z > 0.0)
-    {
-        color = color2;
-    }
+    // vec3 color2 = render_buffer(uv);
+    // if (color2.x + color2.y + color2.z > 0.0)
+    // {
+    //     color = color2;
+    // }
 
     fsout_frag_color = vec4(color, 1.0);
 }

@@ -24,6 +24,8 @@ class RenderSystem
 
     res_x;
     res_y;
+    res_min;
+    res_max;
 
     view_pos = [ 0.0, 0.0 ];
 
@@ -31,6 +33,8 @@ class RenderSystem
     {
         this.res_x = res_x;
         this.res_y = res_y;
+        this.res_min = Math.min(res_x, res_y);
+        this.res_max = Math.max(res_x, res_y);
     };
 
 
@@ -62,7 +66,7 @@ class RenderSystem
 
     draw( engine )
     {
-
+        background(0);
     };
 
 

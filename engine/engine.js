@@ -17,6 +17,7 @@ class Engine
      * If the object passed is not a valid system an error will explain why.
      * 
      * @param {*} system Object instance.
+     * @param {*} name Name of system. Used to access it from other systems. 
      */
     addSystem( system, name )
     {
