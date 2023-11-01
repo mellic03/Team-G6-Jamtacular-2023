@@ -359,11 +359,13 @@ class Quadtree
         const mx = ydir / xdir;
         const my = xdir / ydir;
 
+        let nx = -xdir;
+        let ny = -ydir;
+
         const Ax = x - (span * Math.floor(x / span));
         const Ay = y - (span * Math.floor(y / span));
 
         let dx, dy;
-
         if (xdir <= 0) { dx = Ax;        };
         if (xdir >  0) { dx = span - Ax; };
         if (ydir <= 0) { dy = Ay;        };
@@ -383,13 +385,19 @@ class Quadtree
         if (length_h < length_v)
         {
             const sign_h = Math.sign(xdir);
-            return [ sign_h*(hdx+EPSILON), sign_h*(hdy+EPSILON) ];
+            nx = 1.0;
+            ny = 0.0;
+
+            return [ sign_h*(hdx+EPSILON), sign_h*(hdy+EPSILON), sign_h*nx, ny ];
         }
 
         else
         {
             const sign_v = Math.sign(ydir);
-            return [ sign_v*(vdx+EPSILON), sign_v*(vdy+EPSILON) ];
+            nx = 0.0;
+            ny = 1.0;
+
+            return [ sign_v*(vdx+EPSILON), sign_v*(vdy+EPSILON), nx, sign_v*ny ];
         }
     };
 
@@ -427,32 +435,17 @@ class Quadtree
 
             px += step[0];
             py += step[1];
+            normalx = step[2];
+            normaly = step[3];
 
             fill(255, 0, 0);
             circle(px-x, py-y, 10);
-
-
-            let old_cx = cx;
-            let old_cy = cy;
 
             node_data = this.__find(px, py);
             blocktype = node_data[0];
             cx        = node_data[1];
             cy        = node_data[2];
             span      = node_data[3];
-
-
-            if (abs(cx-old_cx) > abs(cy-old_cy))
-            {
-                normalx = Math.sign(cx-old_cx);
-                normaly = 0;
-            }
-
-            else
-            {
-                normalx = 0;
-                normaly = Math.sign(cy-old_cy);
-            }
 
 
             if (blocktype > 0)
@@ -466,7 +459,8 @@ class Quadtree
 
         translate(-512, -512);
 
-        return [px, py, -Math.sign(normalx), -Math.sign(normaly)];
+
+        return [px, py, Math.sign(normalx), Math.sign(normaly)];
     };
 
 
@@ -514,4 +508,38 @@ class Quadtree
     {
         return this.nodegroups.computebuffer.data();
     };
+
+
+    __leafList( list, group_id, cx, cy, span )
+    {
+        for (let i=0; i<4; i++)
+        {
+            const quadrant  = i;
+            const blocktype = this.nodegroups.get_blocktype(group_id, quadrant);
+            const ncx = this._shift_center_x(quadrant, cx, span);
+            const ncy = this._shift_center_y(quadrant, cy, span);
+
+            list.push(blocktype);
+            list.push(ncx);
+            list.push(ncy);
+
+            const children_id = this.nodegroups.get_children_id(group_id, quadrant);
+
+            if (children_id > 0)
+            {
+                this.__leafList(list, children_id, ncx, ncy, span/2);
+            }
+        }
+    };
+
+
+    // Return a list of leaf block types and positions.
+    leafList()
+    {
+        let list = [  ];
+        this.__leafList(list, this.root_id, this.pos_x, this.pos_y, this.MAX_SPAN);
+
+        return list;
+    };
+
 };

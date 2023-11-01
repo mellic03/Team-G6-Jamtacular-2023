@@ -30,7 +30,8 @@ let   mouse_state   = 0;
 
 class Keylog
 {
-    key_state   = [  ];
+    key_state    = [  ];
+    mouse_locked = false;
 
     preload()
     {
@@ -83,7 +84,6 @@ class Keylog
 
             this.key_state[i] = state;
         }
-
     };
 
 
@@ -110,6 +110,21 @@ class Keylog
     mouseClicked()
     {
         return mouse_state == MOUSE_CLICKED;
+    };
+
+    lockMouse()
+    {
+        this.mouse_locked = true;
+    };
+
+    unlockMouse()
+    {
+        this.mouse_locked = false;
+    };
+
+    mouseLocked()
+    {
+        return this.mouse_locked == true;
     };
 
 };

@@ -20,10 +20,7 @@ uniform vec2 un_view_pos;
 #define BLOCK_AIR   0
 #define BLOCK_GRASS 1
 #define BLOCK_DIRT  2
-
-#define COLOR_AIR   vec3(0.05)
-#define COLOR_GRASS vec3(100.0/255.0, 155.0/255.0, 86.0/255.0)
-#define COLOR_DIRT  vec3(177.0/255.0, 127.0/255.0, 88.0/255.0)
+#define BLOCK_GOLD  3
 
 
 vec3 blocktype_color( int blocktype )
@@ -31,9 +28,10 @@ vec3 blocktype_color( int blocktype )
     switch (blocktype)
     {
         default:           return vec3(1.0, 0.0, 0.0);
-        case BLOCK_AIR:    return COLOR_AIR;
-        case BLOCK_DIRT:   return COLOR_DIRT;
-        case BLOCK_GRASS:  return COLOR_GRASS;
+        case BLOCK_AIR:    return vec3(0.05);
+        case BLOCK_GRASS:  return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
+        case BLOCK_DIRT:   return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
+        case BLOCK_GOLD:   return vec3(0.86, 0.65, 0.07);
     }
 }
 
@@ -44,11 +42,24 @@ float blocktype_variation( int blocktype )
     {
         default:           return 0.0;
         case BLOCK_AIR:    return 0.05;
-        case BLOCK_DIRT:   return 0.1;
         case BLOCK_GRASS:  return 0.02;
+        case BLOCK_DIRT:   return 0.1;
+        case BLOCK_GOLD:   return 0.3;
     }
 }
 
+
+float blocktype_coarseness( int blocktype )
+{
+    switch (blocktype)
+    {
+        default:           return 1.0 - 0.0;
+        case BLOCK_AIR:    return 1.0 - 0.8;
+        case BLOCK_GRASS:  return 1.0 - 0.95;
+        case BLOCK_DIRT:   return 1.0 - 0.8;
+        case BLOCK_GOLD:   return 1.0 - 0.7;
+    }
+}
 
 struct QuadNode
 {
@@ -156,7 +167,15 @@ vec3 render_quadtree( vec2 position )
 {
     QuadNode node = get_quadnode(position);
     
-    float intensity = rand(vec2(ivec2(0.2*position)));
+    vec2 ree = vec2(0.0);
+
+    if (node.blocktype == 0)
+    {
+        ree = 0.5*un_view_pos;
+    }
+
+    float coarseness = blocktype_coarseness(node.blocktype);
+    float intensity = rand(vec2(ivec2(coarseness*(position - ree))));
     float variation = blocktype_variation(node.blocktype);
 
     return blocktype_color(node.blocktype) + intensity*variation;

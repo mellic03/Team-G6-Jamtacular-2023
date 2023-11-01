@@ -42,16 +42,39 @@ class ButtonGrid
 
         this.x_origin = top_left + this.col_width/2 + 1;
         this.y_origin = 0 + this.row_height/2 + 1;
-    
+
+        this.left   = this.x_origin - this.col_width/2;
+        this.right  = this.left + this.width;
+
+        this.top    = this.y_origin - this.row_height/2;
+        this.bottom = this.top + this.height;
+
         this.keylog = keylog;
     };
+
+
+    mouseInBounds()
+    {
+        if (mouseX < this.left || mouseX > this.right)
+        {
+            return false;
+        }
+
+        if (mouseY < this.top || mouseY > this.bottom)
+        {
+            return false;
+        }
+
+        return true;
+    };
+
 
     background( grey )
     {
         rectMode(CORNER);
         fill(2);
         rect(this.x_origin-this.col_width/2, this.y_origin, this.width, this.height);
-    }
+    };
 
 
     menuButton( row, col, string, callback )

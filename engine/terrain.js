@@ -171,7 +171,22 @@ class TerrainSystem
             let col = cell[1];
             this.sectors[row][col].nodegroups.mapBuffer();
         }
+    };
 
+
+
+    unlockAll( )
+    {
+        this.visible_sectors = [ ];
+        
+        for (let i=0; i<SECTORS_Y; i++)
+        {
+            for (let j=0; j<SECTORS_X; j++)
+            {
+                this.visible_sectors.push([i, j]);
+                this.sectors[i][j].nodegroups.mapBuffer();
+            }
+        }
     };
 
 
@@ -192,7 +207,7 @@ class TerrainSystem
 
     preload( engine )
     {
-
+        this.mapimg = loadImage("map.png");
     };
 
 
@@ -217,6 +232,43 @@ class TerrainSystem
                 this.sectors[row].push(qt);
             }
         }
+
+
+
+        this.unlockAll();
+        this.mapimg.loadPixels();
+        let data = this.mapimg.pixels;
+        let d = this.mapimg.pixelDensity();
+
+        const IMG_W = 1024;
+        for (let y=0; y<IMG_W; y++)
+        {
+            for (let x=0; x<IMG_W; x++)
+            {
+                const idx = 4*(y*IMG_W + x);
+
+                if (data[idx] < 10)
+                {
+                    continue;
+                }
+
+                if (data[idx+0] < 20)
+                {
+                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 1, 16);
+                }
+
+                else if (data[idx+0] < 30)
+                {
+                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 2, 16);
+                }
+                else if (data[idx+0] < 40)
+                {
+                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 3, 16);
+                }
+            }
+        }
+        this.lock();
+    
     };
 
 
@@ -231,7 +283,6 @@ class TerrainSystem
         render.quadtree_shader.setUniform("un_view_pos", render.view_pos);
         render.quadtree_shader.setUniform("mouseX", mouseX-render.res_x/2);
         render.quadtree_shader.setUniform("mouseY", mouseY-render.res_y/2);
-        // translate(-128, 0);
 
         for (let cell of this.visible_sectors)
         {
@@ -242,11 +293,9 @@ class TerrainSystem
             render.quadtree_shader.setUniform("un_quadtree_pos", [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
 
             pg.rect(0, 0, render.res_min, render.res_min);
-            // pg.rect(0, -128, render.res_min, render.res_min);
         }
 
         image(pg, 0, 0, render.res_min, render.res_min);
-        // image(pg, 128, 0, render.res_min, render.res_min);
 
 
         // for (let cell of this.visible_sectors)
@@ -255,9 +304,6 @@ class TerrainSystem
         //     let col = cell[1];
         //     this.sectors[row][col].draw(-render.view_pos[0], -render.view_pos[1]);
         // }
-        // const x = render.view_pos[0];
-        // const y = render.view_pos[1];
-        // this.nearest_intersection(x, y, 1, 0);
     };
 
 
@@ -269,4 +315,20 @@ class TerrainSystem
 
         return this.sectors[row][col].nearest_intersection(x, y, dx, dy);
     };
+
+
+    toFile( filepath )
+    {
+        let lists = [  ];
+        
+        for (let row=0; row<SECTORS_Y; row++)
+        {
+            for (let col=0; col<SECTORS_X; col++)
+            {
+                lists.push(...this.sectors[row][col].leafList());
+            }
+        }
+
+        save(lists, filepath);
+    }
 };

@@ -8,13 +8,13 @@
 
 class Player
 {
-    block_width = 8.0;
+    block_width = 16.0;
     block_type  = 1.0;
 
     move_speed  = 5.0;
 
     acceleration = 0.05;
-    drag         = 0.001;
+    drag         = 0.01;
 
     max_velocity = 1.0;
     velocity     = new vec2(0.0, 0.0);
@@ -50,8 +50,55 @@ class Player
         const terrain = engine.getSystem("terrain");
         const keylog  = engine.getSystem("keylog");
     
-        const pos = render.view_pos;
 
+        this.mouse_input(engine);
+        this.key_input(engine);
+
+
+        const x = render.view_pos[0];
+        const y = render.view_pos[1];
+        let dx = this.velocity.x;
+        let dy = this.velocity.y;
+        let mag = Math.sqrt(dx**2 + dy**2);
+
+        let data = terrain.nearest_intersection(x, y, dx/mag, dy/mag);
+        const px = data[0];
+        const py = data[1];
+        const nx = data[2];
+        const ny = data[3];
+
+        const distance = dist(x, y, px, py);
+
+        if (distance < 60.0 * deltaTime)
+        {
+            if (nx != 0)
+            {
+                this.velocity.x -= (1.0 / distance) * Math.sign(this.velocity.x);
+            }
+
+            else
+            {
+                this.velocity.y  -= (1.0 / distance) * Math.sign(this.velocity.y);
+            }
+
+        }
+
+    };
+
+
+    mouse_input( engine )
+    {
+        const render  = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
+        const keylog  = engine.getSystem("keylog");
+
+        if (keylog.mouseLocked())
+        {
+            return;
+        }
+
+
+        const pos = render.view_pos;
         terrain.unlock(pos[0], pos[1], render.res_x, render.res_y);
 
         if (mouseIsPressed)
@@ -73,40 +120,14 @@ class Player
         }
     
         terrain.lock();
+    };
 
 
-        const x = render.view_pos[0];
-        const y = render.view_pos[1];
-        let dx = this.velocity.x;
-        let dy = this.velocity.y;
-        let mag = Math.sqrt(dx**2 + dy**2);
-
-        let data = terrain.nearest_intersection(x, y, dx/mag, dy/mag);
-        const px = data[0];
-        const py = data[1];
-        const nx = data[2];
-        const ny = data[3];
-
-        const distance = dist(x, y, px, py);
-
-        if (distance < 16.0)
-        {
-            console.log(nx, ny);
-
-            if (nx != 0)
-            {
-                this.velocity.x -= (1.0 / distance) * Math.sign(this.velocity.x);
-            }
-
-            else
-            {
-                this.velocity.y  -= (1.0 / distance) * Math.sign(this.velocity.y);
-            }
-
-
-            console.log("WOOP!");
-        }
-
+    key_input( engine )
+    {
+        const render  = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
+        const keylog  = engine.getSystem("keylog");
 
         if (keylog.keyTapped(KEYCODES.UP))
         {
@@ -151,7 +172,6 @@ class Player
         {
             this.velocity.y -= this.acceleration;
         }
-
 
 
         /*

@@ -30,10 +30,22 @@ class UISystem
 
     draw( engine )
     {
-        const render = engine.getSystem("render");
+        const render  = engine.getSystem("render");
         const factory = engine.getSystem("factory");
         const terrain = engine.getSystem("terrain");
-        // const player = engine.getSystem("player");
+        const keylog  = engine.getSystem("keylog");
+
+
+        // Reset mouse lock, if mouse is still over UI then enable it again
+        // ----------------------------------------------------------------
+        keylog.unlockMouse();
+
+        if (this.UIgrid.mouseInBounds())
+        {
+            keylog.lockMouse();
+        }
+        // ----------------------------------------------------------------
+
 
         this.UIgrid.background(100);
 
@@ -43,9 +55,12 @@ class UISystem
 
         this.UIgrid.menuButton(0, 0, "Test", testcallback);
         this.UIgrid.menuButton(0, 1, "Build");
-        this.UIgrid.menuButton(5, 2, "test");
-        this.UIgrid.menuButton(6, 1, "test");
-        this.UIgrid.menuButton(6, 2, "test");
+        this.UIgrid.menuButton(10, 0, "Save", () => {
+            terrain.toFile("terrain.txt");
+        });
+
     };
+
+
 };
 
