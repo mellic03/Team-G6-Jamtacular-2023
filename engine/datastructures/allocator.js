@@ -40,7 +40,7 @@ class Allocator
         if (this.unused_ids.length > 0)
         {
             object_id = this.unused_ids.pop();
-            this.get(object_id).reset();
+            this.get(object_id).reset(...args);
         }
 
         else

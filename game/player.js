@@ -8,7 +8,7 @@
 
 class Player
 {
-    block_width = 16.0;
+    block_width = 2.0;
     block_type  = 1.0;
 
     move_speed  = 5.0;
@@ -107,11 +107,13 @@ class Player
             const mx = pos[0] + mouseX - render.res_min/2;
             const my = pos[1] + mouseY - render.res_min/2;
 
-            for (let y=my-4*span; y<my+4*span; y+=span)
+            const ksize = 16;
+
+            for (let y=my-ksize*span; y<my+ksize*span; y+=span)
             {
-                for (let x=mx-4*span; x<mx+4*span; x+=span)
+                for (let x=mx-ksize*span; x<mx+ksize*span; x+=span)
                 {
-                    if (dist(x, y, mx, my) < 4*span)
+                    if (dist(x, y, mx, my) < ksize*span)
                     {
                         terrain.placeBlock(x, y, this.block_type, span);
                     }

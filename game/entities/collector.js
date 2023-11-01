@@ -10,3 +10,24 @@ class Collector
 
 };
 
+
+class CollectorSystem
+{
+    preload( engine )
+    {
+
+    };
+
+
+    setup( engine )
+    {
+
+    };
+
+
+    draw( engine )
+    {
+
+    };
+};
+

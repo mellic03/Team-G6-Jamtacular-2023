@@ -17,6 +17,7 @@ class QuadNode_Allocator
     bufferdata = null;
 
     nodegroups_allocated = 0;
+    nodegroups_active = 0;
     unused_group_ids = [];
 
     constructor( compute_buffer )
@@ -97,6 +98,8 @@ class QuadNode_Allocator
             console.log("[QuadNode_Allocator::create] WTF???????????????");
         }
 
+        this.nodegroups_active += 1;
+
         this.clearNodeGroup(group_id);
         return group_id;
     };
@@ -135,6 +138,7 @@ class QuadNode_Allocator
     {
         this.clearNodeGroup(group_id);
         this.unused_group_ids.push(group_id);
+        this.nodegroups_active -= 1;
     };
 };
 
@@ -147,7 +151,6 @@ class Quadtree
     MAX_SPAN;
     pos_x;  pos_y;
     root_id;
-
 
 
     constructor( pos_x, pos_y, max_span, compute_buffer )
@@ -168,7 +171,7 @@ class Quadtree
         }
         this.nodegroups.unmapBuffer();
 
-        console.log("root nodegroup id: " + this.root_id);
+        // console.log("root nodegroup id: " + this.root_id);
     };
 
 
@@ -412,7 +415,8 @@ class Quadtree
      */
     nearest_intersection( x, y, xdir, ydir )
     {
-        translate(512, 512);
+        translate(720/2, 720/2);
+
         let node_data = this.__find(x, y);
     
         let blocktype = node_data[0];
@@ -457,8 +461,7 @@ class Quadtree
         fill(0, 255, 0);
         circle(px-x, py-y, 10);
 
-        translate(-512, -512);
-
+        translate(-720/2, -720/2);
 
         return [px, py, Math.sign(normalx), Math.sign(normaly)];
     };
@@ -541,5 +544,37 @@ class Quadtree
 
         return list;
     };
+
+
+    /** Find the deepest node which contains the entirety of an AABB
+     * 
+     */
+    boundingNode( x, y, w, h )
+    {
+        /*
+            Traverse to leaf node corresponding to (x, y).
+            Then, move upwards until the current node envelops the AABB entirely.
+        */
+
+        let ancestry = [  ];
+
+    };
+
+
+    currentBufferUsage()
+    {
+        const capacity = this.nodegroups.computebuffer.w * this.nodegroups.computebuffer.h;        
+        const used     = NODESIZE * this.nodegroups.nodegroups_active;
+    
+        return used / capacity;
+    };
+
+    maxBufferUsage()
+    {
+        const capacity = this.nodegroups.computebuffer.w * this.nodegroups.computebuffer.h;        
+        const used     = NODESIZE * this.nodegroups.nodegroups_allocated;
+    
+        return used / capacity;
+    }
 
 };

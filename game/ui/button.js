@@ -30,7 +30,7 @@ class ButtonGrid
 
     keylog;
 
-    constructor( top_left, width, height, num_rows, num_cols, keylog )
+    constructor( left, top, width, height, num_rows, num_cols, keylog )
     {
         this.num_cols = num_cols;
 
@@ -40,8 +40,8 @@ class ButtonGrid
         this.row_height = height/num_rows - 1;
         this.col_width  = width/num_cols - 1;
 
-        this.x_origin = top_left + this.col_width/2 + 1;
-        this.y_origin = 0 + this.row_height/2 + 1;
+        this.x_origin = left + this.col_width/2 + 1;
+        this.y_origin = top + this.row_height/2 + 1;
 
         this.left   = this.x_origin - this.col_width/2;
         this.right  = this.left + this.width;
@@ -69,15 +69,15 @@ class ButtonGrid
     };
 
 
-    background( grey )
+    background( rgba = [0, 0, 0, 0] )
     {
         rectMode(CORNER);
-        fill(2);
+        fill(rgba);
         rect(this.x_origin-this.col_width/2, this.y_origin, this.width, this.height);
     };
 
 
-    menuButton( row, col, string, callback )
+    menuButton( row, col, string, callback, selected=false )
     {
         const x = this.x_origin + col*this.col_width;
         const y = this.y_origin + row*this.row_height;
@@ -85,7 +85,7 @@ class ButtonGrid
         let rectfill = 100;
         let textfill = 255;
 
-        if (point_in_AABB(mouseX, mouseY, x, y, this.col_width, this.row_height))
+        if (selected || point_in_AABB(mouseX, mouseY, x, y, this.col_width, this.row_height))
         {
             rectfill = 255;
             textfill = 100;
@@ -103,7 +103,7 @@ class ButtonGrid
 
         textAlign(CENTER, CENTER);
         fill(textfill);
-        textSize(32);
+        textSize(0.85*this.row_height);
         text(string, x, y);
     };
 

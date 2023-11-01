@@ -9,18 +9,20 @@ in vec2 fsin_texcoord;
 #define QUADTREE_BUFFER_WIDTH 256
 #define QUADTREE_SPAN 1024
 #define QUADTREE_HALF_SPAN (QUADTREE_SPAN / 2)
-#define VIEWPORT_W 1024
-#define VIEWPORT_H 1024
+#define VIEWPORT_W 720
+#define VIEWPORT_H 720
 
 uniform sampler2D un_quadtree;
 uniform vec2 un_quadtree_pos;
 uniform vec2 un_view_pos;
 
 
-#define BLOCK_AIR   0
-#define BLOCK_GRASS 1
-#define BLOCK_DIRT  2
-#define BLOCK_GOLD  3
+#define BLOCK_AIR     0
+#define BLOCK_GRASS   1
+#define BLOCK_DIRT    2
+#define BLOCK_STONE   3
+#define BLOCK_SILVER  4
+#define BLOCK_GOLD    5
 
 
 vec3 blocktype_color( int blocktype )
@@ -31,6 +33,8 @@ vec3 blocktype_color( int blocktype )
         case BLOCK_AIR:    return vec3(0.05);
         case BLOCK_GRASS:  return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
         case BLOCK_DIRT:   return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
+        case BLOCK_STONE:  return vec3(0.67, 0.69, 0.71);
+        case BLOCK_SILVER: return vec3(0.67, 0.69, 0.71);
         case BLOCK_GOLD:   return vec3(0.86, 0.65, 0.07);
     }
 }
@@ -42,8 +46,10 @@ float blocktype_variation( int blocktype )
     {
         default:           return 0.0;
         case BLOCK_AIR:    return 0.05;
-        case BLOCK_GRASS:  return 0.02;
+        case BLOCK_GRASS:  return 0.2;
         case BLOCK_DIRT:   return 0.1;
+        case BLOCK_STONE:  return 0.1;
+        case BLOCK_SILVER: return 0.3;
         case BLOCK_GOLD:   return 0.3;
     }
 }
@@ -57,7 +63,9 @@ float blocktype_coarseness( int blocktype )
         case BLOCK_AIR:    return 1.0 - 0.8;
         case BLOCK_GRASS:  return 1.0 - 0.95;
         case BLOCK_DIRT:   return 1.0 - 0.8;
-        case BLOCK_GOLD:   return 1.0 - 0.7;
+        case BLOCK_STONE:  return 1.0 - 0.85;
+        case BLOCK_SILVER: return 1.0 - 0.55;
+        case BLOCK_GOLD:   return 1.0 - 0.55;
     }
 }
 

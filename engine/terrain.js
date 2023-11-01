@@ -2,11 +2,18 @@
 
 const QUADTREE_SPAN = 1024.0;
 const HALF_SPAN = QUADTREE_SPAN / 2;
-
 const COMPUTEBUFFER_WIDTH = 256;
 
 const SECTORS_X = 4;
 const SECTORS_Y = 4;
+
+
+const BLOCK_AIR    = 0;
+const BLOCK_GRASS  = 1;
+const BLOCK_DIRT   = 2;
+const BLOCK_STONE  = 3;
+const BLOCK_SILVER = 4;
+const BLOCK_GOLD   = 5;
 
 
 function get_quadrant( x, y, cx, cy )
@@ -316,6 +323,11 @@ class TerrainSystem
         return this.sectors[row][col].nearest_intersection(x, y, dx, dy);
     };
 
+    
+    getSectors()
+    {
+        return this.sectors;
+    };
 
     toFile( filepath )
     {
