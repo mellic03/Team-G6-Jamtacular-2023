@@ -20,7 +20,6 @@ uniform sampler2D un_quadtree1;
 uniform sampler2D un_quadtree2;
 uniform sampler2D un_quadtree3;
 
-
 uniform vec2 un_quadtree_pos0;
 uniform vec2 un_quadtree_pos1;
 uniform vec2 un_quadtree_pos2;
