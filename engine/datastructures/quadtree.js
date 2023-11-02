@@ -24,11 +24,6 @@ class QuadNode_Allocator
     {
         this.computebuffer = compute_buffer;
 
-        // this.buffer_size = buffer_size;
-        // this.computebuffer = new ComputeBuffer(
-        //     buffer_size, buffer_size, COMPUTEBUFFER_FLOAT
-        // );
-
         // Initialize all nodes
         this.mapBuffer();
     
@@ -405,6 +400,21 @@ class Quadtree
     };
 
 
+    __out_of_bounds( x, y )
+    {
+        if (x < this.pos_x - HALF_SPAN || x > this.pos_x + HALF_SPAN)
+        {
+            return true;
+        }
+    
+        if (y < this.pos_y - HALF_SPAN || y > this.pos_y + HALF_SPAN)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     /** Given a position and direction, determine the nearest intersection with a block of blocktype > 0
      * 
      * @param {*} x starting x position
@@ -415,8 +425,6 @@ class Quadtree
      */
     nearest_intersection( x, y, xdir, ydir )
     {
-        translate(720/2, 720/2);
-
         let node_data = this.__find(x, y);
     
         let blocktype = node_data[0];
@@ -430,9 +438,8 @@ class Quadtree
         let px = 1.0*x;
         let py = 1.0*y;
 
-        stroke(255);
-        line(0, 0, 512*xdir, 512*ydir);
-    
+        let first = true;
+
         for (let i=0; i<20; i++)
         {
             let step = this.__next_step(px, py, xdir, ydir, cx, cy, span);
@@ -442,8 +449,9 @@ class Quadtree
             normalx = step[2];
             normaly = step[3];
 
+            const world = engine.getSystem("render").world_to_screen(px, py);
             fill(255, 0, 0);
-            circle(px-x, py-y, 10);
+            circle(...world, 5);
 
             node_data = this.__find(px, py);
             blocktype = node_data[0];
@@ -451,6 +459,16 @@ class Quadtree
             cy        = node_data[2];
             span      = node_data[3];
 
+            if (first && this.__out_of_bounds(px, py))
+            {
+                let world_xy   = engine.getSystem("render").world_to_screen(x, y);
+                let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
+                stroke(255);
+                line(...world_xy, ...world_pxpy);
+                return [px, py];
+            }
+
+            first = false;
 
             if (blocktype > 0)
             {
@@ -458,10 +476,15 @@ class Quadtree
             }
         }
 
-        fill(0, 255, 0);
-        circle(px-x, py-y, 10);
 
-        translate(-720/2, -720/2);
+        let world_xy   = engine.getSystem("render").world_to_screen(x, y);
+        let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
+
+        stroke(255);
+        line(...world_xy, ...world_pxpy);
+
+        fill(0, 255, 0);
+        circle(...world_pxpy, 10);
 
         return [px, py, Math.sign(normalx), Math.sign(normaly)];
     };
@@ -469,6 +492,8 @@ class Quadtree
 
     __draw( group_id, cx, cy, current_span )
     {
+        const render = engine.getSystem("render");
+
         const half_span = current_span / 2.0;
 
         for (let i=0; i<4; i++)
@@ -479,13 +504,10 @@ class Quadtree
             stroke(255);
             noFill();
 
-            // fill(200);
-            // if (this.nodegroups.get_blocktype(group_id, i) > 0)
-            // {
-            //     fill(0);
-            // }
+            const tl = render.world_to_screen(ncx-half_span/2, ncy-half_span/2);
+            const br = render.world_to_screen(ncx+half_span/2, ncy+half_span/2);
 
-            rect(ncx, ncy, half_span, half_span);
+            rect(...tl, ...br);
 
             if (this.nodegroups.get_children_id(group_id, i) > 0.0)
             {
@@ -496,14 +518,13 @@ class Quadtree
     };
 
 
-    draw( offset_x, offset_y )
+    draw()
     {
-        // translate(128, 0);
         noStroke();
         fill(0);
-        rectMode(CENTER);
-        this.__draw(this.root_id, this.pos_x+512+offset_x, this.pos_y+512+offset_y, this.MAX_SPAN);
-        // translate(-128, 0);
+        rectMode(CORNERS);
+
+        this.__draw(this.root_id, this.pos_x, this.pos_y, this.MAX_SPAN);
     };
 
 

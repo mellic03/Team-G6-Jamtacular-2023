@@ -11,30 +11,58 @@ function approxEqual( a, b, epsilon )
     }
 }
 
-let span = 8.0;
+
+
+const OFFLINE_WIDTH  = 512;
+const OFFLINE_HEIGHT = 512;
 
 
 
 class RenderSystem
 {
-    quadtree_shader;
-    quadtree_data;
-    quadtree;
     offline_context;
 
     res_x;
     res_y;
-    res_min;
-    res_max;
+
+    viewport_x;
+    viewport_y;
 
     view_pos = [ 0.0, 0.0 ];
 
     constructor( res_x=512, res_y=512 )
     {
+        this.onWindowResize(res_x, res_y);
+    };
+
+
+    onWindowResize( res_x, res_y )
+    {
         this.res_x = res_x;
         this.res_y = res_y;
         this.res_min = Math.min(res_x, res_y);
         this.res_max = Math.max(res_x, res_y);
+    };
+
+
+    preload( engine )
+    {
+        this.offline_context = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
+        this.offline_context.textureWrap(CLAMP);
+    };
+
+
+    setup( engine )
+    {
+        createCanvas(this.res_x, this.res_y);
+        frameRate(144);
+    };
+
+
+    draw( engine )
+    {
+        windowResized();
+        background(0);
     };
 
 
@@ -45,66 +73,62 @@ class RenderSystem
     };
 
 
-    preload( engine )
+    setView( x, y )
     {
-        this.quadtree_shader = loadShader(
-            "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree.fs"
-        );
+        this.view_pos[0] = x;
+        this.view_pos[1] = y;
     };
 
 
-    setup( engine )
+    world_to_screen( world_x, world_y )
     {
-        createCanvas(this.res_x, this.res_y);
-        frameRate(60);
+        let screen_x = (world_x - this.view_pos[0]) * (this.viewport_w / TERRAIN_VIEW_WIDTH_PIXELS);
+        let screen_y = (world_y - this.view_pos[1]) * (this.viewport_h / TERRAIN_VIEW_HEIGHT_PIXELS);
 
-        this.offline_context = createGraphics(this.res_x, this.res_y, WEBGL);
-        this.offline_context.textureWrap(CLAMP);
+        screen_x += this.viewport_w/2;
+        screen_y += this.viewport_h/2;
+
+        return [ screen_x, screen_y ];
     };
+    
 
-
-    draw( engine )
+    screen_to_world( screen_x, screen_y )
     {
-        background(0);
-    };
+        let world_x = this.view_pos[0] + screen_x - this.viewport_w/2;
+        let world_y = this.view_pos[1] + screen_y - this.viewport_h/2;
 
+        world_x = this.view_pos[0] + TERRAIN_VIEW_WIDTH_PIXELS  * ((world_x - this.view_pos[0]) / this.viewport_w);
+        world_y = this.view_pos[1] + TERRAIN_VIEW_HEIGHT_PIXELS * ((world_y - this.view_pos[1]) / this.viewport_h);
 
-    draw_data_buffer()
-    {
-        // this.quadtree.draw();
-
-        // stroke(155);
-        // strokeWeight(1);
-        // for (let y=-512; y<512; y+=1024/16)
-        // {
-        //     line(-512, y, 0.1, 512, y, 0.1);
-        // }
-        // for (let x=-512; x<512; x+=1024/16)
-        // {
-        //     line(x, -512, 0.1, x, 512, 0.1);
-        // }
-
-        // stroke(255);
-        // strokeWeight(4);
-        // for (let x=-512; x<512; x+=1024/4)
-        // {
-        //     line(x, -512, 0.1, x, 512, 0.1);
-        // }
-    };
-
+        return [ world_x, world_y ];
+    }
 };
 
 
-function keyPressed()
+
+
+function windowResized()
 {
-    if (keyIsDown(38))
+    const render = engine.getSystem("render");
+    const UIsys  = engine.getSystem("ui");
+
+
+    if (windowWidth * (1.0 - UIsys.proportion_ui) < windowHeight)
     {
-        span *= 2.0;
+        render.res_x = windowWidth;
+        render.res_y = windowWidth - (windowWidth * UIsys.proportion_ui);
     }
 
-    if (keyIsDown(40))
+    else
     {
-        span /= 2.0;
+        render.res_x = windowHeight + windowHeight * UIsys.proportion_ui;
+        render.res_y = windowHeight;
     }
+
+    resizeCanvas(render.res_x, render.res_y);
+
+    render.viewport_w = render.res_x * (1.0 - UIsys.proportion_ui);
+    render.viewport_h = render.res_y;
+
+    UIsys.onWindowResize(engine);
 }

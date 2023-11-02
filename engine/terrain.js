@@ -2,10 +2,14 @@
 
 const QUADTREE_SPAN = 1024.0;
 const HALF_SPAN = QUADTREE_SPAN / 2;
-const COMPUTEBUFFER_WIDTH = 256;
+const COMPUTEBUFFER_WIDTH = 64;
 
 const SECTORS_X = 4;
 const SECTORS_Y = 4;
+
+
+const TERRAIN_VIEW_WIDTH_PIXELS  = 1024;
+const TERRAIN_VIEW_HEIGHT_PIXELS = 1024;
 
 
 const BLOCK_AIR    = 0;
@@ -14,6 +18,7 @@ const BLOCK_DIRT   = 2;
 const BLOCK_STONE  = 3;
 const BLOCK_SILVER = 4;
 const BLOCK_GOLD   = 5;
+
 
 
 function get_quadrant( x, y, cx, cy )
@@ -34,6 +39,8 @@ class TerrainSystem
 
     block_changes   = [  ];
     visible_sectors = [  ];
+
+    quadtree_shader;
 
 
     constructor() {  };
@@ -138,6 +145,12 @@ class TerrainSystem
         return [ this.__row_from_y(y), this.__col_from_x(x) ];
     };
 
+    
+    in_bounds( row, col )
+    {
+        return row >= 0 && row < SECTORS_Y && col >= 0 && col < SECTORS_X;
+    };
+
 
     lock()
     {
@@ -212,9 +225,30 @@ class TerrainSystem
     };
 
 
+    placeSphere( x, y, blocktype, radius, span )
+    {
+        for (let i=y-radius*span; i<y+radius*span; i+=span)
+        {
+            for (let j=x-radius*span; j<x+radius*span; j+=span)
+            {
+                if (dist(j, i, x, y) < radius*span)
+                {
+                    this.placeBlock(j, i, blocktype, span);
+                }
+            }
+        }
+    };
+
+
     preload( engine )
     {
+        this.quadtree_shader = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree.fs"
+        );
+
         this.mapimg = loadImage("map.png");
+
     };
 
 
@@ -284,43 +318,85 @@ class TerrainSystem
         const render = engine.getSystem("render");
         const pg = render.offline_context;
 
-        pg.background(0);
-        pg.shader(render.quadtree_shader);
+        const viewport_w = render.viewport_w;
+        const viewport_h = render.viewport_h;
 
-        render.quadtree_shader.setUniform("un_view_pos", render.view_pos);
-        render.quadtree_shader.setUniform("mouseX", mouseX-render.res_x/2);
-        render.quadtree_shader.setUniform("mouseY", mouseY-render.res_y/2);
+
+        pg.background(0);
+        pg.shader(this.quadtree_shader);
+
+        this.__set_common_uniforms(engine);
+
+        this.quadtree_shader.setUniform("un_view_pos", render.view_pos);
+        this.quadtree_shader.setUniform("mouseX", mouseX - viewport_w/2);
+        this.quadtree_shader.setUniform("mouseY", mouseY - viewport_h/2);
 
         for (let cell of this.visible_sectors)
         {
             let row = cell[0];
             let col = cell[1];
 
-            render.quadtree_shader.setUniform("un_quadtree",     this.sectors[row][col].buffer());
-            render.quadtree_shader.setUniform("un_quadtree_pos", [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
+            this.quadtree_shader.setUniform("un_quadtree",     this.sectors[row][col].buffer());
+            this.quadtree_shader.setUniform("un_quadtree_pos", [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
 
-            pg.rect(0, 0, render.res_min, render.res_min);
+            pg.rect(0, 0, viewport_w, viewport_h);
         }
 
-        image(pg, 0, 0, render.res_min, render.res_min);
-
+        image(pg, 0, 0, viewport_w, viewport_h);
 
         // for (let cell of this.visible_sectors)
         // {
         //     let row = cell[0];
         //     let col = cell[1];
-        //     this.sectors[row][col].draw(-render.view_pos[0], -render.view_pos[1]);
+        //     this.sectors[row][col].draw(...render.world_to_screen(...render.view_pos));
         // }
+    };
+
+
+    __set_common_uniforms( engine )
+    {
+        const render = engine.getSystem("render");
+        const player = engine.getSystem("player");
+
+        this.quadtree_shader.setUniform( "QUADTREE_BUFFER_WIDTH", int(COMPUTEBUFFER_WIDTH) );
+        this.quadtree_shader.setUniform( "QUADTREE_SPAN",         int(QUADTREE_SPAN)       );
+        this.quadtree_shader.setUniform( "QUADTREE_HALF_SPAN",    int(HALF_SPAN)           );
+        this.quadtree_shader.setUniform( "VIEWPORT_W",            int(render.viewport_w)   );
+        this.quadtree_shader.setUniform( "VIEWPORT_H",            int(render.viewport_h)   );
+        this.quadtree_shader.setUniform( "un_target_pos",         int(player.target)       );
+        
+        
+        this.quadtree_shader.setUniform( "un_lightsource_pos_0", player.light_a );
+        this.quadtree_shader.setUniform( "un_lightsource_pos_1", player.light_b );
     };
 
 
     nearest_intersection( x, y, dx, dy )
     {
-        const sector = this.get_sector(x, y);
-        const row = sector[0];
-        const col = sector[1];
+        // If intersection is outside original sector, perform another search. 
+        let intersection = [0, 0];
+        let count = 10;
 
-        return this.sectors[row][col].nearest_intersection(x, y, dx, dy);
+        let point = [x, y];
+
+        while (count > 0 && intersection.length == 2)
+        {
+            const sector = this.get_sector(...point);
+            const row = sector[0];
+            const col = sector[1];
+    
+            if (this.in_bounds(row, col) == false)
+            {
+                return [Infinity, Infinity];
+            }
+
+            intersection = this.sectors[row][col].nearest_intersection(...point, dx, dy);
+            point = intersection;
+
+            count -= 1;
+        }
+
+        return intersection
     };
 
     
@@ -328,6 +404,7 @@ class TerrainSystem
     {
         return this.sectors;
     };
+
 
     toFile( filepath )
     {

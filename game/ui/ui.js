@@ -1,38 +1,51 @@
 
-
-function testcallback()
-{
-    console.log("WOW!");
-}
-
-
-
-
 class UISystem
 {
-    DEBUGgrid;
     UIgrid;
+
+    DEBUGgrid;
+    BRUSHgrid;
+
+    proportion_ui = 0.2;
+    player_factory_id;
+
+
+    onWindowResize( engine )
+    {
+        const render = engine.getSystem("render");
+        const keylog = engine.getSystem("keylog");
+
+        const WIN_H = render.res_y;
+
+        const UI_LEFT  = render.res_x * (1.0 - this.proportion_ui);
+        const UI_WIDTH = render.res_x - UI_LEFT;
+
+        this.UIgrid = new ButtonGrid(
+            UI_LEFT, WIN_H/2, UI_WIDTH, WIN_H/2, 15, 2, keylog
+        );
+
+        this.DEBUGgrid = new ButtonGrid(
+            UI_LEFT, 0, UI_WIDTH, WIN_H, 30, 2, keylog
+        );
+
+        this.BRUSHgrid = new ButtonGrid(
+            UI_LEFT, WIN_H/2, UI_WIDTH, WIN_H/2, 15, 2, keylog
+        );
+    };
+
 
     preload( engine )
     {
 
     };
 
+
     setup( engine )
     {
-        const render = engine.getSystem("render");
-        const keylog = engine.getSystem("keylog");
+        this.onWindowResize(engine);
 
-        const WIN_H = render.res_y;
-        const UI_W  = render.res_x - render.res_min;
-
-        this.DEBUGgrid = new ButtonGrid(
-            render.res_min, 0, UI_W, WIN_H, 30, 2, keylog
-        );
-
-        this.UIgrid = new ButtonGrid(
-            render.res_min, WIN_H/2, UI_W, WIN_H/2, 15, 2, keylog
-        );
+        const factory = engine.getSystem("factory");
+        this.player_factory_id = factory.createFactory(FACTORY_PLAYER);
     };
 
 
@@ -56,12 +69,50 @@ class UISystem
         // ----------------------------------------------------------------
 
         this.draw_sector_memusage(engine);
-
+        this.draw_game_ui(engine);
         this.draw_dev_ui(engine);
-
-
-
     };
+
+
+    draw_game_ui( engine )
+    {
+        const player = engine.getSystem("player");
+        const factorySys = engine.getSystem("factory");
+        const id = this.player_factory_id;
+        const playerFactory = factorySys.getFactory(id);
+
+        let row = 2;
+        this.UIgrid.menuButton(row+0, 0, "Monies: " + playerFactory.monies);
+
+
+        this.UIgrid.menuButton(row+1, 0, "Build A", () => {
+            factorySys.buildCollector(id, COLLECTOR_A);
+        });
+
+        this.UIgrid.menuButton(row+1, 1, "Build B", () => {
+            factorySys.buildCollector(id, COLLECTOR_B);
+        });
+
+
+
+        this.UIgrid.menuButton(row+2, 0, "terrain", () => {
+            player.tool_mode = 0;
+        }, player.tool_mode == 0);
+
+        this.UIgrid.menuButton(row+2, 1, "target", () => {
+            player.tool_mode = 1;
+        }, player.tool_mode == 1);
+
+
+        this.UIgrid.menuButton(row+3, 0, "light A", () => {
+            player.tool_mode = 2;
+        }, player.tool_mode == 2);
+
+        this.UIgrid.menuButton(row+3, 1, "light B", () => {
+            player.tool_mode = 3;
+        }, player.tool_mode == 3);
+    };
+
 
 
     draw_sector_memusage( engine )
@@ -69,14 +120,11 @@ class UISystem
         const factory = engine.getSystem("factory");
         const terrain = engine.getSystem("terrain");
 
-
         this.DEBUGgrid.background(100);
-
-        const sectors = terrain.getSectors();
-
         this.DEBUGgrid.menuButton(0, 0, "cur");
         this.DEBUGgrid.menuButton(0, 1, "max");
 
+        const sectors = terrain.getSectors();
 
         let n = 1;
         for (let row=0; row<4; row++)
@@ -97,40 +145,58 @@ class UISystem
         const terrain = engine.getSystem("terrain");
         const player  = engine.getSystem("player");
 
-        
-        let blocktype = player.block_type;
+        let blocktype  = player.block_type;
+        let blockspan  = player.block_width;
+        let ksize      = player.block_ksize;
 
-        const ROW_START = 12;
+        let row = 9;
 
-        this.UIgrid.menuButton(ROW_START+0, 0, "air", () => {
+        this.BRUSHgrid.menuButton(row+0, 0, "span*2", () => {
+            blockspan *= 2;
+        });
+        this.BRUSHgrid.menuButton(row+0, 1, "span/2", () => {
+            blockspan /= 2;
+        });
+
+        this.BRUSHgrid.menuButton(row+1, 0, "ksize*2", () => {
+            ksize *= 2;
+        });
+        this.BRUSHgrid.menuButton(row+1, 1, "ksize/2", () => {
+            ksize /= 2;
+        });
+
+
+        row = 12;
+
+        this.BRUSHgrid.menuButton(row+0, 0, "air", () => {
             blocktype = BLOCK_AIR;
         }, blocktype === BLOCK_AIR);
-
-
-        this.UIgrid.menuButton(ROW_START+0, 1, "grass", () => {
+        this.BRUSHgrid.menuButton(row+0, 1, "grass", () => {
             blocktype = BLOCK_GRASS;
         },  blocktype === BLOCK_GRASS);
 
 
-        this.UIgrid.menuButton(ROW_START+1, 0, "dirt", () => {
+        this.BRUSHgrid.menuButton(row+1, 0, "dirt", () => {
             blocktype = BLOCK_DIRT;
         },  blocktype === BLOCK_DIRT);
-        this.UIgrid.menuButton(ROW_START+1, 1, "stone", () => {
+        this.BRUSHgrid.menuButton(row+1, 1, "stone", () => {
             blocktype = BLOCK_STONE;
         },  blocktype === BLOCK_STONE);
 
 
-        this.UIgrid.menuButton(ROW_START+2, 0, "silver", () => {
+        this.BRUSHgrid.menuButton(row+2, 0, "silver", () => {
             blocktype = BLOCK_SILVER;
         },  blocktype === BLOCK_SILVER);
-        this.UIgrid.menuButton(ROW_START+2, 1, "gold", () => {
+        this.BRUSHgrid.menuButton(row+2, 1, "gold", () => {
             blocktype = BLOCK_GOLD;
         },  blocktype === BLOCK_GOLD);
 
 
-        player.block_type = blocktype;
-    };
+        player.block_type  = blocktype;
+        player.block_width = blockspan;
+        player.block_ksize = ksize;
 
+    };
 
 };
 
