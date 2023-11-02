@@ -21,7 +21,7 @@ class UISystem
         const UI_WIDTH = render.res_x - UI_LEFT;
 
         this.UIgrid = new ButtonGrid(
-            UI_LEFT, WIN_H/2, UI_WIDTH, WIN_H/2, 15, 2, keylog
+            UI_LEFT, 0, UI_WIDTH, WIN_H, 30, 2, keylog
         );
 
         this.DEBUGgrid = new ButtonGrid(
@@ -68,7 +68,7 @@ class UISystem
         }
         // ----------------------------------------------------------------
 
-        this.draw_sector_memusage(engine);
+        // this.draw_sector_memusage(engine);
         this.draw_game_ui(engine);
         this.draw_dev_ui(engine);
     };
@@ -81,8 +81,11 @@ class UISystem
         const id = this.player_factory_id;
         const playerFactory = factorySys.getFactory(id);
 
+        this.UIgrid.background(100);
+
+
         let row = 2;
-        this.UIgrid.menuButton(row+0, 0, "Monies: " + playerFactory.monies);
+        this.UIgrid.menuButton(row+0, 0, "$" + playerFactory.monies);
 
 
         this.UIgrid.menuButton(row+1, 0, "Build A", () => {

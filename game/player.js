@@ -54,6 +54,13 @@ class Player
         fill(255, 100, 100);
         circle(...render.world_to_screen(...this.target), 20);
 
+        fill(255, 50, 50);
+        circle(...render.world_to_screen(...this.light_a), 20);
+
+        fill(50, 255, 50);
+        circle(...render.world_to_screen(...this.light_b), 20);
+
+
         this.input(engine);
     };
 

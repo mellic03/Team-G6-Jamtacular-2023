@@ -331,17 +331,20 @@ class TerrainSystem
         this.quadtree_shader.setUniform("mouseX", mouseX - viewport_w/2);
         this.quadtree_shader.setUniform("mouseY", mouseY - viewport_h/2);
 
+        let idx = 0;
+
         for (let cell of this.visible_sectors)
         {
             let row = cell[0];
             let col = cell[1];
 
-            this.quadtree_shader.setUniform("un_quadtree",     this.sectors[row][col].buffer());
-            this.quadtree_shader.setUniform("un_quadtree_pos", [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
+            this.quadtree_shader.setUniform("un_quadtree" + int(idx), this.sectors[row][col].buffer());
+            this.quadtree_shader.setUniform("un_quadtree_pos" + int(idx), [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
 
-            pg.rect(0, 0, viewport_w, viewport_h);
+            idx += 1;
         }
 
+        pg.rect(0, 0, viewport_w, viewport_h);
         image(pg, 0, 0, viewport_w, viewport_h);
 
         // for (let cell of this.visible_sectors)
