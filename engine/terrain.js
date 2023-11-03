@@ -356,6 +356,8 @@ class TerrainSystem
     };
 
 
+    increment = 0.0;
+
     __set_common_uniforms( engine )
     {
         const render = engine.getSystem("render");
@@ -371,6 +373,7 @@ class TerrainSystem
         
         this.quadtree_shader.setUniform( "un_lightsource_pos_0", player.light_a );
         this.quadtree_shader.setUniform( "un_lightsource_pos_1", player.light_b );
+        this.quadtree_shader.setUniform( "un_increment",         this.increment );
     };
 
 

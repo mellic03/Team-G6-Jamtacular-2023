@@ -18,6 +18,8 @@ class Collector
     direction = [0.0, 0.0];
     velocity  = [0.0, 0.1];
 
+    resources = [  ];
+
     energy    = 10.0;
 
     constructor( type )
@@ -30,7 +32,6 @@ class Collector
 
     draw()
     {
-
         this.sprite.drawXY(...this.position);
 
         const target = engine.getSystem("player").target;
