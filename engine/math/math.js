@@ -15,8 +15,19 @@ function velocityDampening( drag, dx, dy )
 }
 
 
+function distance2( x1, y1, x2, y2 )
+{
+    return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)
+}
+
 function clamp( n, low, high )
 {
     return min(high, max(n, low));
 }
 
+function swap( a, b )
+{
+    const temp = a;
+    a = b;
+    b = temp;
+}

@@ -9,8 +9,9 @@ class Graph
 {
     nodes = new Allocator(GraphNode);
     adj_list = [  ];
-    
-    add( a, b, weight )
+
+
+    safety( a, b )
     {
         if (this.adj_list[a] == undefined)
         {
@@ -21,18 +22,24 @@ class Graph
         {
             this.adj_list[b] = [];
         }
+    };
+
+
+    add( a, b, weight )
+    {
+        this.safety(a, b);
 
         this.adj_list[a][b] = weight;
         this.adj_list[b][a] = weight;
     };
 
 
-    draw()
+    remove( a, b )
     {
-        for (let node of this.adj_list)
-        {
-            console.log(node);
-        }
+        this.safety(a, b);
+
+        this.adj_list[a][b] = Infinity;
+        this.adj_list[b][a] = Infinity;
     };
 
 

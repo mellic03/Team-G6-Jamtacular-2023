@@ -21,12 +21,14 @@ const OFFLINE_HEIGHT = 512;
 class RenderSystem
 {
     offline_context;
+    offline_contexts = [  ];
 
     res_x;
     res_y;
 
     viewport_x;
     viewport_y;
+    viewport_left;
 
     view_pos = [ 0.0, 0.0 ];
 
@@ -45,23 +47,31 @@ class RenderSystem
     };
 
 
+    offlineContext( idx )
+    {
+        return this.offline_contexts[idx];
+    }
+
+
     preload( engine )
     {
-        this.offline_context = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
-        this.offline_context.textureWrap(CLAMP);
+        this.offline_contexts[0] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
+        this.offline_contexts[0].textureWrap(CLAMP);
+        this.offline_contexts[1] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
+        this.offline_contexts[1].textureWrap(CLAMP);
     };
 
 
     setup( engine )
     {
         createCanvas(this.res_x, this.res_y);
-        frameRate(144);
+        frameRate(165);
+        windowResized();
     };
 
 
     draw( engine )
     {
-        windowResized();
         background(0);
     };
 
@@ -112,7 +122,6 @@ function windowResized()
     const render = engine.getSystem("render");
     const UIsys  = engine.getSystem("ui");
 
-
     if (windowWidth * (1.0 - UIsys.proportion_ui) < windowHeight)
     {
         render.res_x = windowWidth;
@@ -127,6 +136,7 @@ function windowResized()
 
     resizeCanvas(render.res_x, render.res_y);
 
+    render.viewport_left = render.res_x * (1.0 - UIsys.proportion_ui);
     render.viewport_w = render.res_x * (1.0 - UIsys.proportion_ui);
     render.viewport_h = render.res_y;
 

@@ -1,16 +1,17 @@
 
 
+function valueof( n )
+{
+    return 0.5*n + 0.5*n;
+}
+
 
 
 class Engine
 {
     system_instances = [  ];
     system_IDs       = [  ];
-
-    constructor()
-    {
-
-    };
+    system_events    = [  ];
 
 
     /** Add a system to the system manager.
@@ -46,6 +47,7 @@ class Engine
         const ID = this.system_instances.length;
         this.system_instances.push(system);
         this.system_IDs[name] = ID;
+        this.system_events[ID] = [];
     };
 
 
@@ -53,7 +55,20 @@ class Engine
     {
         const ID = this.system_IDs[name];
         return this.system_instances[ID];
+    };
+
+
+    setEvent( system_name, event_name, event_data )
+    {
+        const id = this.system_IDs[system_name];
+        this.system_events[id][event_name] = event_data;
     }
+
+    getEvent( system_name, event_name )
+    {
+        const id = this.system_IDs[system_name];
+        return this.system_events[id][event_name];
+    };
 
 
     preload()

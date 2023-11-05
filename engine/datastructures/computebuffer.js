@@ -9,11 +9,8 @@ class ComputeBuffer
     dtype;
     buffer = null;
 
-
     constructor( w, h, render_context, dtype=COMPUTEBUFFER_FLOAT )
     {
-        // console.log("[ComputeBuffer::ComputeBuffer] wxh = " + w + "x" + h);
-
         this.w = w;
         this.h = h;
         this.dtype = dtype;

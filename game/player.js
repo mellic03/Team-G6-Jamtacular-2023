@@ -1,9 +1,12 @@
 
-/*
-    Player does not necessarily mean a literal player character.
-    The Player class contains logic relevant to player input.
-*/
 
+const TOOL_SELECT  = 0;
+const SELECTION_GATHER = 0;
+const SELECTION_DEFEND = 1;
+const SELECTION_ATTACK = 3;
+
+const TOOL_TERRAIN = 1;
+const TOOL_TARGET  = 2;
 
 
 class Player
@@ -17,13 +20,16 @@ class Player
     drag         = 0.01;
     max_velocity = 1.0;
 
-    tool_mode    = 0;
+    tool_mode      = TOOL_TERRAIN;
+    selection_mode = SELECTION_GATHER;
 
     target       = [0.0, 0.0];
     light_a      = [-1.0, 0.0];
     light_b      = [+1.0, 0.0];
-    position     = [0.0, 0.0];
-    velocity     = [0.0, 0.0];
+
+    position      = [0.0, 0.1];
+    view_offset   = [0.0, 0.0];
+    velocity      = [0.0, 0.0];
 
     constructor()
     {
@@ -43,23 +49,13 @@ class Player
 
     draw( engine )
     {
-        const render  = engine.getSystem("render");
+        const render = engine.getSystem("render");
         const UIsys  = engine.getSystem("ui");
         const viewport_w = render.res_x * (1.0 - UIsys.proportion_ui);
         const viewport_h = render.res_y;
 
         fill(100, 255, 100);
-        circle(viewport_w/2, viewport_h/2, 20);
-
-        fill(255, 100, 100);
-        circle(...render.world_to_screen(...this.target), 20);
-
-        fill(255, 50, 50);
-        circle(...render.world_to_screen(...this.light_a), 20);
-
-        fill(50, 255, 50);
-        circle(...render.world_to_screen(...this.light_b), 20);
-
+        circle(...render.world_to_screen(...this.position), 20);
 
         this.input(engine);
     };
@@ -73,8 +69,8 @@ class Player
         this.mouse_input(engine);
         this.key_input(engine);
 
-        const x = render.view_pos[0];
-        const y = render.view_pos[1];
+        const x = this.position[0];
+        const y = this.position[1];
         let dx = this.velocity[0];
         let dy = this.velocity[1];
         let mag = Math.sqrt(dx**2 + dy**2);
@@ -90,6 +86,70 @@ class Player
             this.velocity[0] -= (1.0 / distance) * Math.sign(this.velocity[0]);
             this.velocity[1] -= (1.0 / distance) * Math.sign(this.velocity[1]);
         }
+    };
+
+
+    selecting    = false;
+    selection_tl = [0.0, 0.0];
+    selection_br = [0.0, 0.0];
+
+    tool_select( engine )
+    {
+        const render = engine.getSystem("render");
+        const keylog = engine.getSystem("keylog");
+
+        if (keylog.mouseDown() && this.selecting == false)
+        {
+            engine.setEvent("player", "selection", undefined);
+            this.selection_tl = render.screen_to_world(...[mouseX, mouseY]);
+            this.selecting = true;
+        }
+
+        if (keylog.mouseDragged() && this.selecting == true)
+        {
+            this.selection_br = render.screen_to_world(mouseX, mouseY);
+
+            rectMode(CORNERS);
+            fill(0, 0, 0, 70);
+            stroke(255);
+            rect(...render.world_to_screen(...this.selection_tl), ...render.world_to_screen(...this.selection_br));
+
+            const min_x = min(this.selection_tl[0], this.selection_br[0]);
+            const min_y = min(this.selection_tl[1], this.selection_br[1]);
+            const max_x = max(this.selection_tl[0], this.selection_br[0]);
+            const max_y = max(this.selection_tl[1], this.selection_br[1]);
+
+            let world_tl = [min_x, min_y];
+            let world_br = [max_x, max_y];
+
+            const data = {
+                header: "selection",
+                tl: world_tl,
+                br: world_br
+            };
+
+            engine.setEvent("player", "selection", data);
+        }
+
+
+        if (keylog.mouseUp())
+        {
+            this.selecting = false;
+        }
+
+
+        if (keylog.mouseClicked())
+        {
+            this.target = render.screen_to_world(mouseX, mouseY);
+
+            const data = {
+                header: "target",
+                target: this.target
+            };
+
+            engine.setEvent("player", "selection", data);
+        }
+
     };
 
 
@@ -109,32 +169,37 @@ class Player
 
         const pos = render.view_pos;
         terrain.unlock(pos[0], pos[1], viewport_w, viewport_h);
-
+    
+        switch (this.tool_mode)
+        {
+            case TOOL_SELECT: this.tool_select(engine); break;
+        }
 
         if (mouseIsPressed)
         {
-            if (this.tool_mode == 1)
+            switch (this.tool_mode)
             {
-                this.target = render.screen_to_world(mouseX, mouseY);
-                return;
-            }
+                case TOOL_TERRAIN:
+                    let world_pos = render.screen_to_world(mouseX, mouseY);
+                    terrain.placeSphere(...world_pos, this.block_type, this.block_ksize, this.block_width);    
+                    break;
 
-            if (this.tool_mode == 2)
-            {
-                console.log("woop");
-                this.light_a = render.screen_to_world(mouseX, mouseY);
-                return;
+                case TOOL_TARGET:
+                    this.target = render.screen_to_world(mouseX, mouseY);
+                    break;
             }
 
             if (this.tool_mode == 3)
             {
-                this.light_b = render.screen_to_world(mouseX, mouseY);
+                this.light_a = render.screen_to_world(mouseX, mouseY);
                 return;
             }
 
-
-            let world_pos = render.screen_to_world(mouseX, mouseY);
-            terrain.placeSphere(...world_pos, this.block_type, this.block_ksize, this.block_width);
+            if (this.tool_mode == 4)
+            {
+                this.light_b = render.screen_to_world(mouseX, mouseY);
+                return;
+            }
         }
     
         terrain.lock();
@@ -144,6 +209,7 @@ class Player
     key_input( engine )
     {
         const render  = engine.getSystem("render");
+        const keylog  = engine.getSystem("keylog");
 
         if (keyIsDown(KEYCODES.D))
         {
@@ -175,14 +241,24 @@ class Player
         // const dampening = (1.0 - this.drag) / (this.velocity.magSq() + 1);
         // this.velocity.mult(min(dampening, 0.9));
 
-
-
         this.velocity = velocityDampening(this.drag, ...this.velocity);
 
         this.position[0] += deltaTime * this.velocity[0];
         this.position[1] += deltaTime * this.velocity[1];
 
-        render.setView(...this.position);
+        const mouse_worldspace = render.screen_to_world(mouseX, mouseY);
+
+        let dir = vec2_sub(mouse_worldspace, this.position);
+        dir = vec2_mult(dir, 0.1);
+        
+        this.view_offset[0] = dir[0];
+        this.view_offset[1] = dir[1];
+
+        render.setView(
+            this.position[0] + this.view_offset[0],
+            this.position[1] + this.view_offset[1]
+        );
     };
+
 
 };

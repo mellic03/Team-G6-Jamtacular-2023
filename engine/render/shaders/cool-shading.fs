@@ -21,6 +21,7 @@ uniform vec2 un_quadtree_pos0;
 uniform vec2 un_quadtree_pos1;
 uniform vec2 un_quadtree_pos2;
 uniform vec2 un_quadtree_pos3;
+
 uniform vec2 un_view_pos;
 uniform vec2 un_player_pos;
 
@@ -99,7 +100,7 @@ struct QuadNode
 
 ivec2 uv_to_texel( vec2 uv )
 {
-    return ivec2( float(VIEWPORT_W/2) * uv );
+    return ivec2( float(QUADTREE_BUFFER_WIDTH) * uv );
 }
 
 
@@ -111,15 +112,6 @@ vec2 uv_to_screen( vec2 uv )
     return vec2(VIEWPORT_W, VIEWPORT_H) * uv;
 }
 
-
-vec2 screen_to_uv( vec2 screen )
-{
-    screen /= vec2(VIEWPORT_W, VIEWPORT_H);
-    screen += 0.5;
-    screen.y = 1.0 - screen.y;
-
-    return screen;
-}
 
 vec2 screen_to_world( vec2 screen )
 {
@@ -332,68 +324,6 @@ float attenuation_function( float dist, float constant, float linear, float quad
 
 
 
-float trace_airdist( vec2 ray_pos, vec2 end, vec2 ray_dir, QuadNode start_node, QuadNode end_node)
-{
-    float ray_length = 0.0;
-    QuadNode node = start_node;
-
-    if (node.blocktype == 0)
-    {
-        return 0.0;
-    }
-
-    for (int i=0; i<64; i++)
-    {
-        float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
-        ray_length += step_size;
-        ray_pos += step_size*ray_dir;
-
-        int quadtree_idx = get_quadtree_idx(ray_pos);
-        node = get_quadnode(ray_pos, quadtree_idx);
-
-        if (node.blocktype == 0)
-        {
-            break;
-        }
-
-        if (node.idx == end_node.idx)
-        {
-            break;
-        }
-    }
-
-    return ray_length;
-}
-
-
-float trace_visibility( vec2 ray_pos, vec2 end_pos, vec2 ray_dir, QuadNode start_node, QuadNode end_node)
-{
-    float ray_length = 0.0;
-    QuadNode node = start_node;
-
-    for (int i=0; i<64; i++)
-    {
-        if (node.idx == end_node.idx)
-        {
-            return 1.0;
-        }
-
-        float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
-        ray_length += step_size;
-        ray_pos += step_size*ray_dir;
-
-        int quadtree_idx = get_quadtree_idx(ray_pos);
-        node = get_quadnode(ray_pos, quadtree_idx);
-
-        if (node.blocktype > 0)
-        {
-            return 0.005;
-        }
-    }
-
-    return 0.005;
-}
-
 
 float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
 {
@@ -402,6 +332,7 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
     float ray_length = 0.0;
 
     float dist = distance(start, end);
+    float dist_to_air = 0.0; 
 
     QuadNode end_node = get_quadnode(end, end_idx);
     QuadNode node = get_quadnode(ray_pos, start_idx);
@@ -409,14 +340,40 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
 
     if (node.blocktype > 0)
     {
-        return attenuation_function(dist, SOLID_CONSTANT, SOLID_LINEAR, SOLID_QUADRATIC);
+        for (int i=0; i<64; i++)
+        {
+            float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
+            ray_length += step_size;
+            ray_pos += step_size*ray_dir;
+
+            dist_to_air += step_size;
+
+            int quadtree_idx = get_quadtree_idx(ray_pos);
+            node = get_quadnode(ray_pos, quadtree_idx);
+
+            if (quadtree_idx == end_idx)
+            {
+                return dist_to_air * SOLID_AMIENT; // ; + attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
+            }
+
+            if (node.blocktype == 0)
+            {
+                dist_to_air = 1.0 - (clamp(dist_to_air, 0.0, 32.0) / 32.0);
+                break;
+            }
+
+            else if (node.blocktype > 0)
+            {
+                dist_to_air = 0.0;
+            }
+        }
     }
 
     for (int i=0; i<64; i++)
     {
         if (node.idx == end_node.idx)
         {
-            return attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
+            return SOLID_AMIENT + attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
         }
 
         float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
@@ -428,7 +385,7 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
 
         if (node.blocktype > 0)
         {
-            return SOLID_AMIENT;
+            return dist_to_air;
         }
     }
 
@@ -485,8 +442,6 @@ uniform vec2 un_target_pos;
 vec3         target_color = (vec3(1.0, 0.35, 0.35) + vec3(0.35, 1.0, 0.35) / 2.0);
 
 
-
-
 vec3 do_light( vec3 diffuse, vec2 light_pos, vec2 frag_pos, int frag_quadtree_idx )
 {
     vec2 dir = light_pos - frag_pos;
@@ -496,20 +451,20 @@ vec3 do_light( vec3 diffuse, vec2 light_pos, vec2 frag_pos, int frag_quadtree_id
     int light_quadtree_idx = get_quadtree_idx(light_pos);
 
     float radius = 32.0;
-    float offset = -radius/3.0;
-    float step_size = radius / 3.0;
+    float offset = -radius;
+    float step_size = radius / 4.0;
 
     float direct = 0.0;
 
-    for (int i=0; i<3; i++)
+    for (int i=0; i<4; i++)
     {
-        float variance = step_size*rand(frag_pos);
+        float variance = 0.5*step_size*rand(frag_pos);
 
         direct += trace_direct_multiTree(frag_pos, light_pos + offset*tangent + variance*tangent, frag_quadtree_idx, light_quadtree_idx);
         offset += step_size;
     }
 
-    vec3 illumination = diffuse * (direct / 3.0);
+    vec3 illumination = diffuse * (direct / 4.0);
 
     return illumination;
 }
@@ -535,10 +490,11 @@ vec3 render_quadtree()
 
     vec3 illumination_0 = do_light(un_lightsource_diffuse_0, un_lightsource_pos_0, worldspace, frag_quadtree_idx);
     vec3 illumination_1 = do_light(un_lightsource_diffuse_1, un_lightsource_pos_1, worldspace, frag_quadtree_idx);
-    vec3 illumination_2 = do_light(target_color,             un_player_pos,        worldspace, frag_quadtree_idx);
+    vec3 illumination_2 = do_light(target_color,             un_view_pos,          worldspace, frag_quadtree_idx);
     vec3 illumination   = illumination_0 + illumination_1 + illumination_2;
 
     return illumination * (blocktype_color(node.blocktype) + intensity*variation);
+
 }
 
 
@@ -548,9 +504,11 @@ vec3 render_quadtree()
 
 void main()
 {
+    vec2 screenspace = uv_to_screen(fsin_texcoord.xy) + un_view_pos;
+
     vec3 color = render_quadtree();
     color = vec3(1.0) - exp(-color * EXPOSURE);
     color = pow(color, vec3(1.0 / GAMMA));
-
+  
     fsout_frag_color = vec4(color, 1.0);
 }

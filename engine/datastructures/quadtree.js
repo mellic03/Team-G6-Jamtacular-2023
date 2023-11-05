@@ -7,6 +7,13 @@ const GROUPSIZE = 16;
 const BLOCKTYPE_IDX = 0;
 const CHILDREN_IDX  = 1;
 
+const BLOCK_AIR    = 0;
+const BLOCK_GRASS  = 1;
+const BLOCK_DIRT   = 2;
+const BLOCK_STONE  = 3;
+const BLOCK_SILVER = 4;
+const BLOCK_GOLD   = 5;
+
 
 
 class QuadNode_Allocator
@@ -147,7 +154,6 @@ class Quadtree
     pos_x;  pos_y;
     root_id;
 
-
     constructor( pos_x, pos_y, max_span, compute_buffer )
     {
         this.pos_x = pos_x;
@@ -227,9 +233,10 @@ class Quadtree
         for (let i=0; i<4; i++)
         {
             const child_id = this.nodegroups.get_children_id(group_id, i);
-
             if (child_id > 0)
             {
+                const blocktype = valueof(this.nodegroups.get_blocktype(group_id, i));
+
                 this._remove_group(child_id);
                 this.nodegroups.destroyGroup(child_id);
             }
@@ -296,15 +303,12 @@ class Quadtree
 
     insert( x, y, blocktype, min_span )
     {
-        // First do bounds check
         if (x < this.pos_x - this.MAX_SPAN/2 || x > this.pos_x + this.MAX_SPAN/2)
         {
-            console.log("[QuadTree::insert] out of bounds");
             return;
         }
         if (y < this.pos_y - this.MAX_SPAN/2 || y > this.pos_y + this.MAX_SPAN/2)
         {
-            console.log("[QuadTree::insert] out of bounds");
             return;
         }
 
@@ -312,23 +316,25 @@ class Quadtree
     };
 
 
+
     /** Find the node corresponding to a world-space position and return it's group id and quadrant.
      * 
      * @param {*} x 
      * @param {*} y 
+     * @returns [blocktype, center_x, center_y, span]
      */
-    __find( x, y )
+    find( x, y )
     {
         fill(255);
 
         let cx = this.pos_x;
         let cy = this.pos_y;
         let span = this.MAX_SPAN;
-        // circle(cx, cy, span/4);
         let blocktype;
 
         let quadrant = this._get_quadrant(x, y, cx, cy);
         let group_id = this.nodegroups.get_children_id(0, quadrant);
+        blocktype = this.nodegroups.get_blocktype(0, quadrant);
 
         cx = this._shift_center_x(quadrant, cx, span);
         cy = this._shift_center_y(quadrant, cy, span);
@@ -346,9 +352,7 @@ class Quadtree
             span /= 2.0;
         }
 
-        // circle(cx, cy, span/4);
-
-        return [ blocktype, cx, cy, span ];g
+        return [ blocktype, cx, cy, span ];
     };
 
 
@@ -425,7 +429,7 @@ class Quadtree
      */
     nearest_intersection( x, y, xdir, ydir )
     {
-        let node_data = this.__find(x, y);
+        let node_data = this.find(x, y);
     
         let blocktype = node_data[0];
         let cx        = node_data[1];
@@ -453,7 +457,7 @@ class Quadtree
             fill(255, 0, 0);
             circle(...world, 5);
 
-            node_data = this.__find(px, py);
+            node_data = this.find(px, py);
             blocktype = node_data[0];
             cx        = node_data[1];
             cy        = node_data[2];
@@ -564,21 +568,6 @@ class Quadtree
         this.__leafList(list, this.root_id, this.pos_x, this.pos_y, this.MAX_SPAN);
 
         return list;
-    };
-
-
-    /** Find the deepest node which contains the entirety of an AABB
-     * 
-     */
-    boundingNode( x, y, w, h )
-    {
-        /*
-            Traverse to leaf node corresponding to (x, y).
-            Then, move upwards until the current node envelops the AABB entirely.
-        */
-
-        let ancestry = [  ];
-
     };
 
 
