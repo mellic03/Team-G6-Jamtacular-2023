@@ -39,7 +39,7 @@ class TerrainSystem
     pathfinder = new PathFinder();
 
     shaders  = [  ];
-    fidelity = 1;
+    fidelity = 0;
 
 
     constructor()
@@ -85,12 +85,12 @@ class TerrainSystem
             case 2: sectors = [ [row, col+1], [row-1, col], [row-1, col+1] ]; break;
             case 3: sectors = [ [row, col-1], [row-1, col], [row-1, col-1] ]; break;
         }
-        sectors.push([row, col]);
 
 
         let filtered = [  ];
+        filtered.push([row, col]);
 
-        for (let i=0; i<4; i++)
+        for (let i=0; i<3; i++)
         {
             let cell = sectors[i];
 
@@ -227,20 +227,25 @@ class TerrainSystem
     {
         this.shaders[0] = loadShader(
             "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree-flat.fs"
+            "engine/render/shaders/quadtree-fast.fs"
         );
 
         this.shaders[1] = loadShader(
             "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree.fs"
+            "engine/render/shaders/quadtree-flat.fs"
         );
 
         this.shaders[2] = loadShader(
             "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree-dark.fs"
+            "engine/render/shaders/quadtree.fs"
         );
 
         this.shaders[3] = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree-dark.fs"
+        );
+
+        this.shaders[4] = loadShader(
             "engine/render/shaders/screenquad.vs",
             "engine/render/shaders/cool-shading.fs"
         );
@@ -276,7 +281,6 @@ class TerrainSystem
         this.unlockAll();
         this.mapimg.loadPixels();
         let data = this.mapimg.pixels;
-        let d = this.mapimg.pixelDensity();
 
         const IMG_W = 1024;
         for (let y=0; y<IMG_W; y++)

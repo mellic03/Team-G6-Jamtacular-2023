@@ -63,7 +63,10 @@ class SettingsModal
             terrain.fidelity = 2;
         }, terrain.fidelity == 2);
     
-
+        ui.menuButton2(0, 4, "Blazed", () => {
+            terrain.fidelity = 3;
+        }, terrain.fidelity == 3);
+    
 
         ui.nextRow(3);
         ui.menuTitle("Debugging", 1);
