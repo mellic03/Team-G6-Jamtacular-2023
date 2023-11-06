@@ -1,7 +1,8 @@
 "use strict";
 
-const PATHFINDER_SECTOR_W = 64
-const PATHFINDER_SECTORS  = 64
+const PATHFINDER_SECTOR_W = 64;
+const PATHFINDER_SECTORS  = 64;
+const PATHFINDER_SECTORS_SQ  = PATHFINDER_SECTORS**2;
 
 
 class PathFinder
@@ -67,9 +68,20 @@ class PathFinder
     };
 
 
+    isBlocked( row, col )
+    {
+        if (this.in_bounds(row, col) == false)
+        {
+            return false;
+        }
+
+        return this.blocked[row][col] == true;
+    };
+
+
     nodeIndex( row, col )
     {
-        return PATHFINDER_SECTORS*row, col;
+        return PATHFINDER_SECTORS*row + col;
     };
 
 
@@ -301,7 +313,7 @@ class PathFinder
     };
 
 
-    drawPath( path )
+    drawPath( path, stop_idx=0 )
     {
         const render = engine.getSystem("render");
 
@@ -311,9 +323,9 @@ class PathFinder
         }
 
         strokeWeight(8);
-        stroke(0, 0, 255);
+        stroke(0, 0, 0, 100);
 
-        for (let i=0; i<path.length-1; i++)
+        for (let i=0; i<stop_idx; i++)
         {
             const xy0 = render.world_to_screen(path[i][0],   path[i][1]);
             const xy1 = render.world_to_screen(path[i+1][0], path[i+1][1]);
@@ -328,12 +340,8 @@ class PathFinder
 
     refine( terrain )
     {
-        const quantity = (PATHFINDER_SECTORS*PATHFINDER_SECTORS) / 128;
-        
-        if (this.count >= PATHFINDER_SECTORS**2)
-        {
-            this.count = 0;
-        }
+        const quantity = (PATHFINDER_SECTORS_SQ) / 128;
+
 
         for (let i=this.count; i<this.count+quantity; i++)
         {
@@ -364,7 +372,7 @@ class PathFinder
             }
         }
         
-        this.count += quantity;
+        this.count = (this.count + quantity) % PATHFINDER_SECTORS_SQ;
     };
 
 };

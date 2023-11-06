@@ -1,5 +1,13 @@
 
 
+function dowith_probability( p, callback )
+{
+    if (p > random(0, 1))
+    {
+        callback();
+    }
+}
+
 
 function velocityDampening( drag, dx, dy )
 {

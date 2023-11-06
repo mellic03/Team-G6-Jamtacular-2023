@@ -9,7 +9,7 @@ class Factory
 {
     sprite;
     position   = [0, 0];
-    monies     = 100.0;
+    monies     = 1000.0;
     collectors = [  ];
 
     constructor( sprite )
@@ -20,7 +20,7 @@ class Factory
 
     draw( engine )
     {
-        // this.sprite.drawXY(...this.position);
+        this.sprite.draw(...this.position);
 
         // for (let collector of this.collectors)
         // {
@@ -62,7 +62,8 @@ class FactorySystem
 
     setup( engine )
     {
-
+        // allSprites.autoUpdate = false;
+        allSprites.autoDraw = false;
     };
 
 
@@ -84,6 +85,8 @@ class FactorySystem
         const factory_id = this.allocator.create([sprite]);
         this.factory_ids.push(factory_id);
 
+        this.allocator.get(factory_id).sprite = sprite;
+
         return factory_id;
     };
 
@@ -101,7 +104,7 @@ class FactorySystem
         const factory = this.getFactory(factory_id);
         const cost    = collectorSys.costOf(type);
 
-        if (factory.monies > cost)
+        if (factory.monies >= cost)
         {
             const collector_id = collectorSys.createCollector(type);
             factory.collectors.push(collector_id);

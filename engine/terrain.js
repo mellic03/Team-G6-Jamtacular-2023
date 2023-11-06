@@ -4,8 +4,8 @@ const QUADTREE_SPAN = 1024.0;
 const HALF_SPAN = QUADTREE_SPAN / 2;
 const COMPUTEBUFFER_WIDTH = 64;
 
-const SECTORS_X = 4;
-const SECTORS_Y = 4;
+const SECTORS_X = 16;
+const SECTORS_Y = 16;
 
 
 const TERRAIN_VIEW_WIDTH_PIXELS  = 1024;
@@ -39,7 +39,7 @@ class TerrainSystem
     pathfinder = new PathFinder();
 
     shaders  = [  ];
-    fidelity = 0;
+    fidelity = 1;
 
 
     constructor()
@@ -94,11 +94,8 @@ class TerrainSystem
         {
             let cell = sectors[i];
 
-            cell[0] %= SECTORS_Y;
-            cell[1] %= SECTORS_X;
-
-            if (cell[0] < 0)  { cell[0] = SECTORS_Y + cell[0]; };
-            if (cell[1] < 0)  { cell[1] = SECTORS_X + cell[1]; };
+            if (cell[0] < 0 || cell[0] >= SECTORS_X)  { continue; };
+            if (cell[1] < 0 || cell[1] >= SECTORS_Y)  { continue; };
 
             filtered.push(cell);
         }
@@ -250,7 +247,7 @@ class TerrainSystem
             "engine/render/shaders/cool-shading.fs"
         );
 
-        this.mapimg = loadImage("map.png");
+        this.mapimg = loadImage("map2.png");
 
     };
 
@@ -294,19 +291,19 @@ class TerrainSystem
                     continue;
                 }
 
-                if (data[idx+0] < 20)
+                else // if (data[idx+0] < 20)
                 {
-                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 1, 16);
+                    this.placeBlock((x*8)-HALF_SPAN, (y*8)-HALF_SPAN, 1, 16);
                 }
 
-                else if (data[idx+0] < 30)
-                {
-                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 2, 16);
-                }
-                else if (data[idx+0] < 40)
-                {
-                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 3, 16);
-                }
+                // else if (data[idx+0] < 30)
+                // {
+                //     this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 2, 16);
+                // }
+                // else if (data[idx+0] < 40)
+                // {
+                //     this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 3, 16);
+                // }
             }
         }
 
@@ -385,6 +382,10 @@ class TerrainSystem
         this.getShader().setUniform( "un_mouse",              render.screen_to_world(mouseX, mouseY));
         this.getShader().setUniform( "un_lightsource_pos_0",  player.light_a           );
         this.getShader().setUniform( "un_lightsource_pos_1",  player.light_b           );
+        this.getShader().setUniform( "un_lightsource_diffuse_0",  player.diffuse_a     );
+        this.getShader().setUniform( "un_lightsource_diffuse_1",  player.diffuse_b     );
+        this.getShader().setUniform( "un_lightsource_attenuation_0",  player.attenuation_a );
+        this.getShader().setUniform( "un_lightsource_attenuation_1",  player.attenuation_b );
     };
 
 
@@ -397,14 +398,12 @@ class TerrainSystem
     nearest_intersection( x, y, dx, dy )
     {
         // If intersection is outside original sector, perform another search. 
-        let intersection = [0, 0];
+        let intersection = [x, y];
         let count = 10;
-
-        let point = [x, y];
 
         while (count > 0 && intersection.length == 2)
         {
-            const sector = this.get_sector(...point);
+            const sector = this.get_sector(...intersection);
             const row = sector[0];
             const col = sector[1];
     
@@ -413,8 +412,7 @@ class TerrainSystem
                 return [Infinity, Infinity];
             }
 
-            intersection = this.sectors[row][col].nearest_intersection(...point, dx, dy);
-            point = intersection;
+            intersection = this.sectors[row][col].nearest_intersection(...intersection, dx, dy);
 
             count -= 1;
         }

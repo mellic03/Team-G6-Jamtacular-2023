@@ -6,8 +6,9 @@ class UISystem
     DEBUGgrid;
     BRUSHgrid;
 
-    settings_modal = new SettingsModal(1, 1, 1, 1);
+    settings_modal  = new SettingsModal(1, 1, 1, 1);
     inventory_modal = new InventoryModal(1, 1, 1, 1);
+    factory_modal   = new FactoryModal(1, 1, 1, 1);
 
     proportion_ui = 0.2;
     player_factory_id;
@@ -37,6 +38,7 @@ class UISystem
     
         this.settings_modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
         this.inventory_modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
+        this.factory_modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
     };
 
 
@@ -83,6 +85,7 @@ class UISystem
 
         this.inventory_modal.draw();
         this.settings_modal.draw();
+        this.factory_modal.draw();
     };
 
 
@@ -96,52 +99,33 @@ class UISystem
 
         this.UIgrid.background(100);
 
-
         let row = 2;
         this.UIgrid.menuButton(row+0, 0, "$" + playerFactory.monies);
         this.UIgrid.text_scale = 0.8;
 
+        this.UIgrid.menuButton(row+1, 0, "Weapon", () => {
+            player.tool_mode = TOOL_WEAPON;
+        }, player.tool_mode == TOOL_WEAPON);
 
-        this.UIgrid.menuButton(row+1, 0, "Build A", () => {
-            factorySys.buildCollector(id, COLLECTOR_A);
-        });
+        this.UIgrid.menuButton(row+2, 0, "Inspect", () => {
+            player.tool_mode = TOOL_INSPECT;
+        }, player.tool_mode == TOOL_INSPECT);
 
-        this.UIgrid.menuButton(row+1, 1, "Build B", () => {
-            factorySys.buildCollector(id, COLLECTOR_B);
-        });
-
-
-        this.UIgrid.menuButton(row+2, 0, "Gather", () => {
+        this.UIgrid.menuButton(row+2, 1, "Select", () => {
             player.tool_mode = TOOL_SELECT;
-            player.selection_mode = SELECTION_GATHER
-        }, player.tool_mode == TOOL_SELECT && player.selection_mode == SELECTION_GATHER);
-
-        this.UIgrid.menuButton(row+2, 1, "Defend", () => {
-            player.tool_mode = TOOL_SELECT;
-            player.selection_mode = SELECTION_DEFEND
-        }, player.tool_mode == TOOL_SELECT && player.selection_mode == SELECTION_DEFEND);
-
-        this.UIgrid.menuButton(row+3, 0, "Attack", () => {
-            player.tool_mode = TOOL_SELECT;
-            player.selection_mode = SELECTION_ATTACK
-        }, player.tool_mode == TOOL_SELECT && player.selection_mode == SELECTION_ATTACK);
-
-
-
-
-        this.UIgrid.menuButton(row+4, 0, "Terrain", () => {
-            player.tool_mode = TOOL_TERRAIN;
-        }, player.tool_mode == TOOL_TERRAIN);
+        }, player.tool_mode == TOOL_SELECT);
 
     
 
 
     
         this.UIgrid.menuButton(row+6, 0, "Inventory", () => {
+            player.tool_mode = TOOL_NONE;
             this.inventory_modal.show();
         });
 
         this.UIgrid.menuButton(row+6, 1, "Settings", () => {
+            player.tool_mode = TOOL_NONE;
             this.settings_modal.show();
         });
 
@@ -150,12 +134,12 @@ class UISystem
 
 
         this.UIgrid.menuButton(row+7, 0, "light A", () => {
-            player.tool_mode = 3;
-        }, player.tool_mode == 3);
+            player.tool_mode = TOOL_LIGHT_A;
+        }, player.tool_mode == TOOL_LIGHT_A);
 
         this.UIgrid.menuButton(row+7, 1, "light B", () => {
-            player.tool_mode = 4;
-        }, player.tool_mode == 4);
+            player.tool_mode = TOOL_LIGHT_B;
+        }, player.tool_mode == TOOL_LIGHT_B);
 
 
     };
@@ -215,29 +199,39 @@ class UISystem
 
         row = 12;
 
+        let using_terrain = player.tool_mode == TOOL_TERRAIN;
+
         this.BRUSHgrid.menuButton(row+0, 0, "air", () => {
+            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_AIR;
-        }, blocktype === BLOCK_AIR);
+        }, blocktype === BLOCK_AIR && using_terrain);
+
         this.BRUSHgrid.menuButton(row+0, 1, "grass", () => {
+            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_GRASS;
-        },  blocktype === BLOCK_GRASS);
+        },  blocktype === BLOCK_GRASS && using_terrain);
 
 
         this.BRUSHgrid.menuButton(row+1, 0, "dirt", () => {
+            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_DIRT;
-        },  blocktype === BLOCK_DIRT);
+        },  blocktype === BLOCK_DIRT && using_terrain);
 
         this.BRUSHgrid.menuButton(row+1, 1, "stone", () => {
+            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_STONE;
-        }, blocktype === BLOCK_STONE);
+        }, blocktype === BLOCK_STONE && using_terrain);
 
 
         this.BRUSHgrid.menuButton(row+2, 0, "silver", () => {
+            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_SILVER;
-        },  blocktype === BLOCK_SILVER);
+        },  blocktype === BLOCK_SILVER && using_terrain);
+
         this.BRUSHgrid.menuButton(row+2, 1, "gold", () => {
+            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_GOLD;
-        },  blocktype === BLOCK_GOLD);
+        },  blocktype == BLOCK_GOLD && using_terrain);
 
 
         player.block_type  = blocktype;

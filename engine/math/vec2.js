@@ -22,6 +22,18 @@ function vec2_sub( u, v )
 }
 
 
+function vec2_dir( end, start )
+{
+    return vec2_normalize(vec2_sub(end, start));
+}
+
+
+function vec2_tangent( dir )
+{
+    return [-dir[1], dir[0]];
+}
+
+
 function vec2_dot( u, v )
 {
     return u[0]*v[0]  +  u[1]*v[1];

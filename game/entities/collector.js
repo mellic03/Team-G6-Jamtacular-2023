@@ -3,96 +3,73 @@
     Collectors are agents which move out into the world and collect resources.
     When a resource is collected, it returns to the "mothership" to deposit it.
 */
-const COLLECTOR_A = 0;
-const COLLECTOR_B = 1;
-const COLLECTOR_C = 2;
-const COLLECTOR_D = 3;
+const COLLECTOR_GATHER = 0;
+const COLLECTOR_DEFEND = 1;
+const COLLECTOR_ATTACK = 3;
 
+let collector_sprites = [  ];
 
 
 class Collector
 {
     sprite;
-    position = [0.0, 0.0]
 
+    body;
     direction = [0.0, 0.0];
-    velocity  = [0.0, 0.1];
 
+    behaviour_mode = COLLECTOR_GATHER;
 
     selected  = false;
     energy    = 10.0;
     inventory = [ 0, 0, 0, 0 ];
 
-
     path = [  ];
     player_target = [0.0, 0.0];
     current_target = -1;
 
-
-    constructor( type )
+    constructor( type=COLLECTOR_GATHER )
     {
-        this.position[0] = random(-150, 150);
-        this.position[1] = random(-150, 150);
-
-        this.sprite  = new BSprite(-100, -100, 50, 50 );
-        this.sprite2 = new BSprite(-100, -100, 50, 50 );
-
-        this.sprite.collider = "none";
+        this.body = new PhysicsBody(random(-150, 150), random(-150, 150), 32, 32);
+        this.sprite = collector_sprites[type];
     };
 
 
     draw()
     {
-        if (this.selected == true)
-        {
-            this.sprite.drawXY(-1000, -1000);
-            this.sprite2.drawXY(...this.position);
-        }
-
-        else
-        {
-            this.sprite2.drawXY(-1000, -1000);
-            this.sprite.drawXY(...this.position);
-        }
-
+        const render = engine.getSystem("render");
         const terrain = engine.getSystem("terrain");
 
         if (this.current_target >= 0)
         {
             this.follow_path();
  
-            if (terrain.visualize_pathfinding)
+            // if (terrain.visualize_pathfinding)
             {
-                terrain.pathfinder.drawPath(this.path);
+                terrain.pathfinder.drawPath(this.path, this.current_target);
             }
         }
 
+
+        if (this.selected == true)
+        {
+            const size = render.world_to_screen_dist(64);
+            rectMode(CENTER);
+            fill(0, 0, 0, 100);
+            rect(...render.world_to_screen(...this.body.position), size, size);
+        }
+
+
+        this.body.update();
+        this.sprite.draw(...this.body.position);
     };
 
 
     follow_path( )
     {
         const target = this.path[this.current_target];
-        
-        this.direction = vec2_sub(target, this.position);
-        
-        if (vec2_magSq(this.direction) < 0.05)
-        {
-            this.current_target -= 1;
-            return;
-        }
+        this.body.applyForceTowards(...target);
 
-        this.direction = vec2_normalize(this.direction);
-
-
-        this.velocity = vec2_add(this.velocity, this.direction);
-        this.velocity = velocityDampening(0.55, ...this.velocity);
-
-        this.energy = clamp(this.energy + 0.01*deltaTime, 0.0, 10.01);
-        this.position = vec2_multadd(this.position, this.velocity, deltaTime);
-
-           
-        if (dist(...this.position, ...target) < 32.0)
+        if (dist(...this.body.position, ...target) < 32.0)
         {
             this.current_target -= 1;
         }
@@ -104,10 +81,9 @@ class Collector
         const terrain = engine.getSystem("terrain");
 
         const T = [ valueof(target[0]), valueof(target[1]) ];
-        this.path = terrain.pathfinder.find(...this.position, ...T);
-        this.current_target = this.path.length - 1;
+        this.path = terrain.pathfinder.find(...this.body.position, ...T);
+        this.current_target = this.path.length - 2;
     };
-
 
 
     unset_target( )
@@ -116,73 +92,34 @@ class Collector
         this.current_target = -1;
     };
 
-
-    collisions( engine )
-    {
-        const terrain = engine.getSystem("terrain");
-        const render = engine.getSystem("render");
-
-        let dx = this.velocity[0];
-        let dy = this.velocity[1];
-        let mag = Math.sqrt(dx**2 + dy**2);
-        let data = terrain.nearest_intersection(...this.position, dx/mag, dy/mag);
-
-
-        const px = data[0];
-        const py = data[1];
-        // const nx = data[2];
-        // const ny = data[3];
-        const distance = dist(...this.position, px, py);
-
-
-        if (distance < 64)
-        {
-            if (this.energy > 10.0)
-            {
-                terrain.placeSphere(px, py, 0, 4, 8);
-
-                strokeWeight(16);
-                stroke(255, 0, 0);
-                line(...render.world_to_screen(...this.position), ...render.world_to_screen(px, py));
-                circle(...render.world_to_screen(px, py), 32);
-           
-                this.energy -= 10.0;
-            }
-        }
-
-        if (distance < 1.0 * deltaTime)
-        {
-            this.velocity[0] -= (1.0 / distance) * Math.sign(this.velocity[0]);
-            this.velocity[1] -= (1.0 / distance) * Math.sign(this.velocity[1]);
-        }
-    
-        strokeWeight(1);
-        stroke(255);
-    }
-
 };
 
 
 class CollectorSystem
 {
     allocator     = new Allocator(Collector);
-    sprite_imgs   = [  ];
     collector_ids = [  ];
     costs         = [  ];
 
     preload( engine )
     {
-        this.sprite_imgs[COLLECTOR_A] = loadImage("collector.png");
-        this.sprite_imgs[COLLECTOR_B] = loadImage("collector.png");
+        collector_sprites[COLLECTOR_GATHER] = new BSprite();
+        collector_sprites[COLLECTOR_GATHER].image(loadImage("gather.png"));
+
+        collector_sprites[COLLECTOR_DEFEND] = new BSprite();
+        collector_sprites[COLLECTOR_DEFEND].image(loadImage("defend.png"));
+
+        collector_sprites[COLLECTOR_ATTACK] = new BSprite();
+        collector_sprites[COLLECTOR_ATTACK].image(loadImage("attack.png"));
+
     };
 
 
     setup( engine )
     {
-        this.costs[COLLECTOR_A] = 10;
-        this.costs[COLLECTOR_B] = 50;
-        this.costs[COLLECTOR_C] = 100;
-        this.costs[COLLECTOR_D] = 200;
+        this.costs[COLLECTOR_GATHER] = 10;
+        this.costs[COLLECTOR_DEFEND] = 50;
+        this.costs[COLLECTOR_ATTACK] = 100;
     };
 
 
@@ -191,7 +128,6 @@ class CollectorSystem
         const terrain = engine.getSystem("terrain");
         const player  = engine.getSystem("player");
 
-        // terrain.unlock(...player.position);
 
         const data = engine.getEvent("player", "selection");
         this.find_selected(data);
@@ -201,33 +137,7 @@ class CollectorSystem
         {
             const collector = this.allocator.get(id);
             collector.draw();
-            
-            for (let id2 of this.collector_ids)
-            {
-                if (id == id2)
-                {
-                    continue;
-                }
-
-                const collector2 = this.allocator.get(id2);
-                const distance = dist(...collector2.position, ...collector.position);
-
-                let dir = vec2_sub(collector.position, collector2.position);                
-                dir = vec2_normalize(dir);
-
-                if (distance > 64.0)
-                {
-                    continue;
-                }
-
-                dir = vec2_mult(dir, 0.25); 
-                collector.velocity = vec2_add(collector.velocity, dir);
-
-                dir = vec2_mult(dir, -1.0); 
-                collector2.velocity = vec2_add(collector2.velocity, dir);
-            }
         }
-        // terrain.lock();
     };
 
 
@@ -241,8 +151,6 @@ class CollectorSystem
 
         if (data.header == "target")
         {
-            console.log("target");
-    
             for (let id of this.collector_ids)
             {
                 const collector = this.allocator.get(id);
@@ -269,8 +177,8 @@ class CollectorSystem
             {
                 const collector = this.allocator.get(id);
             
-                const px = collector.position[0];
-                const py = collector.position[1];
+                const px = collector.body.position[0];
+                const py = collector.body.position[1];
 
                 if (xmin < px && px < xmax && ymin < py && py < ymax)
                 {
@@ -294,16 +202,15 @@ class CollectorSystem
         {
             const collector = this.allocator.get(id);
             collector.selected = false;
-            // collector.unset_target();
         }
     };
 
 
     createCollector( type )
     {
-        const id = this.allocator.create();
+        const id = this.allocator.create([type]);
         const collector = this.allocator.get(id);
-        collector.sprite.image(this.sprite_imgs[type]);
+        collector.behaviour_mode = type;
         this.collector_ids.push(id);
     };
 

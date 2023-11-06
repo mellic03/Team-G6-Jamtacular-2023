@@ -1,12 +1,12 @@
 
+const TOOL_NONE    = 0;
+const TOOL_SELECT  = 1;
+const TOOL_TERRAIN = 2;
+const TOOL_WEAPON  = 4;
+const TOOL_INSPECT = 5;
 
-const TOOL_SELECT  = 0;
-const SELECTION_GATHER = 0;
-const SELECTION_DEFEND = 1;
-const SELECTION_ATTACK = 3;
-
-const TOOL_TERRAIN = 1;
-const TOOL_TARGET  = 2;
+const TOOL_LIGHT_A = 6;
+const TOOL_LIGHT_B = 7;
 
 
 class Player
@@ -21,11 +21,17 @@ class Player
     max_velocity = 1.0;
 
     tool_mode      = TOOL_TERRAIN;
-    selection_mode = SELECTION_GATHER;
 
     target       = [0.0, 0.0];
+
     light_a      = [-1.0, 0.0];
     light_b      = [+1.0, 0.0];
+    
+    diffuse_a    = [1.0, 1.0, 1.0];
+    diffuse_b    = [1.0, 1.0, 1.0];
+
+    attenuation_a = 1.0;
+    attenuation_b = 1.0;
 
     position      = [0.0, 0.1];
     view_offset   = [0.0, 0.0];
@@ -96,18 +102,19 @@ class Player
     tool_select( engine )
     {
         const render = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
         const keylog = engine.getSystem("keylog");
 
         if (keylog.mouseDown() && this.selecting == false)
         {
             engine.setEvent("player", "selection", undefined);
-            this.selection_tl = render.screen_to_world(...[mouseX, mouseY]);
+            this.selection_tl = render.mouse_worldspace;
             this.selecting = true;
         }
 
         if (keylog.mouseDragged() && this.selecting == true)
         {
-            this.selection_br = render.screen_to_world(mouseX, mouseY);
+            this.selection_br = render.mouse_worldspace;
 
             rectMode(CORNERS);
             fill(0, 0, 0, 70);
@@ -129,18 +136,37 @@ class Player
             };
 
             engine.setEvent("player", "selection", data);
+            engine.setEvent("collector", "selection", {header: "num_selected", num_selected: 0});
         }
-
 
         if (keylog.mouseUp())
         {
             this.selecting = false;
-        }
 
+            const size = render.world_to_screen_dist(64.0);
+
+            const nodespace  = terrain.pathfinder.world_to_node(...render.mouse_worldspace);
+            const worldspace = terrain.pathfinder.node_to_world(nodespace);
+            let screenspace  = render.world_to_screen(...worldspace);
+
+
+            noStroke();
+
+            if (terrain.pathfinder.isBlocked(...nodespace))
+            {
+                fill(155, 0, 0, 50);
+            }
+            else
+            {
+                fill(0, 155, 0, 50);
+            }
+
+            rect(...screenspace, size, size);
+        }
 
         if (keylog.mouseClicked())
         {
-            this.target = render.screen_to_world(mouseX, mouseY);
+            this.target = render.mouse_worldspace
 
             const data = {
                 header: "target",
@@ -153,56 +179,152 @@ class Player
     };
 
 
+    tool_terrain( engine )
+    {
+        const render = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
+
+        let world_pos = render.mouse_worldspace;
+        fill(0, 0, 0, 100);
+        circle(mouseX, mouseY, (render.viewport_w/1024)*2*this.block_ksize*this.block_width);
+
+        if (mouseIsPressed)
+        {
+            terrain.placeSphere(...world_pos, this.block_type, this.block_ksize, this.block_width);    
+        }
+
+    };
+
+
+    tool_inspect( engine )
+    {
+        const render = engine.getSystem("render");
+        const sprite = engine.getSystem("sprite");
+        const keylog = engine.getSystem("keylog");
+        const UIsys  = engine.getSystem("ui");
+        const factorySys = engine.getSystem("factory");
+        const factory = factorySys.getFactory(0);
+
+
+        if (dist(...factory.position, ...render.mouse_worldspace) < 32.0)
+        {
+            fill(0, 0, 0, 100);
+            rectMode(CENTER);
+            
+            let size = render.world_to_screen_dist(64);
+
+            rect(...render.world_to_screen(...factory.position), size, size);
+
+            if (keylog.mouseClicked())
+            {
+                UIsys.factory_modal.show();
+            }
+        }
+
+    };
+
+
+    flag   = true;
+    timer = 0;
+
+    tool_weapon( engine )
+    {
+        const render = engine.getSystem("render");
+        const keylog = engine.getSystem("keylog");
+        const bulletSys = engine.getSystem("bullet");
+        
+        const screenspace = render.world_to_screen(...this.position);
+
+
+        let dir = vec2_dir(render.mouse_worldspace, this.position);
+        let end = [screenspace[0]+64*dir[0], screenspace[1]+64*dir[1]];
+
+        stroke(255, 255, 255, 100);
+        strokeWeight(4);
+        line(...screenspace, ...end);
+        strokeWeight(1);
+
+        if (keylog.mouseDown())
+        {
+            if (this.timer < 100)
+            {
+                this.diffuse_a = [16, 16, 6];
+                bulletSys.create(...this.position, ...dir);
+
+                // let tangent = vec2_tangent(dir);
+                // const t = vec2_mult(tangent, 0.05);
+                // const tt = vec2_mult(tangent, 0.05/2.0);
+    
+                // dir = vec2_sub(dir, t);
+    
+                // for (let i=-4; i<4; i+=2)
+                // {
+                //     dir = vec2_add(dir, tt);
+                //     bulletSys.create(...this.position, ...dir);
+                // }
+
+                this.timer = 100;
+            }
+
+            else
+            {
+                this.diffuse_a = [0.25, 0.25, 0.25];
+            }
+
+            if (this.timer > 500)
+            {
+                this.timer = 0;
+            }
+
+            this.timer += deltaTime;
+        }
+
+        else
+        {
+            this.diffuse_a = [0.25, 0.25, 0.25];
+            this.timer = 0;
+        }
+
+    };
+
+
     mouse_input( engine )
     {
         const render = engine.getSystem("render");
         const terrain = engine.getSystem("terrain");
         const keylog  = engine.getSystem("keylog");
+        this.light_a = this.position;
 
         if (keylog.mouseLocked())
         {
             return;
         }
 
-        const viewport_w = render.viewport_w;
-        const viewport_h = render.viewport_h;
-
-        const pos = render.view_pos;
-        terrain.unlock(pos[0], pos[1], viewport_w, viewport_h);
-    
         switch (this.tool_mode)
         {
-            case TOOL_SELECT: this.tool_select(engine); break;
+            case TOOL_SELECT:  this.tool_select(engine);  break;
+            case TOOL_TERRAIN: this.tool_terrain(engine); break;
+            case TOOL_INSPECT: this.tool_inspect(engine); break;
+            case TOOL_WEAPON:  this.tool_weapon(engine);  break;
+
         }
+
 
         if (mouseIsPressed)
         {
             switch (this.tool_mode)
             {
-                case TOOL_TERRAIN:
-                    let world_pos = render.screen_to_world(mouseX, mouseY);
-                    terrain.placeSphere(...world_pos, this.block_type, this.block_ksize, this.block_width);    
+                case TOOL_LIGHT_A:
+                    this.light_a = render.mouse_worldspace;
                     break;
 
-                case TOOL_TARGET:
-                    this.target = render.screen_to_world(mouseX, mouseY);
+                case TOOL_LIGHT_B:
+                    this.light_b = render.mouse_worldspace;
                     break;
             }
 
-            if (this.tool_mode == 3)
-            {
-                this.light_a = render.screen_to_world(mouseX, mouseY);
-                return;
-            }
-
-            if (this.tool_mode == 4)
-            {
-                this.light_b = render.screen_to_world(mouseX, mouseY);
-                return;
-            }
         }
     
-        terrain.lock();
     };
 
 
@@ -246,7 +368,7 @@ class Player
         this.position[0] += deltaTime * this.velocity[0];
         this.position[1] += deltaTime * this.velocity[1];
 
-        const mouse_worldspace = render.screen_to_world(mouseX, mouseY);
+        const mouse_worldspace = render.mouse_worldspace;
 
         let dir = vec2_sub(mouse_worldspace, this.position);
         dir = vec2_mult(dir, 0.1);

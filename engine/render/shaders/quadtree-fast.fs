@@ -337,12 +337,8 @@ float trace_direct( vec2 start, vec2 end )
 
 uniform vec2 un_lightsource_pos_0;
 uniform vec2 un_lightsource_pos_1;
-vec3 un_lightsource_diffuse_0 = vec3(1.0, 1.0, 0.2);
-vec3 un_lightsource_diffuse_1 = vec3(0.2, 1.0, 1.0);
-
-uniform vec2 un_target_pos;
-vec3         target_color = (vec3(1.0, 0.35, 0.35) + vec3(0.35, 1.0, 0.35) / 2.0);
-
+uniform vec3 un_lightsource_diffuse_0;
+uniform vec3 un_lightsource_diffuse_1;
 
 
 
@@ -364,6 +360,24 @@ vec3 render_quadtree()
     vec2 worldspace = un_view_pos + uv_to_screen(fsin_texcoord);
     vec2 screenspace = worldspace - un_quadtree_pos0;
 
+    float half_span = float(QUADTREE_HALF_SPAN);
+
+    float left = un_quadtree_pos0.x - half_span;
+    float right = un_quadtree_pos0.x + half_span;
+
+    float top = un_quadtree_pos0.y - half_span;
+    float bottom = un_quadtree_pos0.y + half_span;
+
+    if (worldspace.x < left || worldspace.x > right)
+    {
+        discard;
+    }
+
+    if (worldspace.y < top || worldspace.y > bottom)
+    {
+        discard;
+    }
+
     QuadNode node = get_quadnode(worldspace);
     
     float coarseness = blocktype_coarseness(node.blocktype);
@@ -376,8 +390,7 @@ vec3 render_quadtree()
 
     vec3 illumination_0 = do_light(un_lightsource_diffuse_0, un_lightsource_pos_0, worldspace);
     vec3 illumination_1 = do_light(un_lightsource_diffuse_1, un_lightsource_pos_1, worldspace);
-    vec3 illumination_2 = do_light(target_color,             un_player_pos,        worldspace);
-    vec3 illumination   = illumination_0 + illumination_1 + illumination_2;
+    vec3 illumination   = illumination_0 + illumination_1;
 
     return illumination * (blocktype_color(node.blocktype) + intensity*variation);
 }

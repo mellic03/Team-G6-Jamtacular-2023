@@ -454,8 +454,8 @@ class Quadtree
             normaly = step[3];
 
             const world = engine.getSystem("render").world_to_screen(px, py);
-            fill(255, 0, 0);
-            circle(...world, 5);
+            // fill(255, 0, 0);
+            // circle(...world, 5);
 
             node_data = this.find(px, py);
             blocktype = node_data[0];
@@ -467,9 +467,9 @@ class Quadtree
             {
                 let world_xy   = engine.getSystem("render").world_to_screen(x, y);
                 let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
-                stroke(255);
-                line(...world_xy, ...world_pxpy);
-                return [px, py];
+                // stroke(255);
+                // line(...world_xy, ...world_pxpy);
+                return [px-0.1*step[0], py-0.1*step[1]];
             }
 
             first = false;
@@ -484,11 +484,11 @@ class Quadtree
         let world_xy   = engine.getSystem("render").world_to_screen(x, y);
         let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
 
-        stroke(255);
-        line(...world_xy, ...world_pxpy);
+        // stroke(255);
+        // line(...world_xy, ...world_pxpy);
 
-        fill(0, 255, 0);
-        circle(...world_pxpy, 10);
+        // fill(0, 255, 0);
+        // circle(...world_pxpy, 10);
 
         return [px, py, Math.sign(normalx), Math.sign(normaly)];
     };

@@ -49,7 +49,7 @@ class SettingsModal
         ui.nextRow(3);
 
         ui.menuTitle("Lighting Quality", 1);
-        ui.nextRow(5);
+        ui.nextRow(6);
 
         ui.menuButton2(0, 1, "Low", () => {
             terrain.fidelity = 0;

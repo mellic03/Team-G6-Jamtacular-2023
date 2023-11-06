@@ -462,12 +462,8 @@ float trace_direct( vec2 start, vec2 end, int quadtree_idx )
 
 uniform vec2 un_lightsource_pos_0;
 uniform vec2 un_lightsource_pos_1;
-vec3 un_lightsource_diffuse_0 = vec3(1.0, 1.0, 0.2);
-vec3 un_lightsource_diffuse_1 = vec3(0.2, 1.0, 1.0);
-
-uniform vec2 un_target_pos;
-vec3         target_color = (vec3(1.0, 0.35, 0.35) + vec3(0.35, 1.0, 0.35) / 2.0);
-
+uniform vec3 un_lightsource_diffuse_0;
+uniform vec3 un_lightsource_diffuse_1;
 
 vec3 do_light( vec3 diffuse, vec2 light_pos, vec2 frag_pos, int frag_quadtree_idx )
 {
@@ -517,8 +513,7 @@ vec3 render_quadtree()
 
     vec3 illumination_0 = do_light(un_lightsource_diffuse_0, un_lightsource_pos_0, worldspace, frag_quadtree_idx);
     vec3 illumination_1 = do_light(un_lightsource_diffuse_1, un_lightsource_pos_1, worldspace, frag_quadtree_idx);
-    vec3 illumination_2 = do_light(target_color,             un_player_pos,        worldspace, frag_quadtree_idx);
-    vec3 illumination   = illumination_0 + illumination_1 + illumination_2;
+    vec3 illumination   = illumination_0 + illumination_1;
 
     return illumination * (blocktype_color(node.blocktype) + intensity*variation);
 

@@ -31,6 +31,7 @@ class RenderSystem
     viewport_left;
 
     view_pos = [ 0.0, 0.0 ];
+    mouse_worldspace = [0, 0];
 
     constructor( res_x=512, res_y=512 )
     {
@@ -57,8 +58,8 @@ class RenderSystem
     {
         this.offline_contexts[0] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
         this.offline_contexts[0].textureWrap(CLAMP);
-        this.offline_contexts[1] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
-        this.offline_contexts[1].textureWrap(CLAMP);
+        // this.offline_contexts[1] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
+        // this.offline_contexts[1].textureWrap(CLAMP);
     };
 
 
@@ -73,6 +74,7 @@ class RenderSystem
     draw( engine )
     {
         background(0);
+        this.mouse_worldspace = this.screen_to_world(mouseX, mouseY);
     };
 
 
@@ -112,6 +114,12 @@ class RenderSystem
 
         return [ world_x, world_y ];
     }
+
+
+    world_to_screen_dist( world_dist )
+    {
+        return world_dist * (this.viewport_w / 1024);
+    };
 };
 
 
