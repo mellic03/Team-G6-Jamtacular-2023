@@ -121,9 +121,9 @@ class Attacker extends Agent
         
         if (this.timer > 500.0)
         {
-            bulletSys.createBullet(
+            bulletSys.createBullet_startEnd(
                 ...this.body.position,
-                ...vec2_dir(player.position, this.body.position),
+                ...player.position,
                 this.weapon_spread
             );
             this.timer = 0.0;
