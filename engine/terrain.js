@@ -33,10 +33,13 @@ class TerrainSystem
 
     block_changes   = [  ];
     visible_sectors = [  ];
+    sectors_visible = [  ];
 
     visualize_quadtree    = false;
     visualize_pathfinding = false;
     pathfinder = new PathFinder();
+
+    voxel_sprite_queue = [  ];
 
     shaders  = [  ];
     fidelity = 1;
@@ -123,8 +126,11 @@ class TerrainSystem
             let row = cell[0];
             let col = cell[1];
 
+            this.sectors_visible[row][col] = false;
             this.sectors[row][col].nodegroups.unmapBuffer();
         }
+
+        this.visible_sectors = [  ];
     };
 
 
@@ -148,6 +154,7 @@ class TerrainSystem
             let row = cell[0];
             let col = cell[1];
 
+            this.sectors_visible[row][col] = true;
             this.sectors[row][col].nodegroups.mapBuffer();
         }
     };
@@ -163,6 +170,7 @@ class TerrainSystem
             for (let j=0; j<SECTORS_X; j++)
             {
                 this.visible_sectors.push([i, j]);
+                this.sectors_visible[i][j] = true;
                 this.sectors[i][j].nodegroups.mapBuffer();
             }
         }
@@ -173,6 +181,11 @@ class TerrainSystem
     {
         let row = this.__row_from_y(y);
         let col = this.__col_from_x(x);
+
+        if (this.sectors_visible[row][col] == false)
+        {
+            return;
+        }
 
         if (row == -1 || col == -1)
         {
@@ -260,6 +273,7 @@ class TerrainSystem
         {
             this.sectors.push([]);
             this.buffers.push([]);
+            this.sectors_visible.push([]);
 
             for (let col=0; col<SECTORS_X; col++)
             {
@@ -271,6 +285,7 @@ class TerrainSystem
 
                 this.buffers[row].push(cb);
                 this.sectors[row].push(qt);
+                this.sectors_visible[row].push(false);
             }
         }
 
@@ -293,7 +308,7 @@ class TerrainSystem
 
                 else // if (data[idx+0] < 20)
                 {
-                    this.placeBlock((x*8)-HALF_SPAN, (y*8)-HALF_SPAN, 1, 16);
+                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 1, 8);
                 }
 
                 // else if (data[idx+0] < 30)
@@ -308,6 +323,13 @@ class TerrainSystem
         }
 
         this.lock();
+
+    };
+
+
+    drawVoxelSprite( vs )
+    {
+        this.voxel_sprite_queue.push(vs);
     };
 
 
@@ -319,6 +341,14 @@ class TerrainSystem
 
         const viewport_w = render.viewport_w;
         const viewport_h = render.viewport_h;
+
+
+        for (let vs of this.voxel_sprite_queue)
+        {
+            vs.__draw();
+        }
+
+        this.voxel_sprite_queue = [  ];
 
 
         pg.background(0);
@@ -367,6 +397,8 @@ class TerrainSystem
     };
 
 
+    increment = 0.0;
+
     __set_common_uniforms( engine )
     {
         const render = engine.getSystem("render");
@@ -386,6 +418,15 @@ class TerrainSystem
         this.getShader().setUniform( "un_lightsource_diffuse_1",  player.diffuse_b     );
         this.getShader().setUniform( "un_lightsource_attenuation_0",  player.attenuation_a );
         this.getShader().setUniform( "un_lightsource_attenuation_1",  player.attenuation_b );
+        this.getShader().setUniform( "SOLID_QUADRATIC",  player.attenuation_a );
+        this.getShader().setUniform( "un_increment",     this.increment );
+
+        this.increment += 0.01;
+
+        if (this.increment > 1000.0)
+        {
+            this.increment = 0.0;
+        }
     };
 
 

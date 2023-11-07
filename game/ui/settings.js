@@ -4,29 +4,32 @@
 class SettingsModal
 {
     UIgrid;
-
     visible = false;
+
 
     constructor( x, y, w, h )
     {
-        this.UIgrid = new ButtonGrid(x, y, w, h, 30, 5);
+        this.UIgrid = new MenuGrid(x, y, w, h, 30, 5);
     };
 
 
     reposition( x, y, w, h )
     {
-        this.UIgrid = new ButtonGrid(x, y, w, h, 20, 5);
+        this.UIgrid = new MenuGrid(x, y, w, h, 20, 5);
     };
+
 
     show()
     {
         this.visible = true;
     };
 
+
     hide()
     {
         this.visible = false;
     };
+
 
     draw()
     {
@@ -97,10 +100,11 @@ class SettingsModal
             }, terrain.visualize_pathfinding == true);
         }
 
-
         ui.menuButton(-1, -1, "Close", () => { this.hide(); });
-
     };
+
+
+    
 
 };
 

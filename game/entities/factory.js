@@ -1,5 +1,5 @@
-const FACTORY_PLAYER = 0;
 
+const FACTORY_PLAYER = 0;
 
 
 /*
@@ -12,9 +12,12 @@ class Factory
     monies     = 1000.0;
     collectors = [  ];
 
-    constructor( sprite )
+    factory_id = -1;
+
+    constructor( sprite, id=-1 )
     {
         this.sprite = sprite;
+        this.factory_id = id;
     };
 
 
@@ -29,15 +32,10 @@ class Factory
     };
 
 
-    buildCollector( type )
+    createAgent( type )
     {
-        // const cost = COLLECTOR_COSTS[type];
-
-        // if (this.monies > cost)
-        // {
-        //     this.collectors.push(new Collector(type));
-        //     this.monies -= cost;
-        // }
+        const agentSys = engine.getSystem("agent");
+        agentSys.createAgent(type, this.factory_id);
     };
 
 };
@@ -48,68 +46,59 @@ class Factory
 
 class FactorySystem
 {
-    allocator    = new Allocator(Factory);
+    player_factory;
+    enemy_factories = [  ];
 
-    factory_ids  = [  ];
-    factory_imgs = [  ];
+    sprites = [  ];
 
 
     preload( engine )
     {
-        this.factory_imgs[FACTORY_PLAYER] = loadImage("factory.png");
+        this.sprites[FACTORY_PLAYER] = new BSprite();
+        this.sprites[FACTORY_PLAYER].image(loadImage("factory.png"));
     };
 
 
     setup( engine )
     {
-        // allSprites.autoUpdate = false;
+        this.player_factory = new Factory(this.sprites[FACTORY_PLAYER], FACTORY_PLAYER);
+        
         allSprites.autoDraw = false;
     };
 
 
     draw( engine )
     {
-        for (let id of this.factory_ids)
-        {
-            const factory = this.allocator.get(id);
-            factory.draw(engine);
-        }
     };
 
 
     createFactory( type )
     {
-        const sprite = new BSprite(0, 0, 100, 100);
-        sprite.image(this.factory_imgs[type]);
+        // const sprite = new BSprite(0, 0, 100, 100);
+        // sprite.image(this.factory_imgs[type]);
 
-        const factory_id = this.allocator.create([sprite]);
-        this.factory_ids.push(factory_id);
+        // const factory_id = this.allocator.create([sprite]);
+        // this.factory_ids.push(factory_id);
 
-        this.allocator.get(factory_id).sprite = sprite;
+        // this.allocator.get(factory_id).sprite = sprite;
 
-        return factory_id;
+        // return factory_id;
     };
 
 
-    getFactory( id )
+    createAgent( factory_id, type )
     {
-        return this.allocator.get(id);
-    }
+        // const agentSys = engine.getSystem("agent");
 
+        // const factory = this.getFactory(factory_id);
+        // const cost    = agentSys.costOf(type);
 
-    buildCollector( factory_id, type )
-    {
-        const collectorSys = engine.getSystem("collector");
-
-        const factory = this.getFactory(factory_id);
-        const cost    = collectorSys.costOf(type);
-
-        if (factory.monies >= cost)
-        {
-            const collector_id = collectorSys.createCollector(type);
-            factory.collectors.push(collector_id);
-            factory.monies -= cost;
-        }
+        // if (factory.monies >= cost)
+        // {
+        //     const collector_id = agentSys.createCollector(type);
+        //     factory.agents.push(collector_id);
+        //     factory.monies -= cost;
+        // }
     };
 
 };

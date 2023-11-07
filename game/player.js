@@ -16,9 +16,12 @@ class Player
     block_ksize = 8.0;
 
     move_speed   = 2.5;
-    acceleration = 0.05;
+    acceleration = 0.025;
     drag         = 0.01;
     max_velocity = 1.0;
+
+    weapon_spread = 0.1;
+    weapon_cooldown = 100;
 
     tool_mode      = TOOL_TERRAIN;
 
@@ -30,7 +33,7 @@ class Player
     diffuse_a    = [1.0, 1.0, 1.0];
     diffuse_b    = [1.0, 1.0, 1.0];
 
-    attenuation_a = 1.0;
+    attenuation_a = 20.0;
     attenuation_b = 1.0;
 
     position      = [0.0, 0.1];
@@ -136,7 +139,7 @@ class Player
             };
 
             engine.setEvent("player", "selection", data);
-            engine.setEvent("collector", "selection", {header: "num_selected", num_selected: 0});
+            engine.setEvent("agent", "selection", {header: "num_selected", num_selected: 0});
         }
 
         if (keylog.mouseUp())
@@ -203,8 +206,7 @@ class Player
         const keylog = engine.getSystem("keylog");
         const UIsys  = engine.getSystem("ui");
         const factorySys = engine.getSystem("factory");
-        const factory = factorySys.getFactory(0);
-
+        const factory = factorySys.player_factory;
 
         if (dist(...factory.position, ...render.mouse_worldspace) < 32.0)
         {
@@ -246,43 +248,36 @@ class Player
 
         if (keylog.mouseDown())
         {
-            if (this.timer < 100)
+            if (this.timer == 0)
             {
                 this.diffuse_a = [16, 16, 6];
-                bulletSys.create(...this.position, ...dir);
+                this.attenuation_a = 2000.0;
 
-                // let tangent = vec2_tangent(dir);
-                // const t = vec2_mult(tangent, 0.05);
-                // const tt = vec2_mult(tangent, 0.05/2.0);
-    
-                // dir = vec2_sub(dir, t);
-    
-                // for (let i=-4; i<4; i+=2)
-                // {
-                //     dir = vec2_add(dir, tt);
-                //     bulletSys.create(...this.position, ...dir);
-                // }
-
-                this.timer = 100;
+                bulletSys.create(...this.position, ...dir, this.weapon_spread);
             }
 
             else
             {
                 this.diffuse_a = [0.25, 0.25, 0.25];
+                this.attenuation_a = 32.0;
             }
 
-            if (this.timer > 500)
+            if (this.timer > this.weapon_cooldown)
             {
                 this.timer = 0;
             }
 
-            this.timer += deltaTime;
+            else
+            {
+                this.timer += deltaTime;
+            }
         }
 
         else
         {
             this.diffuse_a = [0.25, 0.25, 0.25];
             this.timer = 0;
+            this.attenuation_a = 32.0;
         }
 
     };

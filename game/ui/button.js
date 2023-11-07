@@ -20,7 +20,7 @@ function point_in_AABB( px, py, bx, by, bw, bh )
 
 
 
-class ButtonGrid
+class MenuGrid
 {
     row_height;
     col_width;

@@ -35,19 +35,21 @@ uniform vec2 un_player_pos;
 #define BLOCK_STONE   3
 #define BLOCK_SILVER  4
 #define BLOCK_GOLD    5
+#define BLOCK_BEDROCK 6
 
 
 vec3 blocktype_color( int blocktype )
 {
     switch (blocktype)
     {
-        default:           return vec3(1.0, 0.0, 0.0);
-        case BLOCK_AIR:    return vec3(0.05);
-        case BLOCK_GRASS:  return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
-        case BLOCK_DIRT:   return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
-        case BLOCK_STONE:  return vec3(0.67, 0.69, 0.71);
-        case BLOCK_SILVER: return vec3(0.67, 0.69, 0.71);
-        case BLOCK_GOLD:   return vec3(0.86, 0.65, 0.07);
+        default:             return vec3(1.0, 0.0, 0.0);
+        case BLOCK_AIR:      return vec3(0.05);
+        case BLOCK_GRASS:    return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
+        case BLOCK_DIRT:     return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
+        case BLOCK_STONE:    return vec3(0.67, 0.69, 0.71);
+        case BLOCK_SILVER:   return vec3(0.67, 0.69, 0.71);
+        case BLOCK_GOLD:     return vec3(0.86, 0.65, 0.07);
+        case BLOCK_BEDROCK:  return vec3(0.25);
     }
 }
 
@@ -55,13 +57,14 @@ float blocktype_variation( int blocktype )
 {
     switch (blocktype)
     {
-        default:           return 0.0;
-        case BLOCK_AIR:    return 0.05;
-        case BLOCK_GRASS:  return 0.2;
-        case BLOCK_DIRT:   return 0.1;
-        case BLOCK_STONE:  return 0.1;
-        case BLOCK_SILVER: return 0.3;
-        case BLOCK_GOLD:   return 0.3;
+        default:             return 0.0;
+        case BLOCK_AIR:      return 0.05;
+        case BLOCK_GRASS:    return 0.2;
+        case BLOCK_DIRT:     return 0.1;
+        case BLOCK_STONE:    return 0.1;
+        case BLOCK_SILVER:   return 0.3;
+        case BLOCK_GOLD:     return 0.1;
+        case BLOCK_BEDROCK:  return 0.05;
     }
 }
 
@@ -69,13 +72,14 @@ float blocktype_coarseness( int blocktype )
 {
     switch (blocktype)
     {
-        default:           return 1.0 - 0.0;
-        case BLOCK_AIR:    return 1.0 - 0.85;
-        case BLOCK_GRASS:  return 1.0 - 0.95;
-        case BLOCK_DIRT:   return 1.0 - 0.8;
-        case BLOCK_STONE:  return 1.0 - 0.85;
-        case BLOCK_SILVER: return 1.0 - 0.55;
-        case BLOCK_GOLD:   return 1.0 - 0.55;
+        default:             return 1.0 - 0.0;
+        case BLOCK_AIR:      return 1.0 - 0.85;
+        case BLOCK_GRASS:    return 1.0 - 0.95;
+        case BLOCK_DIRT:     return 1.0 - 0.8;
+        case BLOCK_STONE:    return 1.0 - 0.85;
+        case BLOCK_SILVER:   return 1.0 - 0.55;
+        case BLOCK_GOLD:     return 1.0 - 0.75;
+        case BLOCK_BEDROCK:  return 1.0 - 0.85;
     }
 }
 
@@ -319,7 +323,7 @@ float attenuation_function( float dist, float constant, float linear, float quad
 
 #define SOLID_CONSTANT  0.0
 #define SOLID_LINEAR    1.0
-#define SOLID_QUADRATIC 20.0
+uniform float SOLID_QUADRATIC;
 #define SOLID_AMIENT    0.01
 
 

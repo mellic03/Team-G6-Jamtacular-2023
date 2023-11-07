@@ -8,13 +8,13 @@ class InventoryModal
 
     constructor( x, y, w, h )
     {
-        this.UIgrid = new ButtonGrid(x, y, w, h, 20, 20);
+        this.UIgrid = new MenuGrid(x, y, w, h, 20, 20);
     };
 
 
     reposition( x, y, w, h )
     {
-        this.UIgrid = new ButtonGrid(x, y, w, h, 20, 20);
+        this.UIgrid = new MenuGrid(x, y, w, h, 20, 20);
     };
 
     show()

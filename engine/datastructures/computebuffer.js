@@ -43,6 +43,11 @@ class ComputeBuffer
 
     };
 
+    readBuffer()
+    {
+        return this.buffer.pixels;
+    };
+
     mapBuffer()
     {
         this.buffer.loadPixels();

@@ -7,13 +7,28 @@ const GROUPSIZE = 16;
 const BLOCKTYPE_IDX = 0;
 const CHILDREN_IDX  = 1;
 
-const BLOCK_AIR    = 0;
-const BLOCK_GRASS  = 1;
-const BLOCK_DIRT   = 2;
-const BLOCK_STONE  = 3;
-const BLOCK_SILVER = 4;
-const BLOCK_GOLD   = 5;
+const BLOCK_AIR     = 0;
+const BLOCK_GRASS   = 1;
+const BLOCK_DIRT    = 2;
+const BLOCK_STONE   = 3;
+const BLOCK_SILVER  = 4;
+const BLOCK_GOLD    = 5;
+const BLOCK_BEDROCK = 6;
 
+
+function blocktype_hardness( blocktype )
+{
+    switch (blocktype)
+    {
+        case BLOCK_AIR:      return 0.0;
+        case BLOCK_GRASS:    return 1.0;
+        case BLOCK_DIRT:     return 1.0;
+        case BLOCK_STONE:    return 0.05;
+        case BLOCK_SILVER:   return 0.5;
+        case BLOCK_GOLD:     return 0.8;
+        case BLOCK_BEDROCK:  return 0.0;
+    }
+}
 
 
 class QuadNode_Allocator
@@ -49,6 +64,12 @@ class QuadNode_Allocator
         this.unmapBuffer();
     };
 
+
+    readBuffer()
+    {
+        return this.computebuffer.readBuffer();
+    };
+
     
     mapBuffer()
     {
@@ -59,7 +80,7 @@ class QuadNode_Allocator
     unmapBuffer()
     {
         this.computebuffer.unmapBuffer();
-        // this.bufferdata = null;
+        this.bufferdata = null;
     }
 
 
@@ -73,7 +94,7 @@ class QuadNode_Allocator
 
             this.bufferdata[node_idx + BLOCKTYPE_IDX] = 0.0; // blocktype
             this.bufferdata[node_idx + CHILDREN_IDX ] = 0.0; // children_id
-            this.bufferdata[node_idx + 2] =  random(-0.05, +0.05); // z
+            this.bufferdata[node_idx + 2] = 0.0 // z
             this.bufferdata[node_idx + 3] = 1.0; // w
         }
 
@@ -115,7 +136,8 @@ class QuadNode_Allocator
     get_blocktype( group_id, quadrant )
     {
         const idx = this.get_node_idx(group_id, quadrant);
-        return this.bufferdata[idx + BLOCKTYPE_IDX];
+        const data = this.readBuffer();
+        return data[idx + BLOCKTYPE_IDX];
     };
 
     set_blocktype( group_id, quadrant, blocktype )
@@ -127,7 +149,8 @@ class QuadNode_Allocator
     get_children_id( group_id, quadrant )
     {
         const idx = this.get_node_idx(group_id, quadrant);
-        return this.bufferdata[idx + CHILDREN_IDX];
+        const data = this.readBuffer();
+        return data[idx + CHILDREN_IDX];
     };
 
     set_children_id( group_id, quadrant, children_id )
@@ -235,8 +258,6 @@ class Quadtree
             const child_id = this.nodegroups.get_children_id(group_id, i);
             if (child_id > 0)
             {
-                const blocktype = valueof(this.nodegroups.get_blocktype(group_id, i));
-
                 this._remove_group(child_id);
                 this.nodegroups.destroyGroup(child_id);
             }
@@ -490,7 +511,7 @@ class Quadtree
         // fill(0, 255, 0);
         // circle(...world_pxpy, 10);
 
-        return [px, py, Math.sign(normalx), Math.sign(normaly)];
+        return [px, py, Math.sign(normalx), Math.sign(normaly), blocktype];
     };
 
 

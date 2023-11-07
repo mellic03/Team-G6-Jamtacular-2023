@@ -1,7 +1,7 @@
 "use strict";
 
-const PATHFINDER_SECTOR_W = 64;
-const PATHFINDER_SECTORS  = 64;
+const PATHFINDER_SECTOR_W = 32;
+const PATHFINDER_SECTORS  = 128;
 const PATHFINDER_SECTORS_SQ  = PATHFINDER_SECTORS**2;
 
 
@@ -292,9 +292,9 @@ class PathFinder
     {
         const render = engine.getSystem("render");
 
-        for (let y=0; y<PATHFINDER_SECTORS; y++)
+        for (let y=0; y<PATHFINDER_SECTORS/4; y++)
         {
-            for (let x=0; x<PATHFINDER_SECTORS; x++)
+            for (let x=0; x<PATHFINDER_SECTORS/4; x++)
             {
                 const nodespace = this.node_to_world([y, x]);
                 const worldspace = render.world_to_screen(...nodespace); 
@@ -340,7 +340,7 @@ class PathFinder
 
     refine( terrain )
     {
-        const quantity = (PATHFINDER_SECTORS_SQ) / 128;
+        const quantity = (PATHFINDER_SECTORS_SQ) / 256;
 
 
         for (let i=this.count; i<this.count+quantity; i++)

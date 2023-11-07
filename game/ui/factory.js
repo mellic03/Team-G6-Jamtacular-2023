@@ -8,13 +8,13 @@ class FactoryModal
 
     constructor( x, y, w, h )
     {
-        this.UIgrid = new ButtonGrid(x, y, w, h, 20, 20);
+        this.UIgrid = new MenuGrid(x, y, w, h, 20, 20);
     };
 
 
     reposition( x, y, w, h )
     {
-        this.UIgrid = new ButtonGrid(x, y, w, h, 20, 20);
+        this.UIgrid = new MenuGrid(x, y, w, h, 20, 20);
     };
 
     show()
@@ -32,6 +32,7 @@ class FactoryModal
         const terrain = engine.getSystem("terrain");
         const player = engine.getSystem("player");
         const factorySys = engine.getSystem("factory");
+        const playerFactory = factorySys.player_factory;
 
         if (this.visible == false)
         {
@@ -54,15 +55,15 @@ class FactoryModal
         ui.menuLabel(0, 1, "Build");
 
         ui.menuButton2(0, 3, "Gatherer", () => {
-            factorySys.buildCollector(0, COLLECTOR_GATHER);
+            playerFactory.createAgent(AGENT_GATHERER);
         });
 
         ui.menuButton2(0, 4, "Guard", () => {
-            factorySys.buildCollector(0, COLLECTOR_DEFEND);
+            playerFactory.createAgent(AGENT_GUARD);
         });
 
-        ui.menuButton2(0, 5, "Attack", () => {
-            factorySys.buildCollector(0, COLLECTOR_ATTACK);
+        ui.menuButton2(0, 5, "Attacker", () => {
+            playerFactory.createAgent(AGENT_ATTACKER);
         });
 
 

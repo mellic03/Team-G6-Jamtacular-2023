@@ -24,15 +24,15 @@ class UISystem
         const UI_LEFT  = render.viewport_left;
         const UI_WIDTH = render.res_x - render.viewport_left;
 
-        this.UIgrid = new ButtonGrid(
+        this.UIgrid = new MenuGrid(
             UI_LEFT, 0, UI_WIDTH, WIN_H, 30, 2, keylog
         );
 
-        this.DEBUGgrid = new ButtonGrid(
+        this.DEBUGgrid = new MenuGrid(
             UI_LEFT, 0, UI_WIDTH, WIN_H, 30, 2, keylog
         );
 
-        this.BRUSHgrid = new ButtonGrid(
+        this.BRUSHgrid = new MenuGrid(
             UI_LEFT, WIN_H/2, UI_WIDTH, WIN_H/2, 15, 2, keylog
         );
     
@@ -95,7 +95,7 @@ class UISystem
         const player = engine.getSystem("player");
         const factorySys = engine.getSystem("factory");
         const id = this.player_factory_id;
-        const playerFactory = factorySys.getFactory(id);
+        const playerFactory = factorySys.player_factory;
 
         this.UIgrid.background(100);
 
@@ -103,9 +103,18 @@ class UISystem
         this.UIgrid.menuButton(row+0, 0, "$" + playerFactory.monies);
         this.UIgrid.text_scale = 0.8;
 
-        this.UIgrid.menuButton(row+1, 0, "Weapon", () => {
+        this.UIgrid.menuButton(row+1, 0, "Gun", () => {
             player.tool_mode = TOOL_WEAPON;
-        }, player.tool_mode == TOOL_WEAPON);
+            player.weapon_spread = 0.1;
+            player.weapon_cooldown = 400;
+        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.1);
+
+        this.UIgrid.menuButton(row+1, 1, "Gunnn", () => {
+            player.tool_mode = TOOL_WEAPON;
+            player.weapon_spread = 0.5;
+            player.weapon_cooldown = 20;
+        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.5);
+
 
         this.UIgrid.menuButton(row+2, 0, "Inspect", () => {
             player.tool_mode = TOOL_INSPECT;
@@ -180,7 +189,7 @@ class UISystem
         let blockspan  = player.block_width;
         let ksize      = player.block_ksize;
 
-        let row = 9;
+        let row = 4;
 
         this.BRUSHgrid.menuButton(row+0, 0, "span*2", () => {
             blockspan *= 2;
@@ -197,7 +206,7 @@ class UISystem
         });
 
 
-        row = 12;
+        row = 8;
 
         let using_terrain = player.tool_mode == TOOL_TERRAIN;
 
@@ -232,6 +241,12 @@ class UISystem
             player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_GOLD;
         },  blocktype == BLOCK_GOLD && using_terrain);
+
+
+        this.BRUSHgrid.menuButton(row+3, 0, "bedrock", () => {
+            player.tool_mode = TOOL_TERRAIN;
+            blocktype = BLOCK_BEDROCK;
+        },  blocktype == BLOCK_BEDROCK && using_terrain);
 
 
         player.block_type  = blocktype;
