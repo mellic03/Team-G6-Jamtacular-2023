@@ -253,7 +253,7 @@ class Player
                 this.diffuse_a = [16, 16, 6];
                 this.attenuation_a = 2000.0;
 
-                bulletSys.create(...this.position, ...dir, this.weapon_spread);
+                bulletSys.createBullet(...this.position, ...dir, this.weapon_spread);
             }
 
             else

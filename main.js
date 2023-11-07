@@ -41,4 +41,3 @@ function draw()
     avg = (59/60)*avg + (1/60)*frameRate();
     text(avg, 300, 100);
 }
-

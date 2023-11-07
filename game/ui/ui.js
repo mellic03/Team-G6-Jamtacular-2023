@@ -62,12 +62,7 @@ class UISystem
 
     draw( engine )
     {
-        const render  = engine.getSystem("render");
-        const factory = engine.getSystem("factory");
-        const terrain = engine.getSystem("terrain");
         const keylog  = engine.getSystem("keylog");
-        const player  = engine.getSystem("player");
-
 
         // Reset mouse lock, if mouse is still over UI then enable it again
         // ----------------------------------------------------------------
@@ -116,6 +111,7 @@ class UISystem
         }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.5);
 
 
+
         this.UIgrid.menuButton(row+2, 0, "Inspect", () => {
             player.tool_mode = TOOL_INSPECT;
         }, player.tool_mode == TOOL_INSPECT);
@@ -124,10 +120,8 @@ class UISystem
             player.tool_mode = TOOL_SELECT;
         }, player.tool_mode == TOOL_SELECT);
 
-    
 
 
-    
         this.UIgrid.menuButton(row+6, 0, "Inventory", () => {
             player.tool_mode = TOOL_NONE;
             this.inventory_modal.show();
@@ -140,8 +134,6 @@ class UISystem
 
 
 
-
-
         this.UIgrid.menuButton(row+7, 0, "light A", () => {
             player.tool_mode = TOOL_LIGHT_A;
         }, player.tool_mode == TOOL_LIGHT_A);
@@ -150,9 +142,7 @@ class UISystem
             player.tool_mode = TOOL_LIGHT_B;
         }, player.tool_mode == TOOL_LIGHT_B);
 
-
     };
-
 
 
     draw_sector_memusage( engine )

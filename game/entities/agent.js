@@ -3,6 +3,8 @@ const AGENT_GATHERER = 0;
 const AGENT_GUARD  = 1;
 const AGENT_ATTACKER = 3;
 
+
+
 class Agent
 {
     sprite;
@@ -98,17 +100,7 @@ class Agent
 };
 
 
-
 class Gatherer extends Agent
-{
-    behaviour()
-    {
-
-    };
-};
-
-
-class Guard extends Agent
 {
     behaviour()
     {
@@ -129,7 +121,7 @@ class Attacker extends Agent
         
         if (this.timer > 500.0)
         {
-            bulletSys.create(
+            bulletSys.createBullet(
                 ...this.body.position,
                 ...vec2_dir(player.position, this.body.position),
                 this.weapon_spread
@@ -210,8 +202,8 @@ class AgentSystem
                 continue;
             }
 
-            const collector = this.agents[i];
-            collector.draw();
+            const agent = this.agents[i];
+            agent.draw();
         }
     };
 

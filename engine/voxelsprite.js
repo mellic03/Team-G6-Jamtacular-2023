@@ -41,11 +41,11 @@ class VoxelSprite
                 {
                     let px = (8*(col-8))*lcosr - (8*(row-8))*lsinr;
                     let py = (8*(row-8))*lcosr + (8*(col-8))*lsinr;
-                    terrain.placeBlock(this.last_x+px, this.last_y+py, 0, 16);
+                    terrain.placeBlock(this.last_x+px, this.last_y+py, 0, 8);
                     
                     px = (8*(col-8))*cosr - (8*(row-8))*sinr;
                     py = (8*(row-8))*cosr + (8*(col-8))*sinr;
-                    terrain.placeBlock(this.x+px, this.y+py, 2, 16);
+                    terrain.placeBlock(this.x+px, this.y+py, 2, 8);
                 }
             }
         }

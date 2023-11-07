@@ -139,7 +139,7 @@ class BulletSystem
     };
 
 
-    create( x, y, dx, dy, spread=0.0 )
+    createBullet( x, y, dx, dy, spread=0.0 )
     {
         let tangent = vec2_tangent([dx, dy]);
 
