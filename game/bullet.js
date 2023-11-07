@@ -163,7 +163,6 @@ class BulletSystem
     createBullet_startEnd( startx, starty, endx, endy, spread=0.0)
     {
         const dir = vec2_dir([endx, endy], [startx, starty]);
-        console.log(dir);
         this.createBullet(startx, starty, ...dir, spread);
     };
 

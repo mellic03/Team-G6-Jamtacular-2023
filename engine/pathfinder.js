@@ -355,7 +355,7 @@ class PathFinder
             const blocktype = data[0];
             const span = data[1];
 
-            if (span <= 32.0)
+            if (span <= 16.0)
             {
                 this.blocked[row][col] = true;
                 continue;
