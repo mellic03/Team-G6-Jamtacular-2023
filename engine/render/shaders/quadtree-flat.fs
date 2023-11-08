@@ -449,7 +449,7 @@ vec3 render_quadtree()
     float direct_0 = trace_direct_multiTree(worldspace, un_pointlight_0.position, frag_quadtree_idx, un_pointlight_0);
     float direct_1 = trace_direct_multiTree(worldspace, un_pointlight_1.position, frag_quadtree_idx, un_pointlight_1);
     float direct_2 = trace_direct_multiTree(worldspace, un_pointlight_2.position, frag_quadtree_idx, un_pointlight_2);
-    float direct_3 = trace_direct_multiTree(worldspace, un_pointlight_2.position, frag_quadtree_idx, un_pointlight_2);
+    float direct_3 = trace_direct_multiTree(worldspace, un_pointlight_3.position, frag_quadtree_idx, un_pointlight_3);
 
     vec3 illumination_0 = direct_0 * un_pointlight_0.diffuse;
     vec3 illumination_1 = direct_1 * un_pointlight_1.diffuse;

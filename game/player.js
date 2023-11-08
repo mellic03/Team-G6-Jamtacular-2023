@@ -13,7 +13,6 @@ const TOOL_LIGHT_B = 7;
 class Player
 {
     player_img;
-    player_img2;
     sprite;
 
     block_type  = BLOCK_AIR;
@@ -47,7 +46,6 @@ class Player
     preload()
     {
         this.player_img = loadImage("game/assets/rifle/rifle1.png");
-        this.player_img2 = loadImage("game/assets/rifle/rifle2.png");
     };
 
     setup()
@@ -56,7 +54,6 @@ class Player
         this.sprite.image(this.player_img);
 
         this.player_img.resize(128, 128);
-        this.player_img2.resize(128, 128);
     };
 
 
@@ -273,8 +270,6 @@ class Player
         {
             if (this.timer >= this.weapon_cooldown && this.ammo > 0)
             {
-                // this.sprite.image(this.player_img2);
-
                 bulletSys.createBullet(...this.position, ...dir, this.weapon_spread);
                 this.ammo -= 1;
                 this.view_offset2 = vec2_sub(this.view_offset2, vec2_mult(dir, 15.0));
