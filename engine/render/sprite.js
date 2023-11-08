@@ -35,6 +35,12 @@ class BSprite
     {
         return this.p5p_sprite;
     };
+
+    setRotation( r )
+    {
+        this.p5p_sprite.rotation = r;
+    }
+
 };
 
 

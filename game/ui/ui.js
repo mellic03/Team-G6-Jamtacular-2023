@@ -96,19 +96,20 @@ class UISystem
 
         let row = 2;
         this.UIgrid.menuButton(row+0, 0, "$" + playerFactory.monies);
+        this.UIgrid.menuButton(row+0, 1, "Ammo: " + player.ammo);
         this.UIgrid.text_scale = 0.8;
 
         this.UIgrid.menuButton(row+1, 0, "Gun", () => {
             player.tool_mode = TOOL_WEAPON;
-            player.weapon_spread = 0.1;
-            player.weapon_cooldown = 400;
-        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.1);
+            player.weapon_spread = 0.15;
+            player.weapon_cooldown = 500;
+        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.15);
 
         this.UIgrid.menuButton(row+1, 1, "Gunnn", () => {
             player.tool_mode = TOOL_WEAPON;
-            player.weapon_spread = 0.5;
-            player.weapon_cooldown = 20;
-        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.5);
+            player.weapon_spread = 0.3;
+            player.weapon_cooldown = 50;
+        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.3);
 
 
 

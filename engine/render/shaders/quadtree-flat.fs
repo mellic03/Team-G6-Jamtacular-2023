@@ -6,6 +6,23 @@ out vec4 fsout_frag_color;
 in vec2 fsin_texcoord;
 
 
+
+struct Pointlight
+{
+    vec2 position;
+    vec3 diffuse;
+    float constant, linear, quadratic;
+    float s_constant, s_linear, s_quadratic;
+    float radius;
+};
+
+
+uniform Pointlight un_pointlight_0;
+uniform Pointlight un_pointlight_1;
+uniform Pointlight un_pointlight_2;
+uniform Pointlight un_pointlight_3;
+
+
 uniform int QUADTREE_BUFFER_WIDTH;
 uniform int QUADTREE_SPAN;
 uniform int QUADTREE_HALF_SPAN;
@@ -308,28 +325,33 @@ float next_step( vec2 pos, vec2 dir, vec2 center, float span )
 }
 
 
-float attenuation_function( float dist, float constant, float linear, float quadratic )
+float attenuation_function( float dist, float constant, float linear, float quadratic, float radius )
 {
-    dist /= 512.0;
+    float radius_falloff = 1.0 - clamp(dist / radius, 0.0, 1.0);
 
-    return 1.0 / (constant + linear*dist + quadratic*dist*dist);
+    dist /= 512.0;
+    float attenuation = radius_falloff / (constant + linear*dist + quadratic*dist*dist);
+
+    return attenuation;
 }
 
 
 
-#define AIR_CONSTANT  0.0
-#define AIR_LINEAR    2.0
-#define AIR_QUADRATIC 8.0
+#define AIR_CONSTANT  1.0
+#define AIR_LINEAR    1.0
+#define AIR_QUADRATIC 1.0
 
-#define SOLID_CONSTANT  0.0
+#define SOLID_CONSTANT  1.0
 #define SOLID_LINEAR    1.0
-uniform float SOLID_QUADRATIC;
-#define SOLID_AMIENT    0.01
+#define SOLID_QUADRATIC 1.0
 
 
 
-float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
+float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight light )
 {
+    int end_idx = get_quadtree_idx(light.position);
+
+
     vec2 ray_pos = start;
     vec2 ray_dir = normalize(end - start);
     float ray_length = 0.0;
@@ -342,14 +364,14 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
 
     if (node.blocktype > 0)
     {
-        return attenuation_function(dist, SOLID_CONSTANT, SOLID_LINEAR, SOLID_QUADRATIC);
+        return attenuation_function(dist, light.s_constant, light.s_linear, light.s_quadratic, light.radius);
     }
 
     for (int i=0; i<64; i++)
     {
         if (node.idx == end_node.idx)
         {
-            return attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
+            return attenuation_function(dist, light.constant, light.linear, light.quadratic, light.radius);
         }
 
         float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
@@ -357,46 +379,6 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, int end_idx )
         ray_pos += step_size*ray_dir;
 
         int quadtree_idx = get_quadtree_idx(ray_pos);
-        node = get_quadnode(ray_pos, quadtree_idx);
-
-        if (node.blocktype > 0)
-        {
-            return SOLID_AMIENT;
-        }
-    }
-
-    return 1.0;
-}
-
-
-float trace_direct( vec2 start, vec2 end, int quadtree_idx )
-{
-    vec2 ray_pos = start;
-    vec2 ray_dir = normalize(end - start);
-    float ray_length = 0.0;
-
-    float dist = distance(start, end);
-
-    QuadNode end_node = get_quadnode(end, quadtree_idx);
-    QuadNode node = get_quadnode(ray_pos, quadtree_idx);
-
-
-    if (node.blocktype > 0)
-    {
-        return attenuation_function(dist, SOLID_CONSTANT, SOLID_LINEAR, SOLID_QUADRATIC);
-    }
-
-    for (int i=0; i<64; i++)
-    {
-        if (node.idx == end_node.idx)
-        {
-            return attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
-        }
-
-        float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
-        ray_length += step_size;
-        ray_pos += step_size*ray_dir;
-
         node = get_quadnode(ray_pos, quadtree_idx);
 
         if (node.blocktype > 0)
@@ -409,10 +391,45 @@ float trace_direct( vec2 start, vec2 end, int quadtree_idx )
 }
 
 
-uniform vec2 un_lightsource_pos_0;
-uniform vec2 un_lightsource_pos_1;
-uniform vec3 un_lightsource_diffuse_0;
-uniform vec3 un_lightsource_diffuse_1;
+float trace_direct( vec2 start, vec2 end, int quadtree_idx )
+{
+    // vec2 ray_pos = start;
+    // vec2 ray_dir = normalize(end - start);
+    // float ray_length = 0.0;
+
+    // float dist = distance(start, end);
+
+    // QuadNode end_node = get_quadnode(end, quadtree_idx);
+    // QuadNode node = get_quadnode(ray_pos, quadtree_idx);
+
+
+    // if (node.blocktype > 0)
+    // {
+    //     return attenuation_function(dist, SOLID_CONSTANT, SOLID_LINEAR, SOLID_QUADRATIC);
+    // }
+
+    // for (int i=0; i<64; i++)
+    // {
+    //     if (node.idx == end_node.idx)
+    //     {
+    //         return attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
+    //     }
+
+    //     float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
+    //     ray_length += step_size;
+    //     ray_pos += step_size*ray_dir;
+
+    //     node = get_quadnode(ray_pos, quadtree_idx);
+
+    //     if (node.blocktype > 0)
+    //     {
+    //         return 0.0;
+    //     }
+    // }
+
+    return 1.0;
+}
+
 
 vec3 render_quadtree()
 {
@@ -429,20 +446,17 @@ vec3 render_quadtree()
     float intensity  = rand(vec2(ivec2(coarseness*(worldspace - parallax))));
     float variation  = blocktype_variation(node.blocktype);
 
-    float direct = trace_direct_multiTree(worldspace, un_player_pos, frag_quadtree_idx, view_quadtree_idx);
+    float direct_0 = trace_direct_multiTree(worldspace, un_pointlight_0.position, frag_quadtree_idx, un_pointlight_0);
+    float direct_1 = trace_direct_multiTree(worldspace, un_pointlight_1.position, frag_quadtree_idx, un_pointlight_1);
+    float direct_2 = trace_direct_multiTree(worldspace, un_pointlight_2.position, frag_quadtree_idx, un_pointlight_2);
+    float direct_3 = trace_direct_multiTree(worldspace, un_pointlight_2.position, frag_quadtree_idx, un_pointlight_2);
 
+    vec3 illumination_0 = direct_0 * un_pointlight_0.diffuse;
+    vec3 illumination_1 = direct_1 * un_pointlight_1.diffuse;
+    vec3 illumination_2 = direct_2 * un_pointlight_2.diffuse;
+    vec3 illumination_3 = direct_3 * un_pointlight_3.diffuse;
 
-    int light0_quadtree_idx = get_quadtree_idx(un_lightsource_pos_0);
-    int light1_quadtree_idx = get_quadtree_idx(un_lightsource_pos_1);
-
-
-    float direct_0 = trace_direct_multiTree(worldspace, un_lightsource_pos_0, frag_quadtree_idx, light0_quadtree_idx);
-    float direct_1 = trace_direct_multiTree(worldspace, un_lightsource_pos_1, frag_quadtree_idx, light1_quadtree_idx);
-
-    vec3 illumination_0 = direct_0*un_lightsource_diffuse_0;
-    vec3 illumination_1 = direct_1*un_lightsource_diffuse_1;
-
-    vec3 illumination = illumination_0 + illumination_1;
+    vec3 illumination = illumination_0 + illumination_1 + illumination_2 + illumination_3;
 
     return illumination * (blocktype_color(node.blocktype) + intensity*variation);
 }
@@ -463,3 +477,4 @@ void main()
   
     fsout_frag_color = vec4(color, 1.0);
 }
+

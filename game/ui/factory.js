@@ -48,24 +48,36 @@ class FactoryModal
         ui.reset(3);
         ui.menuTitle("Factory", 1);
         ui.nextRow(3);
-        ui.nextRow(7);
 
         ui.text_scale = 0.8;
 
-        ui.menuLabel(0, 1, "Build");
+        ui.menuTitle("Build", 1);
+        ui.nextRow(7);
 
         ui.menuButton2(0, 3, "Gatherer", () => {
-            playerFactory.createAgent(AGENT_GATHERER);
+            playerFactory.createAgent(AGENT_GATHERER, playerFactory);
         });
 
         ui.menuButton2(0, 4, "Guard", () => {
-            playerFactory.createAgent(AGENT_GUARD);
+            playerFactory.createAgent(AGENT_GUARD, playerFactory);
         });
 
         ui.menuButton2(0, 5, "Attacker", () => {
-            playerFactory.createAgent(AGENT_ATTACKER);
+            playerFactory.createAgent(AGENT_ATTACKER, playerFactory);
         });
 
+
+        ui.nextRow(3);
+        ui.menuTitle("Buy", 1);
+        ui.nextRow(7);
+
+        ui.menuButton2(0, 3, "Ammo", () => {
+            if (playerFactory.monies >= 10)
+            {
+                playerFactory.monies -= 10;
+                player.ammo += 10;
+            }
+        });
 
         ui.menuButton(-1, -1, "Close", () => { this.hide(); });
     };

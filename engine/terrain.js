@@ -4,8 +4,8 @@ const QUADTREE_SPAN = 1024.0;
 const HALF_SPAN = QUADTREE_SPAN / 2;
 const COMPUTEBUFFER_WIDTH = 64;
 
-const SECTORS_X = 16;
-const SECTORS_Y = 16;
+const SECTORS_X = 4;
+const SECTORS_Y = 4;
 
 
 const TERRAIN_VIEW_WIDTH_PIXELS  = 1024;
@@ -55,10 +55,10 @@ class TerrainSystem
     {
         let row = floor((y + HALF_SPAN) / QUADTREE_SPAN) % SECTORS_Y;
 
-        if (row < 0)
-        {
-            row = SECTORS_Y + row;
-        }
+        // if (row < 0)
+        // {
+        //     row = SECTORS_Y + row;
+        // }
 
         return row; 
     };
@@ -68,10 +68,10 @@ class TerrainSystem
     {
         let col = Math.floor((x + HALF_SPAN) / QUADTREE_SPAN) % SECTORS_X;
 
-        if (col < 0)
-        {
-            col = SECTORS_X + col;
-        }
+        // if (col < 0)
+        // {
+        //     col = SECTORS_X + col;
+        // }
 
         return col; 
     };
@@ -97,8 +97,8 @@ class TerrainSystem
         {
             let cell = sectors[i];
 
-            if (cell[0] < 0 || cell[0] >= SECTORS_X)  { continue; };
-            if (cell[1] < 0 || cell[1] >= SECTORS_Y)  { continue; };
+            if (cell[1] < 0 || cell[1] >= SECTORS_X)  { continue; };
+            if (cell[0] < 0 || cell[0] >= SECTORS_Y)  { continue; };
 
             filtered.push(cell);
         }
@@ -136,6 +136,11 @@ class TerrainSystem
 
     unlock( x, y, w, h )
     {
+        if (isNaN(x) || isNaN(y))
+        {
+            return;
+        }
+
         const sector = this.get_sector(x, y);
     
         const sector_row = sector[0];
@@ -182,14 +187,14 @@ class TerrainSystem
         let row = this.__row_from_y(y);
         let col = this.__col_from_x(x);
 
-        if (this.sectors_visible[row][col] == false)
-        {
-            return;
-        }
-
         if (row == -1 || col == -1)
         {
             console.log("[TerrainSystem::placeBlock] coordinates out of bounds");
+            return;
+        }
+
+        if (this.sectors_visible[row][col] == false)
+        {
             return;
         }
 
@@ -295,32 +300,43 @@ class TerrainSystem
         let data = this.mapimg.pixels;
 
         const IMG_W = 1024;
+
+        let minv = +100000.0;
+        let maxv = -100000.0;
+
         for (let y=0; y<IMG_W; y++)
         {
             for (let x=0; x<IMG_W; x++)
             {
                 const idx = 4*(y*IMG_W + x);
 
-                if (data[idx] < 10)
+                if (data[idx] < 50)
                 {
                     continue;
                 }
 
-                else // if (data[idx+0] < 20)
-                {
-                    this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 1, 8);
-                }
+                minv = min(minv, data[idx]);
+                maxv = max(maxv, data[idx]);
 
-                // else if (data[idx+0] < 30)
-                // {
-                //     this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 2, 16);
-                // }
-                // else if (data[idx+0] < 40)
-                // {
-                //     this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, 3, 16);
-                // }
+                this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, floor((data[idx]) / 50), 16);
             }
         }
+
+        console.log(minv, maxv);
+
+
+        // Place bedrock at borders
+        for (let i=0; i<SECTORS_X*QUADTREE_SPAN; i+=32)
+        {
+            this.placeBlock(i-HALF_SPAN, 32 - HALF_SPAN, BLOCK_BEDROCK, 64);
+            this.placeBlock(i-HALF_SPAN, SECTORS_Y*QUADTREE_SPAN - HALF_SPAN - 8, BLOCK_BEDROCK, 64);
+        }
+        for (let i=0; i<SECTORS_Y*QUADTREE_SPAN; i+=32)
+        {
+            this.placeBlock(8-HALF_SPAN, i-HALF_SPAN, BLOCK_BEDROCK, 64);
+            this.placeBlock(SECTORS_Y*QUADTREE_SPAN - HALF_SPAN - 32, i-HALF_SPAN, BLOCK_BEDROCK, 64);
+        }
+
 
         this.lock();
 
@@ -402,6 +418,7 @@ class TerrainSystem
     __set_common_uniforms( engine )
     {
         const render = engine.getSystem("render");
+        const lightSys = engine.getSystem("light");
         const player = engine.getSystem("player");
 
         this.getShader().setUniform( "QUADTREE_BUFFER_WIDTH", int(COMPUTEBUFFER_WIDTH) );
@@ -412,14 +429,9 @@ class TerrainSystem
         this.getShader().setUniform( "un_target_pos",         player.target            );
         this.getShader().setUniform( "un_player_pos",         player.position          );
         this.getShader().setUniform( "un_mouse",              render.screen_to_world(mouseX, mouseY));
-        this.getShader().setUniform( "un_lightsource_pos_0",  player.light_a           );
-        this.getShader().setUniform( "un_lightsource_pos_1",  player.light_b           );
-        this.getShader().setUniform( "un_lightsource_diffuse_0",  player.diffuse_a     );
-        this.getShader().setUniform( "un_lightsource_diffuse_1",  player.diffuse_b     );
-        this.getShader().setUniform( "un_lightsource_attenuation_0",  player.attenuation_a );
-        this.getShader().setUniform( "un_lightsource_attenuation_1",  player.attenuation_b );
-        this.getShader().setUniform( "SOLID_QUADRATIC",  player.attenuation_a );
-        this.getShader().setUniform( "un_increment",     this.increment );
+        this.getShader().setUniform( "un_increment",          this.increment );
+
+        lightSys.setUniforms(this.getShader());
 
         this.increment += 0.01;
 

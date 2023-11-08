@@ -130,21 +130,21 @@ class PathFinder
 
     getNeighbours( row, col, dx, dy )
     {
-        let neighbours = [
-            [row,   col+1], [row-1, col+1], [row+1, col+1],
-            [row-1, col],   [row-1, col-1], [row,   col-1],
-            [row+1, col],   [row+1, col-1]
-        ];
-        // const neighbours = [
-        //                     [row-1, col],
-        //     [row,   col-1],               [row,   col+1],
-        //                     [row+1, col]
+        // let neighbours = [
+        //     [row,   col+1], [row-1, col+1], [row+1, col+1],
+        //     [row-1, col],   [row-1, col-1], [row,   col-1],
+        //     [row+1, col],   [row+1, col-1]
         // ];
+        let neighbours = [
+                            [row-1, col],
+            [row,   col-1],               [row,   col+1],
+                            [row+1, col]
+        ];
 
 
         // Randomly swap two neighbours for variation
-        const idx1 = floor(random(0, 7));
-        const idx2 = floor(random(0, 7));
+        const idx1 = floor(random(0, 4));
+        const idx2 = floor(random(0, 4));
 
         const temp = neighbours[idx1];
         neighbours[idx2] = neighbours[idx1];
@@ -292,9 +292,9 @@ class PathFinder
     {
         const render = engine.getSystem("render");
 
-        for (let y=0; y<PATHFINDER_SECTORS/4; y++)
+        for (let y=0; y<PATHFINDER_SECTORS/2; y++)
         {
-            for (let x=0; x<PATHFINDER_SECTORS/4; x++)
+            for (let x=0; x<PATHFINDER_SECTORS/2; x++)
             {
                 const nodespace = this.node_to_world([y, x]);
                 const worldspace = render.world_to_screen(...nodespace); 
@@ -342,7 +342,6 @@ class PathFinder
     {
         const quantity = (PATHFINDER_SECTORS_SQ) / 256;
 
-
         for (let i=this.count; i<this.count+quantity; i++)
         {
             let idx = i;
@@ -370,6 +369,8 @@ class PathFinder
             {
                 this.blocked[row][col] = true;
             }
+
+            
         }
         
         this.count = (this.count + quantity) % PATHFINDER_SECTORS_SQ;

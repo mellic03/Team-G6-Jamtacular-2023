@@ -2,12 +2,13 @@
 let engine = new Engine();
 
 engine.addSystem( new RenderSystem(),  "render"  );
+engine.addSystem( new LightSystem(),   "light"   );
 engine.addSystem( new Keylog(),        "keylog"  );
 engine.addSystem( new TerrainSystem(), "terrain" );
 
 engine.addSystem( new AgentSystem(),   "agent"   );
-engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new BulletSystem(),  "bullet"  );
+engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new Player(),        "player"  );
 engine.addSystem( new UISystem(),      "ui"      );
 

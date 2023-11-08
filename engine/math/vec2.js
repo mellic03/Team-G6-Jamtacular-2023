@@ -58,3 +58,9 @@ function vec2_normalize( v )
     return [ v[0]/mag, v[1]/mag ];
 }
 
+
+
+function vec2_valueof( v )
+{
+    return [ valueof(v[0]), valueof(v[1]) ];
+}

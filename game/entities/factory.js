@@ -12,30 +12,30 @@ class Factory
     monies     = 1000.0;
     collectors = [  ];
 
-    factory_id = -1;
 
-    constructor( sprite, id=-1 )
+    constructor( sprite)
     {
         this.sprite = sprite;
-        this.factory_id = id;
     };
 
 
     draw( engine )
     {
         this.sprite.draw(...this.position);
-
-        // for (let collector of this.collectors)
-        // {
-        //     collector.draw();
-        // }
     };
 
 
     createAgent( type )
     {
-        const agentSys = engine.getSystem("agent");
-        agentSys.createAgent(type, this.factory_id);
+        const cost = costof_agent(type);
+
+        if (this.monies >= cost)
+        {
+            const agentSys = engine.getSystem("agent");
+            agentSys.createAgent(type, this);
+
+            this.monies -= cost;
+        }
     };
 
 };
@@ -62,14 +62,14 @@ class FactorySystem
     setup( engine )
     {
         this.player_factory = new Factory(this.sprites[FACTORY_PLAYER], FACTORY_PLAYER);
-        
+        this.player_factory.createAgent(AGENT_GATHERER);
         allSprites.autoDraw = false;
     };
 
 
     draw( engine )
     {
-        
+        this.player_factory.draw(engine);
     };
 
 

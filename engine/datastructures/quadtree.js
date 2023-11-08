@@ -446,10 +446,12 @@ class Quadtree
      * @param {*} y starting y position
      * @param {*} xdir x direction
      * @param {*} ydir y direction
-     * @returns [ x, y ] intersection point
+     * @returns [ x, y, nx, ny, blocktype ] intersection point
      */
     nearest_intersection( x, y, xdir, ydir )
     {
+        const render = engine.getSystem("render");
+
         let node_data = this.find(x, y);
     
         let blocktype = node_data[0];
@@ -463,18 +465,21 @@ class Quadtree
         let px = 1.0*x;
         let py = 1.0*y;
 
-        let first = true;
+        if (blocktype > 0)
+        {
+            return [px, py, Math.sign(normalx), Math.sign(normaly), blocktype];
+        }
 
         for (let i=0; i<20; i++)
         {
-            let step = this.__next_step(px, py, xdir, ydir, cx, cy, span);
+            const step = this.__next_step(px, py, xdir, ydir, cx, cy, span);
 
             px += step[0];
             py += step[1];
             normalx = step[2];
             normaly = step[3];
 
-            const world = engine.getSystem("render").world_to_screen(px, py);
+            // const world = render.world_to_screen(px, py);
             // fill(255, 0, 0);
             // circle(...world, 5);
 
@@ -484,16 +489,14 @@ class Quadtree
             cy        = node_data[2];
             span      = node_data[3];
 
-            if (first && this.__out_of_bounds(px, py))
+            if (this.__out_of_bounds(px, py))
             {
-                let world_xy   = engine.getSystem("render").world_to_screen(x, y);
-                let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
+                // let world_xy   = engine.getSystem("render").world_to_screen(x, y);
+                // let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
                 // stroke(255);
                 // line(...world_xy, ...world_pxpy);
-                return [px-0.1*step[0], py-0.1*step[1]];
+                return [px, py];
             }
-
-            first = false;
 
             if (blocktype > 0)
             {
@@ -502,8 +505,8 @@ class Quadtree
         }
 
 
-        let world_xy   = engine.getSystem("render").world_to_screen(x, y);
-        let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
+        // let world_xy   = engine.getSystem("render").world_to_screen(x, y);
+        // let world_pxpy = engine.getSystem("render").world_to_screen(px, py);
 
         // stroke(255);
         // line(...world_xy, ...world_pxpy);

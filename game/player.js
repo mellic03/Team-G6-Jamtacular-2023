@@ -9,35 +9,34 @@ const TOOL_LIGHT_A = 6;
 const TOOL_LIGHT_B = 7;
 
 
+
 class Player
 {
+    player_img;
+    player_img2;
+    sprite;
+
     block_type  = BLOCK_AIR;
     block_width = 8.0;
     block_ksize = 8.0;
 
     move_speed   = 2.5;
-    acceleration = 0.025;
+    acceleration = 0.0125;
     drag         = 0.01;
     max_velocity = 1.0;
 
-    weapon_spread = 0.1;
+    health = 100.0;
+
+    weapon_sound;
+    weapon_spread = 0.2;
     weapon_cooldown = 100;
+    ammo = 100000;
 
-    tool_mode      = TOOL_TERRAIN;
-
-    target       = [0.0, 0.0];
-
-    light_a      = [-1.0, 0.0];
-    light_b      = [+1.0, 0.0];
-    
-    diffuse_a    = [1.0, 1.0, 1.0];
-    diffuse_b    = [1.0, 1.0, 1.0];
-
-    attenuation_a = 20.0;
-    attenuation_b = 1.0;
+    tool_mode     = TOOL_TERRAIN;
 
     position      = [0.0, 0.1];
     view_offset   = [0.0, 0.0];
+    view_offset2  = [0.0, 0.0];
     velocity      = [0.0, 0.0];
 
     constructor()
@@ -47,12 +46,17 @@ class Player
 
     preload()
     {
-
+        this.player_img = loadImage("game/assets/rifle/rifle1.png");
+        this.player_img2 = loadImage("game/assets/rifle/rifle2.png");
     };
 
     setup()
     {
+        this.sprite = new BSprite();
+        this.sprite.image(this.player_img);
 
+        this.player_img.resize(128, 128);
+        this.player_img2.resize(128, 128);
     };
 
 
@@ -63,10 +67,31 @@ class Player
         const viewport_w = render.res_x * (1.0 - UIsys.proportion_ui);
         const viewport_h = render.res_y;
 
-        fill(100, 255, 100);
-        circle(...render.world_to_screen(...this.position), 20);
+
+        const dir = vec2_dir(render.mouse_worldspace, this.position);
+
+        this.sprite.setRotation(atan2(dir[1], dir[0]));
+        this.sprite.draw(...this.position);
+
+        // fill(100, 255, 100);
+        // circle(...render.world_to_screen(...this.position), 10);
+
+        const lightSys = engine.getSystem("light");
+        lightSys.getPointlight(0).position = this.position;
+        lightSys.getPointlight(0).quadratic   = 55.0;
+        lightSys.getPointlight(0).s_constant  = 50.0;
+        lightSys.getPointlight(0).s_quadratic = 20.0;
+
 
         this.input(engine);
+
+        if (this.health <= 0)
+        {
+            this.position = [0, 0];
+            this.ammo = 0.0;
+            this.velocity = [0, 0];
+        }
+
     };
 
 
@@ -75,8 +100,6 @@ class Player
         const render  = engine.getSystem("render");
         const terrain = engine.getSystem("terrain");
 
-        this.mouse_input(engine);
-        this.key_input(engine);
 
         const x = this.position[0];
         const y = this.position[1];
@@ -95,6 +118,9 @@ class Player
             this.velocity[0] -= (1.0 / distance) * Math.sign(this.velocity[0]);
             this.velocity[1] -= (1.0 / distance) * Math.sign(this.velocity[1]);
         }
+
+        this.key_input(engine);
+        this.mouse_input(engine);
     };
 
 
@@ -169,11 +195,9 @@ class Player
 
         if (keylog.mouseClicked())
         {
-            this.target = render.mouse_worldspace
-
             const data = {
                 header: "target",
-                target: this.target
+                target: render.mouse_worldspace
             };
 
             engine.setEvent("player", "selection", data);
@@ -235,60 +259,44 @@ class Player
         const keylog = engine.getSystem("keylog");
         const bulletSys = engine.getSystem("bullet");
         
-        const screenspace = render.world_to_screen(...this.position);
-
+        // const screenspace = render.world_to_screen(...this.position);
 
         let dir = vec2_dir(render.mouse_worldspace, this.position);
-        let end = [screenspace[0]+64*dir[0], screenspace[1]+64*dir[1]];
+        // let end = [screenspace[0]+64*dir[0], screenspace[1]+64*dir[1]];
 
-        stroke(255, 255, 255, 100);
-        strokeWeight(4);
-        line(...screenspace, ...end);
-        strokeWeight(1);
+        // stroke(255, 255, 255, 100);
+        // strokeWeight(4);
+        // line(...screenspace, ...end);
+        // strokeWeight(1);
 
         if (keylog.mouseDown())
         {
-            if (this.timer == 0)
+            if (this.timer >= this.weapon_cooldown && this.ammo > 0)
             {
-                this.diffuse_a = [16, 16, 6];
-                this.attenuation_a = 2000.0;
+                // this.sprite.image(this.player_img2);
 
                 bulletSys.createBullet(...this.position, ...dir, this.weapon_spread);
-            }
+                this.ammo -= 1;
+                this.view_offset2 = vec2_sub(this.view_offset2, vec2_mult(dir, 15.0));
 
-            else
-            {
-                this.diffuse_a = [0.25, 0.25, 0.25];
-                this.attenuation_a = 32.0;
-            }
-
-            if (this.timer > this.weapon_cooldown)
-            {
                 this.timer = 0;
-            }
-
-            else
-            {
-                this.timer += deltaTime;
             }
         }
 
         else
         {
-            this.diffuse_a = [0.25, 0.25, 0.25];
-            this.timer = 0;
-            this.attenuation_a = 32.0;
+            // this.sprite.image(this.player_img);
+            this.timer = this.weapon_cooldown;
         }
 
+        this.timer += deltaTime;
     };
 
 
     mouse_input( engine )
     {
         const render = engine.getSystem("render");
-        const terrain = engine.getSystem("terrain");
-        const keylog  = engine.getSystem("keylog");
-        this.light_a = this.position;
+        const keylog = engine.getSystem("keylog");
 
         if (keylog.mouseLocked())
         {
@@ -307,14 +315,17 @@ class Player
 
         if (mouseIsPressed)
         {
+            const lightSys = engine.getSystem("light");
+
             switch (this.tool_mode)
             {
                 case TOOL_LIGHT_A:
-                    this.light_a = render.mouse_worldspace;
+
+                    lightSys.getPointlight(0).position = render.mouse_worldspace;
                     break;
 
                 case TOOL_LIGHT_B:
-                    this.light_b = render.mouse_worldspace;
+                    lightSys.getPointlight(1).position = render.mouse_worldspace;
                     break;
             }
 
@@ -371,9 +382,12 @@ class Player
         this.view_offset[0] = dir[0];
         this.view_offset[1] = dir[1];
 
+        this.view_offset2[0] *= 0.95;
+        this.view_offset2[1] *= 0.95;
+
         render.setView(
-            this.position[0] + this.view_offset[0],
-            this.position[1] + this.view_offset[1]
+            this.position[0] + this.view_offset[0] + this.view_offset2[0],
+            this.position[1] + this.view_offset[1] + this.view_offset2[1]
         );
     };
 

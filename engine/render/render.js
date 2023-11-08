@@ -58,8 +58,6 @@ class RenderSystem
     {
         this.offline_contexts[0] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
         this.offline_contexts[0].textureWrap(CLAMP);
-        // this.offline_contexts[1] = createGraphics(OFFLINE_WIDTH, OFFLINE_HEIGHT, WEBGL);
-        // this.offline_contexts[1].textureWrap(CLAMP);
     };
 
 
