@@ -17,7 +17,7 @@ class AudioSystem
 
     setup( engine )
     {
-        bgm[0].loop();
+        this.bgm[0].loop();
 
     };
 
