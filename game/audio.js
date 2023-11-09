@@ -20,7 +20,8 @@ class AudioSystem
 
     setup( engine )
     {
-        //this.bgm[TRACK_1].play();
+        this.bgm[TRACK_1].play();
+        //this.bgm[TRACK_2].play();
 
     };
 
