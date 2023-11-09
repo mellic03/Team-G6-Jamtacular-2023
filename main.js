@@ -12,6 +12,7 @@ engine.addSystem( new BulletSystem(),  "bullet"  );
 engine.addSystem( new Player(),        "player"  );
 engine.addSystem( new PhysicsSystem(), "physics" );
 engine.addSystem( new UISystem(),      "ui"      );
+engine.addSystem( new AudioSystem(),   "audio"   );
 
 
 function preload()

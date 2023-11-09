@@ -418,20 +418,29 @@ class Human extends Agent
         const terrain = engine.getSystem("terrain");
         const player = engine.getSystem("player");
         const render = engine.getSystem("render");
+        const physics = engine.getSystem("physics");
+        const bodies = physics.grid.getBodiesXY(...this.body.position);
 
-        const dir = vec2_dir(player.position, this.body.position);
-        const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
+        // const dir = vec2_dir(player.position, this.body.position);
+        // const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
 
-        const data = terrain.nearest_intersection(...origin, ...dir);
-        const end = player.position;
+        // const data = terrain.nearest_intersection(...origin, ...dir);
+        // const end = player.position;
 
-        if (this.player_visible())
+        for (let body of bodies)
         {
-            stroke(255, 0, 0, 100);
-            fill(255, 0, 0, 100);
-            line(...render.world_to_screen(...origin), ...render.world_to_screen(...end));
-            circle(...render.world_to_screen(...end), 10);
+            if (body.label != AGENT_REE || body == this.body)
+            {
+                continue;
+            }
 
+            if (body.generic_data.isFriendly() == false)
+            {
+                continue;
+            }
+
+            const dir = vec2_dir(body.position, this.body.position);
+            const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
             this.body.setRotation(vec2_angle(dir));
 
             if (this.timer >= this.weapon.cooldown)
@@ -440,6 +449,22 @@ class Human extends Agent
                 this.timer = 0.0;
             }
         }
+
+        // if (this.player_visible())
+        // {
+        //     stroke(255, 0, 0, 100);
+        //     fill(255, 0, 0, 100);
+        //     line(...render.world_to_screen(...origin), ...render.world_to_screen(...end));
+        //     circle(...render.world_to_screen(...end), 10);
+
+        //     this.body.setRotation(vec2_angle(dir));
+
+        //     if (this.timer >= this.weapon.cooldown)
+        //     {
+        //         this.weapon.pew(...origin, ...dir);
+        //         this.timer = 0.0;
+        //     }
+        // }
     };
 
 };
