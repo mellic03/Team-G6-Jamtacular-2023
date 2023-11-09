@@ -2,6 +2,7 @@
 const TOOL_NONE    = 0;
 const TOOL_SELECT  = 1;
 const TOOL_TERRAIN = 2;
+const TOOL_RECT    = 3;
 const TOOL_WEAPON  = 4;
 const TOOL_INSPECT = 5;
 
@@ -32,6 +33,8 @@ class Player
     ammo = 100000;
 
     tool_mode     = TOOL_TERRAIN;
+    rect_w        = 128;
+    rect_h        = 64;
 
     position      = [0.0, 0.1];
     view_offset   = [0.0, 0.0];
@@ -87,7 +90,6 @@ class Player
         if (this.health <= 0)
         {
             this.position = [0, 0];
-            // this.ammo = 0.0;
             this.velocity = [0, 0];
 
             this.health = 100;
@@ -228,11 +230,42 @@ class Player
 
         let world_pos = render.mouse_worldspace;
         fill(0, 0, 0, 100);
-        circle(mouseX, mouseY, (render.viewport_w/1024)*2*this.block_ksize*this.block_width);
+
+        const size = render.world_to_screen_dist(this.block_ksize*this.block_width);
+        circle(mouseX, mouseY, 2*size);
 
         if (mouseIsPressed)
         {
             terrain.placeSphere(...world_pos, this.block_type, this.block_ksize, this.block_width);    
+        }
+
+    };
+
+
+    tool_rect( engine )
+    {
+        const render = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
+
+        fill(0, 0, 0, 100);
+        rectMode(CENTER);
+
+        let screen_w   = render.world_to_screen_dist(this.rect_w);
+        let screen_h   = render.world_to_screen_dist(this.rect_h);
+        rect(mouseX, mouseY, screen_w, screen_h);
+
+        let world_pos = render.mouse_worldspace;
+
+
+        if (mouseIsPressed)
+        {
+            for (let y=-this.rect_h/2; y<+this.rect_h/2; y++)
+            {
+                for (let x=-this.rect_w/2; x<+this.rect_w/2; x++)
+                {
+                    terrain.placeBlock(world_pos[0]+x, world_pos[1]+y, this.block_type, 16);
+                }
+            }
         }
 
     };
@@ -325,6 +358,7 @@ class Player
         {
             case TOOL_SELECT:  this.tool_select(engine);  break;
             case TOOL_TERRAIN: this.tool_terrain(engine); break;
+            case TOOL_RECT:    this.tool_rect(engine);    break;
             case TOOL_INSPECT: this.tool_inspect(engine); break;
             case TOOL_WEAPON:  this.tool_weapon(engine);  break;
 

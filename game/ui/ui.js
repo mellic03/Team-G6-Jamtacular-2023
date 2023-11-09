@@ -149,7 +149,6 @@ class UISystem
         });
 
 
-
         this.UIgrid.menuButton(row+7, 0, "light A", () => {
             player.tool_mode = TOOL_LIGHT_A;
         }, player.tool_mode == TOOL_LIGHT_A);
@@ -157,6 +156,38 @@ class UISystem
         this.UIgrid.menuButton(row+7, 1, "light B", () => {
             player.tool_mode = TOOL_LIGHT_B;
         }, player.tool_mode == TOOL_LIGHT_B);
+
+
+
+
+        row = 11;
+
+        this.UIgrid.menuButton(row+0, 0, "Rect", () => {
+            player.tool_mode = TOOL_RECT
+        }, player.tool_mode == TOOL_RECT);
+
+        this.UIgrid.menuButton(row+0, 1, "Flip", () => {
+            [player.rect_w, player.rect_h] = [player.rect_h, player.rect_w];
+        });
+
+
+        this.UIgrid.menuButton(row+1, 0, "Width/2", () => {
+            player.rect_w /= 2;
+        });
+
+        this.UIgrid.menuButton(row+1, 1, "Width*2", () => {
+            player.rect_w *= 2;
+        });
+
+        this.UIgrid.menuButton(row+2, 0, "Height/2", () => {
+            player.rect_h /= 2;
+
+        });
+
+        this.UIgrid.menuButton(row+2, 1, "Height*2", () => {
+            player.rect_h *= 2;
+        });
+
 
     };
 

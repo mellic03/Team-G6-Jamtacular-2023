@@ -92,8 +92,15 @@ class RenderSystem
 
     world_to_screen( world_x, world_y )
     {
-        let screen_x = (world_x - this.view_pos[0]) * (this.viewport_w / TERRAIN_VIEW_WIDTH_PIXELS);
-        let screen_y = (world_y - this.view_pos[1]) * (this.viewport_h / TERRAIN_VIEW_HEIGHT_PIXELS);
+        let m = 1;
+
+        if (engine.getSystem("terrain").is_devmode())
+        {
+            m = 4;
+        }
+
+        let screen_x = (world_x - this.view_pos[0]) * (this.viewport_w / (m*TERRAIN_VIEW_WIDTH_PIXELS));
+        let screen_y = (world_y - this.view_pos[1]) * (this.viewport_h / (m*TERRAIN_VIEW_HEIGHT_PIXELS));
 
         screen_x += this.viewport_w/2;
         screen_y += this.viewport_h/2;
@@ -104,8 +111,15 @@ class RenderSystem
 
     screen_to_world( screen_x, screen_y )
     {
-        let world_x = this.view_pos[0] + screen_x - this.viewport_w/2;
-        let world_y = this.view_pos[1] + screen_y - this.viewport_h/2;
+        let m = 1;
+
+        if (engine.getSystem("terrain").is_devmode())
+        {
+            m = 4;
+        }
+
+        let world_x = this.view_pos[0] + m*(screen_x - this.viewport_w/2);
+        let world_y = this.view_pos[1] + m*(screen_y - this.viewport_h/2);
 
         world_x = this.view_pos[0] + TERRAIN_VIEW_WIDTH_PIXELS  * ((world_x - this.view_pos[0]) / this.viewport_w);
         world_y = this.view_pos[1] + TERRAIN_VIEW_HEIGHT_PIXELS * ((world_y - this.view_pos[1]) / this.viewport_h);
@@ -116,7 +130,14 @@ class RenderSystem
 
     world_to_screen_dist( world_dist )
     {
-        return world_dist * (this.viewport_w / 1024);
+        let m = 1;
+
+        if (engine.getSystem("terrain").is_devmode())
+        {
+            m = 4;
+        }
+
+        return world_dist * (this.viewport_w / 1024) / m;
     };
 };
 

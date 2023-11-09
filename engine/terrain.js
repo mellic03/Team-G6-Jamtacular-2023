@@ -40,7 +40,7 @@ class TerrainSystem
     pathfinder = new PathFinder();
 
     shaders  = [  ];
-    fidelity = 3;
+    fidelity = 1;
 
     mapimg;
     maptxt;
@@ -128,6 +128,8 @@ class TerrainSystem
 
     draw( engine )
     {
+        this.pathfinder.refine(this);
+
         if (this.is_devmode())
         {
             this.__draw_devmode();
@@ -167,8 +169,6 @@ class TerrainSystem
         pg.rect(0, 0, viewport_w, viewport_h);
         image(pg, 0, 0, viewport_w, viewport_h);
 
-
-        this.pathfinder.refine(this);
 
         if (this.visualize_quadtree)
         {
