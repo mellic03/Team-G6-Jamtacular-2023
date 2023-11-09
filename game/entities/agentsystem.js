@@ -44,11 +44,12 @@ class AgentSystem
         this.costs[AGENT_GATHERER_IDX] = 10;
         this.costs[AGENT_GUARD_IDX]    = 50;
         this.costs[AGENT_ATTACKER_IDX] = 100;
+        this.costs[AGENT_REE_IDX]      = 0;
 
         this.constructors[AGENT_GATHERER_IDX] = Gatherer;
         this.constructors[AGENT_GUARD_IDX]    = Guard;
         this.constructors[AGENT_ATTACKER_IDX] = Attacker;
-        this.constructors[AGENT_REE_IDX]      = REE;
+        this.constructors[AGENT_REE_IDX]      = Human;
 
         for (let i=0; i<MAX_AGENTS; i++)
         {
@@ -176,23 +177,14 @@ class AgentSystem
 
     createAgent( type, parent=undefined )
     {
-        const id = valueof(this.current_idx);
+        const id = this.current_idx;
         const TYPE = type - AGENT_OFFSET;
 
         this.agents[id] = new this.constructors[TYPE](this.sprites[TYPE]);
         this.agents[id].parent = parent;
         this.agents[id].body.label = type;
+        this.agents[id].body.generic_data = this.agents[id];
         this.active[id] = true;
-
-        if (parent == engine.getSystem("factory").player_factory)
-        {
-            this.agents[id].friendly = true;
-        }
-
-        else
-        {
-            this.agents[id].friendly = false;
-        }
 
         this.num_active += 1;
         this.current_idx = (this.current_idx + 1) % MAX_AGENTS;
@@ -203,6 +195,8 @@ class AgentSystem
 
     destroyAgent( id )
     {
+        // this.agents[id].parent = undefined;
+        // this.agents[id].reset();
         this.active[id] = false;
         this.num_active -= 1;
     };

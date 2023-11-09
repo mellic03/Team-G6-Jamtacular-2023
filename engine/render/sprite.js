@@ -34,20 +34,26 @@ class BSprite
         this.p5p_sprite.draw();
     };
 
-    image( img )
-    {
-        this.p5p_sprite.image = img;
-    };
-
     p5p()
     {
         return this.p5p_sprite;
     };
 
+    image( img )
+    {
+        this.p5p().image = img;
+    };
+
     setRotation( r )
     {
-        this.p5p_sprite.rotation = r;
+        this.p5p().rotation = r;
     }
+    
+    lerpRotation( r, alpha )
+    {
+        this.p5p().rotation = (1.0 - alpha) * this.p5p().rotation + alpha*r;
+    }
+
 
 };
 

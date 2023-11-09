@@ -32,6 +32,7 @@ class FactoryModal
         const terrain = engine.getSystem("terrain");
         const player = engine.getSystem("player");
         const factorySys = engine.getSystem("factory");
+        const agentSys = engine.getSystem("agent");
         const playerFactory = factorySys.player_factory;
 
         if (this.visible == false)
@@ -55,16 +56,24 @@ class FactoryModal
         ui.nextRow(7);
 
         ui.menuButton2(0, 3, "Gatherer", () => {
-            playerFactory.createAgent(AGENT_GATHERER, playerFactory);
+            agentSys.createAgent(AGENT_GATHERER, playerFactory);
         });
 
         ui.menuButton2(0, 4, "Guard", () => {
-            playerFactory.createAgent(AGENT_GUARD, playerFactory);
+            agentSys.createAgent(AGENT_GUARD, playerFactory);
         });
 
         ui.menuButton2(0, 5, "Attacker", () => {
-            playerFactory.createAgent(AGENT_ATTACKER, playerFactory);
+            agentSys.createAgent(AGENT_ATTACKER, playerFactory);
         });
+
+        ui.menuButton2(0, 6, "Good H", () => {
+            agentSys.createAgent(AGENT_REE, playerFactory);
+        });
+        ui.menuButton2(0, 7, "Bad H", () => {
+            agentSys.createAgent(AGENT_REE, null);
+        });
+
 
 
         ui.nextRow(3);

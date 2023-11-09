@@ -3,9 +3,11 @@
 class PhysicsBody
 {
     label;
+    generic_data;
 
     position;
     velocity;
+    rotation;
 
     last_position;
     velocity_mag;
@@ -22,6 +24,7 @@ class PhysicsBody
     {
         this.position = [x, y];
         this.velocity = [0, 0];
+        this.rotation = 0.0;
 
         this.last_position  = [x, y];
         this.velocity_magSq = 0.0;
@@ -72,6 +75,12 @@ class PhysicsBody
 
         if (this.hasDrag)
             this.velocity = velocityDampening(this.drag, ...this.velocity);
+    };
+
+
+    setRotation( r )
+    {
+        this.rotation = r;
     };
 
 
@@ -285,7 +294,7 @@ class PhysicsSystem
 
                 for (let body of grid[row][col])
                 {
-                    circle(...render.world_to_screen(...body.position), render.world_to_screen_dist(body.radius));
+                    // circle(...render.world_to_screen(...body.position), render.world_to_screen_dist(body.radius));
                     this.dothing(body, neighbours);
                 }
             }

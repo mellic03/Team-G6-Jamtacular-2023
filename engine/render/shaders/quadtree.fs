@@ -58,7 +58,7 @@ vec3 blocktype_color( int blocktype )
     switch (blocktype)
     {
         default:             return vec3(1.0, 0.0, 0.0);
-        case BLOCK_AIR:      return vec3(0.05);
+        case BLOCK_AIR:      return vec3(0.6);
         case BLOCK_GRASS:    return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
         case BLOCK_DIRT:     return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
         case BLOCK_STONE:    return vec3(0.67, 0.69, 0.71);

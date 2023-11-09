@@ -7,8 +7,7 @@ class Agent
     body;
     health = 100.0;
     parent = undefined;
-
-    friendly  = false;
+    friendly = false;
 
     selected  = false;
     energy    = 10.0;
@@ -26,21 +25,20 @@ class Agent
         this.body = new PhysicsBody(random(-150, 150), random(-150, 150), 32, 32, "agent");
         this.body.drag = 0.2;
         this.sprite = sprite;
-
-        this.body.resolution = (other) => {
-
-            if (other.label == PLAYER_BULLET)
-            {
-                console.log("Agent hit!!!");
-                this.health -= 25;
-            }
-        };
     };
 
 
-    reset()
+    reset( sprite )
     {
-        this.setResolution();
+        this.body.drag = 0.2;
+        this.sprite = sprite;
+    };
+
+
+    isFriendly()
+    {
+        // return this.friendly;
+        return this.parent == engine.getSystem("factory").player_factory;
     };
 
 
@@ -74,8 +72,8 @@ class Agent
         }
 
         this.body.update();
-        this.sprite.setRotation(vec2_angle(vec2_normalize(this.body.velocity)));
 
+        this.sprite.setRotation(this.body.rotation);
         this.sprite.draw(...this.body.position);
     };
 
@@ -85,6 +83,9 @@ class Agent
         const target = this.path[this.path_idx];
 
         this.body.applyForceTowards(...target, 0.05);
+
+        const r = vec2_angle(vec2_normalize(this.body.velocity));
+        this.body.setRotation(r);
 
         if (dist(...this.body.position, ...target) < 32.0)
         {
@@ -134,15 +135,6 @@ class Agent
     {
 
     };
-
-
-    setResolution()
-    {
-        const agent = this;
-
-
-    };
-
 
     onHit()
     {
@@ -348,23 +340,33 @@ class Attacker extends Agent
         this.weapon_cooldown += deltaTime;
     };
 
-
-    onHit()
-    {
-        this.health -= 50.0;
-    };
-
 };
 
 
-class REE extends Agent
+
+
+class Human extends Agent
 {
     weapon = new Weapon(1500, 0.25, REE_BULLET);
     timer  = 0.0;
 
+    constructor( sprite )
+    {
+        super(sprite);
+        
+        this.body.resolution = (other) => {
+
+            if (other.label >= PLAYER_BULLET && other.label <= REE_BULLET)
+            {
+                console.log("Agent hit!!!");
+                this.health -= 25;
+            }
+        };
+    };
+
     behaviour()
     {
-        if (this.friendly)
+        if (this.isFriendly())
         {
             this.friendly_behaviour();
         }
@@ -373,13 +375,14 @@ class REE extends Agent
         {
             this.unfriendly_behaviour();
         }
-    
+
         this.timer += deltaTime;
     };
 
 
     friendly_behaviour()
     {
+        const render = engine.getSystem("render");
         const physics = engine.getSystem("physics");
 
         // Search for unfriendlies
@@ -387,7 +390,25 @@ class REE extends Agent
         
         for (let body of bodies)
         {
+            if (body.label != AGENT_REE || body == this.body)
+            {
+                continue;
+            }
 
+            if (body.generic_data.isFriendly())
+            {
+                continue;
+            }
+
+            const dir = vec2_dir(body.position, this.body.position);
+            const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
+            this.body.setRotation(vec2_angle(dir));
+
+            if (this.timer >= this.weapon.cooldown)
+            {
+                this.weapon.pew(...origin, ...dir);
+                this.timer = 0.0;
+            }
         }
     };
 
@@ -410,7 +431,9 @@ class REE extends Agent
             fill(255, 0, 0, 100);
             line(...render.world_to_screen(...origin), ...render.world_to_screen(...end));
             circle(...render.world_to_screen(...end), 10);
-            
+
+            this.body.setRotation(vec2_angle(dir));
+
             if (this.timer >= this.weapon.cooldown)
             {
                 this.weapon.pew(...origin, ...dir);
