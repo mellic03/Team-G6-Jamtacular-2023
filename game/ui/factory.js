@@ -3,7 +3,7 @@
 class FactoryModal
 {
     UIgrid;
-
+    name    = "Factory";
     visible = false;
 
     constructor( x, y, w, h )

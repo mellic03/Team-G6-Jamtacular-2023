@@ -26,7 +26,7 @@ class BulletSystem
     preload( engine )
     {
         this.sounds[PLAYER_BULLET_IDX]   = loadSound("game/assets/weapon.mp3");
-        this.sounds[ATTACKER_BULLET_IDX] = loadSound("game/assets/pistol.wav");
+        this.sounds[ATTACKER_BULLET_IDX] = loadSound("game/assets/pistol.mp3");
         this.sounds[REE_BULLET_IDX]      = loadSound("game/assets/weapon.mp3");
         this.sounds[PLAYER_BULLET_IDX].loop   = false;
         this.sounds[ATTACKER_BULLET_IDX].loop = false;

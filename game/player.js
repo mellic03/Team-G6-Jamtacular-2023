@@ -102,6 +102,21 @@ class Player
         const terrain = engine.getSystem("terrain");
 
 
+        this.key_input(engine);
+        this.mouse_input(engine);
+
+
+        if (terrain.is_devmode())
+        {
+            this.acceleration = 0.2;
+            return;
+        }
+
+        this.acceleration = 0.0125;
+
+
+        // Update position and velocity. Should use a PhysicsBody instead.
+        // -------------------------------------------------------------------------------------
         const x = this.position[0];
         const y = this.position[1];
         let dx = this.velocity[0];
@@ -119,9 +134,8 @@ class Player
             this.velocity[0] -= (1.0 / distance) * Math.sign(this.velocity[0]);
             this.velocity[1] -= (1.0 / distance) * Math.sign(this.velocity[1]);
         }
+        // -------------------------------------------------------------------------------------
 
-        this.key_input(engine);
-        this.mouse_input(engine);
     };
 
 
@@ -244,7 +258,7 @@ class Player
 
             if (keylog.mouseClicked())
             {
-                UIsys.factory_modal.show();
+                UIsys.modals[MODAL_FACTORY].show();
             }
         }
 

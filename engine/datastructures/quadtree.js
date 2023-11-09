@@ -571,15 +571,19 @@ class Quadtree
             const ncx = this._shift_center_x(quadrant, cx, span);
             const ncy = this._shift_center_y(quadrant, cy, span);
 
-            list.push(blocktype);
-            list.push(ncx);
-            list.push(ncy);
-
             const children_id = this.nodegroups.get_children_id(group_id, quadrant);
 
             if (children_id > 0)
             {
                 this.__leafList(list, children_id, ncx, ncy, span/2);
+            }
+
+            else
+            {
+                list.push(blocktype);
+                list.push(ncx);
+                list.push(ncy);
+                list.push(span/2);
             }
         }
     };
@@ -603,12 +607,13 @@ class Quadtree
         return used / capacity;
     };
 
+
     maxBufferUsage()
     {
         const capacity = this.nodegroups.computebuffer.w * this.nodegroups.computebuffer.h;        
         const used     = NODESIZE * this.nodegroups.nodegroups_allocated;
     
         return used / capacity;
-    }
+    };
 
 };

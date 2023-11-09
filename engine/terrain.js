@@ -39,15 +39,229 @@ class TerrainSystem
     visualize_pathfinding = false;
     pathfinder = new PathFinder();
 
-    voxel_sprite_queue = [  ];
-
     shaders  = [  ];
     fidelity = 1;
+
+    mapimg;
+    maptxt;
 
 
     constructor()
     {
 
+    };
+
+
+    preload( engine )
+    {
+        this.shaders[0] = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree-no-lighting.fs"
+        );
+
+        this.shaders[1] = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree-flat.fs"
+        );
+
+        this.shaders[2] = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree.fs"
+        );
+
+        this.shaders[3] = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree-dev.fs"
+        );
+
+        this.mapimg = loadImage("map2.png");
+        this.maptxt = loadStrings("map.txt");
+    };
+
+
+    setup( engine )
+    {
+        let pg = engine.getSystem("render").offlineContext(0);
+
+        for (let row=0; row<SECTORS_Y; row++)
+        {
+            this.sectors.push([]);
+            this.buffers.push([]);
+            this.sectors_visible.push([]);
+
+            for (let col=0; col<SECTORS_X; col++)
+            {
+                const x = QUADTREE_SPAN * col;
+                const y = QUADTREE_SPAN * row;
+
+                const cb = new ComputeBuffer(COMPUTEBUFFER_WIDTH, COMPUTEBUFFER_WIDTH, pg, COMPUTEBUFFER_FLOAT);
+                const qt = new Quadtree(x, y, QUADTREE_SPAN, cb);
+
+                this.buffers[row].push(cb);
+                this.sectors[row].push(qt);
+                this.sectors_visible[row].push(false);
+            }
+        }
+
+
+        this.unlockAll();
+
+        // this.__load_from_png();
+        this.__load_from_txt();
+
+        // Place bedrock at borders
+        for (let i=0; i<SECTORS_X*QUADTREE_SPAN; i+=32)
+        {
+            this.placeBlock(i-HALF_SPAN, 32 - HALF_SPAN, BLOCK_BEDROCK, 64);
+            this.placeBlock(i-HALF_SPAN, SECTORS_Y*QUADTREE_SPAN - HALF_SPAN - 8, BLOCK_BEDROCK, 64);
+        }
+        for (let i=0; i<SECTORS_Y*QUADTREE_SPAN; i+=32)
+        {
+            this.placeBlock(8-HALF_SPAN, i-HALF_SPAN, BLOCK_BEDROCK, 64);
+            this.placeBlock(SECTORS_Y*QUADTREE_SPAN - HALF_SPAN - 32, i-HALF_SPAN, BLOCK_BEDROCK, 64);
+        }
+
+        this.lock();
+
+    };
+
+
+    draw( engine )
+    {
+        const render = engine.getSystem("render");
+        const player = engine.getSystem("player");
+        const pg = render.offlineContext(0);
+
+        const viewport_w = render.viewport_w;
+        const viewport_h = render.viewport_h;
+
+
+        pg.background(0);
+        pg.shader(this.getShader());
+
+        this.__set_common_uniforms(engine);
+
+        this.getShader().setUniform("un_view_pos", render.view_pos);
+        this.getShader().setUniform("mouseX", mouseX - viewport_w/2);
+        this.getShader().setUniform("mouseY", mouseY - viewport_h/2);
+
+        let idx = 0;
+
+        for (let cell of this.visible_sectors)
+        {
+            let row = cell[0];
+            let col = cell[1];
+
+            this.getShader().setUniform("un_quadtree" + int(idx), this.sectors[row][col].buffer());
+            this.getShader().setUniform("un_quadtree_pos" + int(idx), [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
+
+            idx += 1;
+        }
+
+        pg.rect(0, 0, viewport_w, viewport_h);
+        image(pg, 0, 0, viewport_w, viewport_h);
+
+
+        this.pathfinder.refine(this);
+
+        if (this.visualize_quadtree)
+        {
+            for (let cell of this.visible_sectors)
+            {
+                let row = cell[0];
+                let col = cell[1];
+                this.sectors[row][col].draw(...render.world_to_screen(...render.view_pos));
+            }
+        }
+
+        if (this.visualize_pathfinding)
+        {
+            this.pathfinder.draw();
+        }
+
+    };
+
+
+    __load_from_png()
+    {
+        this.mapimg.loadPixels();
+        let data = this.mapimg.pixels;
+
+        const IMG_W = 1024;
+
+        let minv = +100000.0;
+        let maxv = -100000.0;
+
+        for (let y=0; y<IMG_W; y++)
+        {
+            for (let x=0; x<IMG_W; x++)
+            {
+                const idx = 4*(y*IMG_W + x);
+
+                if (data[idx] < 50)
+                {
+                    continue;
+                }
+
+                minv = min(minv, data[idx]);
+                maxv = max(maxv, data[idx]);
+
+                this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, floor((data[idx]) / 50), 16);
+            }
+        }
+
+        console.log(minv, maxv);
+    };
+
+
+    __load_from_txt()
+    {
+        const data = this.maptxt;
+
+        for (let i=0; i<data.length-1; i+=4)
+        {
+            const blocktype = int(data[i+0]);
+            const x         = int(data[i+1]);
+            const y         = int(data[i+2]);
+            const span      = float(data[i+3]);
+
+            this.placeBlock(x, y, blocktype, span);
+        }
+    };
+
+
+    increment = 0.0;
+
+    __set_common_uniforms( engine )
+    {
+        const render = engine.getSystem("render");
+        const lightSys = engine.getSystem("light");
+        const player = engine.getSystem("player");
+
+        this.getShader().setUniform( "QUADTREE_BUFFER_WIDTH", int(COMPUTEBUFFER_WIDTH) );
+        this.getShader().setUniform( "QUADTREE_SPAN",         int(QUADTREE_SPAN)       );
+        this.getShader().setUniform( "QUADTREE_HALF_SPAN",    int(HALF_SPAN)           );
+        this.getShader().setUniform( "VIEWPORT_W",            int(render.viewport_w)   );
+        this.getShader().setUniform( "VIEWPORT_H",            int(render.viewport_h)   );
+        this.getShader().setUniform( "un_target_pos",         player.target            );
+        this.getShader().setUniform( "un_player_pos",         player.position          );
+        this.getShader().setUniform( "un_mouse",              render.screen_to_world(mouseX, mouseY));
+        this.getShader().setUniform( "un_increment",          this.increment );
+
+        lightSys.setUniforms(this.getShader());
+
+        this.increment += 0.01;
+
+        if (this.increment > 1000.0)
+        {
+            this.increment = 0.0;
+        }
+    };
+
+
+    getShader()
+    {
+        return this.shaders[this.fidelity];
     };
 
 
@@ -119,6 +333,12 @@ class TerrainSystem
     };
 
 
+    is_devmode()
+    {
+        return this.fidelity == 3;
+    };
+
+
     lock()
     {
         for (let cell of this.visible_sectors)
@@ -136,6 +356,12 @@ class TerrainSystem
 
     unlock( x, y, w, h )
     {
+        if (this.dev_zoom)
+        {
+            this.unlockAll();
+            return;
+        }
+
         if (isNaN(x) || isNaN(y))
         {
             return;
@@ -235,216 +461,6 @@ class TerrainSystem
 
         const data = this.sectors[row][col].find(x, y);
         return [data[0], data[3]];
-    };
-
-
-    preload( engine )
-    {
-        this.shaders[0] = loadShader(
-            "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree-fast.fs"
-        );
-
-        this.shaders[1] = loadShader(
-            "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree-flat.fs"
-        );
-
-        this.shaders[2] = loadShader(
-            "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree.fs"
-        );
-
-        this.shaders[3] = loadShader(
-            "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/quadtree-dark.fs"
-        );
-
-        this.shaders[4] = loadShader(
-            "engine/render/shaders/screenquad.vs",
-            "engine/render/shaders/cool-shading.fs"
-        );
-
-        this.mapimg = loadImage("map2.png");
-
-    };
-
-
-    setup( engine )
-    {
-        let pg = engine.getSystem("render").offlineContext(0);
-
-        for (let row=0; row<SECTORS_Y; row++)
-        {
-            this.sectors.push([]);
-            this.buffers.push([]);
-            this.sectors_visible.push([]);
-
-            for (let col=0; col<SECTORS_X; col++)
-            {
-                const x = QUADTREE_SPAN * col;
-                const y = QUADTREE_SPAN * row;
-
-                const cb = new ComputeBuffer(COMPUTEBUFFER_WIDTH, COMPUTEBUFFER_WIDTH, pg, COMPUTEBUFFER_FLOAT);
-                const qt = new Quadtree(x, y, QUADTREE_SPAN, cb);
-
-                this.buffers[row].push(cb);
-                this.sectors[row].push(qt);
-                this.sectors_visible[row].push(false);
-            }
-        }
-
-
-        this.unlockAll();
-        this.mapimg.loadPixels();
-        let data = this.mapimg.pixels;
-
-        const IMG_W = 1024;
-
-        let minv = +100000.0;
-        let maxv = -100000.0;
-
-        for (let y=0; y<IMG_W; y++)
-        {
-            for (let x=0; x<IMG_W; x++)
-            {
-                const idx = 4*(y*IMG_W + x);
-
-                if (data[idx] < 50)
-                {
-                    continue;
-                }
-
-                minv = min(minv, data[idx]);
-                maxv = max(maxv, data[idx]);
-
-                this.placeBlock((x*4)-HALF_SPAN, (y*4)-HALF_SPAN, floor((data[idx]) / 50), 16);
-            }
-        }
-
-        console.log(minv, maxv);
-
-
-        // Place bedrock at borders
-        for (let i=0; i<SECTORS_X*QUADTREE_SPAN; i+=32)
-        {
-            this.placeBlock(i-HALF_SPAN, 32 - HALF_SPAN, BLOCK_BEDROCK, 64);
-            this.placeBlock(i-HALF_SPAN, SECTORS_Y*QUADTREE_SPAN - HALF_SPAN - 8, BLOCK_BEDROCK, 64);
-        }
-        for (let i=0; i<SECTORS_Y*QUADTREE_SPAN; i+=32)
-        {
-            this.placeBlock(8-HALF_SPAN, i-HALF_SPAN, BLOCK_BEDROCK, 64);
-            this.placeBlock(SECTORS_Y*QUADTREE_SPAN - HALF_SPAN - 32, i-HALF_SPAN, BLOCK_BEDROCK, 64);
-        }
-
-
-        this.lock();
-
-    };
-
-
-    drawVoxelSprite( vs )
-    {
-        this.voxel_sprite_queue.push(vs);
-    };
-
-
-    draw( engine )
-    {
-        const render = engine.getSystem("render");
-        const player = engine.getSystem("player");
-        const pg = render.offlineContext(0);
-
-        const viewport_w = render.viewport_w;
-        const viewport_h = render.viewport_h;
-
-
-        for (let vs of this.voxel_sprite_queue)
-        {
-            vs.__draw();
-        }
-
-        this.voxel_sprite_queue = [  ];
-
-
-        pg.background(0);
-        pg.shader(this.getShader());
-
-        this.__set_common_uniforms(engine);
-
-        this.getShader().setUniform("un_view_pos", render.view_pos);
-        this.getShader().setUniform("mouseX", mouseX - viewport_w/2);
-        this.getShader().setUniform("mouseY", mouseY - viewport_h/2);
-
-        let idx = 0;
-
-        for (let cell of this.visible_sectors)
-        {
-            let row = cell[0];
-            let col = cell[1];
-
-            this.getShader().setUniform("un_quadtree" + int(idx), this.sectors[row][col].buffer());
-            this.getShader().setUniform("un_quadtree_pos" + int(idx), [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
-
-            idx += 1;
-        }
-
-        pg.rect(0, 0, viewport_w, viewport_h);
-        image(pg, 0, 0, viewport_w, viewport_h);
-
-
-        this.pathfinder.refine(this);
-
-        if (this.visualize_quadtree)
-        {
-            for (let cell of this.visible_sectors)
-            {
-                let row = cell[0];
-                let col = cell[1];
-                this.sectors[row][col].draw(...render.world_to_screen(...render.view_pos));
-            }
-        }
-
-        if (this.visualize_pathfinding)
-        {
-            this.pathfinder.draw();
-        }
-
-    };
-
-
-    increment = 0.0;
-
-    __set_common_uniforms( engine )
-    {
-        const render = engine.getSystem("render");
-        const lightSys = engine.getSystem("light");
-        const player = engine.getSystem("player");
-
-        this.getShader().setUniform( "QUADTREE_BUFFER_WIDTH", int(COMPUTEBUFFER_WIDTH) );
-        this.getShader().setUniform( "QUADTREE_SPAN",         int(QUADTREE_SPAN)       );
-        this.getShader().setUniform( "QUADTREE_HALF_SPAN",    int(HALF_SPAN)           );
-        this.getShader().setUniform( "VIEWPORT_W",            int(render.viewport_w)   );
-        this.getShader().setUniform( "VIEWPORT_H",            int(render.viewport_h)   );
-        this.getShader().setUniform( "un_target_pos",         player.target            );
-        this.getShader().setUniform( "un_player_pos",         player.position          );
-        this.getShader().setUniform( "un_mouse",              render.screen_to_world(mouseX, mouseY));
-        this.getShader().setUniform( "un_increment",          this.increment );
-
-        lightSys.setUniforms(this.getShader());
-
-        this.increment += 0.01;
-
-        if (this.increment > 1000.0)
-        {
-            this.increment = 0.0;
-        }
-    };
-
-
-    getShader()
-    {
-        return this.shaders[this.fidelity];
     };
 
 

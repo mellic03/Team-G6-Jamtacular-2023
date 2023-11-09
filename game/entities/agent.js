@@ -382,7 +382,7 @@ class Attacker extends Agent
 
 class Human extends Agent
 {
-    weapon = new Weapon(1500, 0.25, REE_BULLET);
+    weapon = new Weapon(1500, 0.6, REE_BULLET);
     retreating = false;
     timer  = 0.0;
 
@@ -416,7 +416,8 @@ class Human extends Agent
 
     attack( body )
     {
-        const dir = vec2_dir(body.position, this.body.position);
+        const player = engine.getSystem("player");
+        const dir = vec2_dir(player.position, this.body.position);
         // const tangent = vec2_tangent(dir);
 
         const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
@@ -436,6 +437,8 @@ class Human extends Agent
         if (this.timer >= this.weapon.cooldown)
         {
             this.weapon.pew(...origin, ...dir);
+ 
+            this.weapon.cooldown = random(5, 555);
             this.timer = 0.0;
         }
     };

@@ -4,6 +4,7 @@
 class SettingsModal
 {
     UIgrid;
+    name    = "Settings";
     visible = false;
 
 
@@ -66,7 +67,7 @@ class SettingsModal
             terrain.fidelity = 2;
         }, terrain.fidelity == 2);
     
-        ui.menuButton2(0, 4, "Blazed", () => {
+        ui.menuButton2(0, 4, "Dev", () => {
             terrain.fidelity = 3;
         }, terrain.fidelity == 3);
     

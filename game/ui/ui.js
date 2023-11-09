@@ -1,4 +1,10 @@
 
+const MODAL_SETTINGS  = 0;
+const MODAL_INVENTORY = 1;
+const MODAL_FACTORY   = 2;
+const MODAL_MAP       = 3;
+
+
 class UISystem
 {
     UIgrid;
@@ -6,13 +12,17 @@ class UISystem
     DEBUGgrid;
     BRUSHgrid;
 
-    settings_modal  = new SettingsModal(1, 1, 1, 1);
-    inventory_modal = new InventoryModal(1, 1, 1, 1);
-    factory_modal   = new FactoryModal(1, 1, 1, 1);
+    modals = [  ];
 
     proportion_ui = 0.2;
-    player_factory_id;
 
+    constructor()
+    {
+        this.modals.push(new SettingsModal(1, 1, 1, 1));
+        this.modals.push(new InventoryModal(1, 1, 1, 1));
+        this.modals.push(new FactoryModal(1, 1, 1, 1));
+        this.modals.push(new MapModal(1, 1, 1, 1));
+    }
 
     onWindowResize( engine )
     {
@@ -35,10 +45,12 @@ class UISystem
         this.BRUSHgrid = new MenuGrid(
             UI_LEFT, WIN_H/2, UI_WIDTH, WIN_H/2, 15, 2, keylog
         );
+
+        for (let modal of this.modals)
+        {
+            modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
+        }
     
-        this.settings_modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
-        this.inventory_modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
-        this.factory_modal.reposition(render.viewport_w/2 - UI_WIDTH, render.res_y/2 - UI_WIDTH, 2*UI_WIDTH, WIN_H/2);
     };
 
 
@@ -55,7 +67,7 @@ class UISystem
         this.onWindowResize(engine);
 
         const factory = engine.getSystem("factory");
-        this.player_factory_id = factory.createFactory(FACTORY_PLAYER);
+        factory.createFactory(FACTORY_PLAYER);
 
     };
 
@@ -78,9 +90,10 @@ class UISystem
         this.draw_game_ui(engine);
         this.draw_dev_ui(engine);
 
-        this.inventory_modal.draw();
-        this.settings_modal.draw();
-        this.factory_modal.draw();
+        for (let modal of this.modals)
+        {
+            modal.draw();
+        }
     };
 
 
@@ -89,7 +102,6 @@ class UISystem
         const terrain = engine.getSystem("terrain");
         const player = engine.getSystem("player");
         const factorySys = engine.getSystem("factory");
-        const id = this.player_factory_id;
         const playerFactory = factorySys.player_factory;
 
         this.UIgrid.background(100);
@@ -126,14 +138,14 @@ class UISystem
 
 
 
-        this.UIgrid.menuButton(row+6, 0, "Inventory", () => {
+        this.UIgrid.menuButton(row+6, 0, "Map", () => {
             player.tool_mode = TOOL_NONE;
-            this.inventory_modal.show();
+            this.modals[MODAL_MAP].show();
         });
 
         this.UIgrid.menuButton(row+6, 1, "Settings", () => {
             player.tool_mode = TOOL_NONE;
-            this.settings_modal.show();
+            this.modals[MODAL_SETTINGS].show();
         });
 
 
