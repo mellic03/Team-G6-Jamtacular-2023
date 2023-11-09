@@ -13,7 +13,7 @@ class Agent
     energy    = 10.0;
     inventory = [ 0, 0, 0, 0 ];
 
-    last_target = [ 0, 0 ];
+    last_target    = [ 0, 0 ];
     current_target = [ 0, 0 ];
 
     path = [  ];

@@ -112,7 +112,6 @@ float blocktype_parallax( int blocktype )
 
 
 
-
 struct QuadNode
 {
     int idx;
@@ -132,8 +131,10 @@ ivec2 uv_to_texel( vec2 uv )
 
 vec2 uv_to_screen( vec2 uv )
 {
+    uv.x = (uv.x - 0.5) * 2.0*uv.y ;
+
     uv.y = 1.0 - uv.y;
-    uv -= 0.5;
+    uv.y -= 0.5;
 
     return vec2(VIEWPORT_W, VIEWPORT_H) * uv;
 }
