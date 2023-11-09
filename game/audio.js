@@ -1,8 +1,9 @@
-
+const TRACK_1 = 0;
+const TRACK_2 = 1;
 
 class AudioSystem
 {
-    bgm = [0];
+    bgm = [  ];
 
     constructor()
     {
@@ -11,13 +12,16 @@ class AudioSystem
 
     preload( engine )
     {
-        this.bgm[0] = loadSound("game/assets/bgm.mp3");
+        this.bgm[TRACK_1] = loadSound("game/assets/bgm.mp3");
+        this.bgm[TRACK_2] = loadSound("game/assets/bgm2.mp3");
+
 
     };
 
     setup( engine )
     {
-        this.bgm[0].loop();
+        this.bgm[TRACK_1].loop = true;
+        this.bgm[TRACK_1].play();
 
     };
 
