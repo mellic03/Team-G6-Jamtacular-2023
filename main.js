@@ -45,6 +45,7 @@ function draw()
     engine.draw();
     terrain.lock();
 
+    engine.getSystem("physics").grid.draw();
 
     avg = (164/165)*avg + (1/165)*frameRate();
     text(avg, 300, 100);

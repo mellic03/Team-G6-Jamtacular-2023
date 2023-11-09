@@ -17,7 +17,10 @@ class Agent
     current_target = [ 0, 0 ];
 
     path = [  ];
+    reversed_path = [  ];
     path_idx = -1;
+
+    retreating = false;
 
 
     constructor( sprite )
@@ -110,6 +113,38 @@ class Agent
     };
 
 
+    at_home()
+    {
+        return dist(...this.body.position, 0, 0) < 128;
+    };
+
+
+    retreat_and_return()
+    {
+        if (this.at_home())
+        {
+            console.log("At home!");
+
+            this.health = 100.0;
+            this.set_target(this.last_target);
+            console.log("REVERSED: ", this.last_target);
+            this.retreating = false;
+        }
+
+        else if (this.at_destination())
+        {
+            this.reversed_path = [];
+            for (let i=this.path.length-1; i>=0; i--)
+            {
+                this.reversed_path.push(this.path[i]);
+            }
+
+            this.set_target(this.parent.position);
+            this.retreating = true;
+        }
+    };
+
+
     player_visible()
     {
         const player = engine.getSystem("player");
@@ -136,12 +171,9 @@ class Agent
 
     };
 
-    onHit()
-    {
-
-    };
-
 };
+
+
 
 
 class Gatherer extends Agent
@@ -158,16 +190,7 @@ class Gatherer extends Agent
     was_on_gold = false;
     am_on_gold  = false;
 
-    reversed_path = [];
-
     returning_home = false;
-
-
-    at_home()
-    {
-        return dist(...this.body.position, 0, 0) < 128;
-    };
-
 
     return_home()
     {
@@ -348,6 +371,7 @@ class Attacker extends Agent
 class Human extends Agent
 {
     weapon = new Weapon(1500, 0.25, REE_BULLET);
+    retreating = false;
     timer  = 0.0;
 
     constructor( sprite )
@@ -358,11 +382,12 @@ class Human extends Agent
 
             if (other.label >= PLAYER_BULLET && other.label <= REE_BULLET)
             {
-                console.log("Agent hit!!!");
-                this.health -= 25;
+                const damage = other.generic_data;
+                this.health -= damage;
             }
         };
     };
+
 
     behaviour()
     {
@@ -376,7 +401,39 @@ class Human extends Agent
             this.unfriendly_behaviour();
         }
 
+        if (this.health < 90.0)
+        {
+            this.retreat_and_return();
+        }
+
         this.timer += deltaTime;
+    };
+
+
+    attack( body )
+    {
+        const dir = vec2_dir(body.position, this.body.position);
+        const tangent = vec2_tangent(dir);
+
+        const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
+        this.body.setRotation(vec2_angle(dir));
+
+        const radiusSQ = max(this.body.radius, body.radius)**2;
+
+        if (distance2(...this.body.position, ...body.position) < 2*radiusSQ);
+        {
+            this.body.position[0] -= dir[0] * 0.02*deltaTime;
+            this.body.position[1] -= dir[1] * 0.02*deltaTime;
+        }
+
+        this.body.position[0] += tangent[0] * 0.02*deltaTime;
+        this.body.position[1] += tangent[1] * 0.02*deltaTime;
+
+        if (this.timer >= this.weapon.cooldown)
+        {
+            this.weapon.pew(...origin, ...dir);
+            this.timer = 0.0;
+        }
     };
 
 
@@ -400,15 +457,8 @@ class Human extends Agent
                 continue;
             }
 
-            const dir = vec2_dir(body.position, this.body.position);
-            const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
-            this.body.setRotation(vec2_angle(dir));
-
-            if (this.timer >= this.weapon.cooldown)
-            {
-                this.weapon.pew(...origin, ...dir);
-                this.timer = 0.0;
-            }
+            this.attack(body);
+            break;
         }
     };
 
@@ -420,12 +470,6 @@ class Human extends Agent
         const render = engine.getSystem("render");
         const physics = engine.getSystem("physics");
         const bodies = physics.grid.getBodiesXY(...this.body.position);
-
-        // const dir = vec2_dir(player.position, this.body.position);
-        // const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
-
-        // const data = terrain.nearest_intersection(...origin, ...dir);
-        // const end = player.position;
 
         for (let body of bodies)
         {
@@ -439,16 +483,15 @@ class Human extends Agent
                 continue;
             }
 
-            const dir = vec2_dir(body.position, this.body.position);
-            const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
-            this.body.setRotation(vec2_angle(dir));
-
-            if (this.timer >= this.weapon.cooldown)
-            {
-                this.weapon.pew(...origin, ...dir);
-                this.timer = 0.0;
-            }
+            // this.attack(body);
         }
+
+
+        // const dir = vec2_dir(player.position, this.body.position);
+        // const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
+
+        // const data = terrain.nearest_intersection(...origin, ...dir);
+        // const end = player.position;
 
         // if (this.player_visible())
         // {
@@ -468,6 +511,8 @@ class Human extends Agent
     };
 
 };
+
+
 
 
 class Guard extends Agent

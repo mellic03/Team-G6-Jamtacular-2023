@@ -150,6 +150,7 @@ class BulletSystem
         this.bodies[idx].velocity[1] = 4*dir[1];
         this.bodies[idx].hasDrag = false;
         this.bodies[idx].label = type;
+        this.bodies[idx].generic_data = 10;
 
         this.types[idx] = TYPE;
         this.visible[idx] = true;

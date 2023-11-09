@@ -136,6 +136,16 @@ class CollisionGrid
     addBody( body )
     {
         const cell = this.world_to_grid(...body.position);
+
+        if (cell[1] < 0 || cell[1] > COLLISION_SECTORS_Y)
+        {
+            return;
+        }
+        if (cell[0] < 0 || cell[0] > COLLISION_SECTORS_X)
+        {
+            return;
+        }
+
         this.grid[cell[0]][cell[1]].push(body);
     };
 
