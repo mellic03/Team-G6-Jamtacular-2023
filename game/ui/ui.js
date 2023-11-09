@@ -95,7 +95,6 @@ class UISystem
         this.UIgrid.background(100);
 
 
-
         this.UIgrid.menuButton(1, 0, "Heath: " + player.health);
 
         let row = 2;

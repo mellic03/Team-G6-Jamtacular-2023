@@ -2,15 +2,9 @@
 
 
 
-## Things Done
-- graphics
-- selection
-- enemy pew
-- player pew
+# Do Today
+- As a friendly, get list of nearby unfriendlies.
+    - PhysicsGrid.getBodies() with specified range.
 
 
-## Things Not Done
-- gathering behaviour
-- guard behaviour
-- 
 

@@ -1,5 +1,4 @@
 
-
 function dowith_probability( p, callback )
 {
     if (p > random(0, 1))
@@ -7,7 +6,6 @@ function dowith_probability( p, callback )
         callback();
     }
 }
-
 
 
 /** Random number between 0-1 which almost follows a normal distribution.
@@ -41,7 +39,7 @@ function velocityDampening( drag, dx, dy )
 
 function distance2( x1, y1, x2, y2 )
 {
-    return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)
+    return (x1-x2)**2 + (y1-y2)**2;
 }
 
 
@@ -57,3 +55,22 @@ function swap( a, b )
     a = b;
     b = temp;
 }
+
+
+function point_line_dist_SQ( px, py, x1, y1, x2, y2 )
+{
+    const numerator = (x2-x1)*(y1-py) - (x1-px)*(y2-y1);
+    const denominator = (x2-x1)**2 + (y2-y1)**2;
+
+    return numerator**2 / denominator;
+}
+
+
+function point_line_dist( px, py, x1, y1, x2, y2 )
+{
+    const numerator = abs( (x2-x1)*(y1-py) - (x1-px)*(y2-y1) );
+    const denominator = sqrt( (x2-x1)**2 + (y2-y1)**2 );
+
+    return numerator / denominator;
+}
+

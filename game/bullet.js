@@ -1,23 +1,8 @@
 
-const MUZZLE_FLASH_COLOR = [2, 2, 1];
-const HIT_FLASH_COLOR    = [2, 2, 1];
-const BULLET_COLOR       = [200, 200, 100];
 
-
-const BULLET_ENUM     = 2100;
-const PLAYER_BULLET   = 0;
-const GUARD_BULLET    = 1;
-const ATTACKER_BULLET = 2;
-const REE_BULLET      = 3;
-
-const IMG_BULLET = 0;
-const MAX_BULLETS = 100;
-
-
-
-function enum_is_bullet( e )
+function type_is_bullet( e )
 {
-    return BULLET_ENUM + PLAYER_BULLET <= e && e <= BULLET_ENUM + REE_BULLET;
+    return PLAYER_BULLET <= e && e <= REE_BULLET;
 }
 
 
@@ -40,22 +25,22 @@ class BulletSystem
 
     preload( engine )
     {
-        this.sounds[PLAYER_BULLET]   = loadSound("game/assets/weapon.mp3");
-        this.sounds[ATTACKER_BULLET] = loadSound("game/assets/pistol.wav");
-        this.sounds[REE_BULLET]      = loadSound("game/assets/weapon.mp3");
-        this.sounds[PLAYER_BULLET].loop   = false;
-        this.sounds[ATTACKER_BULLET].loop = false;
-        this.sounds[REE_BULLET].loop      = false;
+        this.sounds[PLAYER_BULLET_IDX]   = loadSound("game/assets/weapon.mp3");
+        this.sounds[ATTACKER_BULLET_IDX] = loadSound("game/assets/pistol.wav");
+        this.sounds[REE_BULLET_IDX]      = loadSound("game/assets/weapon.mp3");
+        this.sounds[PLAYER_BULLET_IDX].loop   = false;
+        this.sounds[ATTACKER_BULLET_IDX].loop = false;
+        this.sounds[REE_BULLET_IDX].loop      = false;
 
-        this.bullet_colors[PLAYER_BULLET]   = [200, 200, 0];
-        this.bullet_colors[GUARD_BULLET]    = [200, 200, 0];
-        this.bullet_colors[ATTACKER_BULLET] = [125, 255, 255];
-        this.bullet_colors[REE_BULLET]      = [255, 155, 155];
+        this.bullet_colors[PLAYER_BULLET_IDX]   = [200, 200, 0];
+        this.bullet_colors[GUARD_BULLET_IDX]    = [200, 200, 0];
+        this.bullet_colors[ATTACKER_BULLET_IDX] = [125, 255, 255];
+        this.bullet_colors[REE_BULLET_IDX]      = [255, 155, 155];
 
-        this.hit_colors[PLAYER_BULLET]   = [1, 1, 0.5];
-        this.hit_colors[GUARD_BULLET]    = [1, 1, 0.5];
-        this.hit_colors[ATTACKER_BULLET] = [0.5, 1, 1];
-        this.hit_colors[REE_BULLET]      = [1, 0.5, 0.5];
+        this.hit_colors[PLAYER_BULLET_IDX]   = [1, 1, 0.5];
+        this.hit_colors[GUARD_BULLET_IDX]    = [1, 1, 0.5];
+        this.hit_colors[ATTACKER_BULLET_IDX] = [0.5, 1, 1];
+        this.hit_colors[REE_BULLET_IDX]      = [1, 0.5, 0.5];
     };
 
 
@@ -64,7 +49,7 @@ class BulletSystem
         for (let i=0; i<MAX_BULLETS; i++)
         {
             this.bodies.push(new PhysicsBody(0, 0, 8, 8, "bullet"));
-            this.types.push(PLAYER_BULLET);
+            this.types.push(PLAYER_BULLET_IDX);
         }
 
         const lightSys = engine.getSystem("light");
@@ -119,32 +104,18 @@ class BulletSystem
             const blocktype = intersection[4];
 
 
-            physics.grid.addBody(...pos, this.bodies[i]);
-
             this.bodies[i].resolution = (other) => {
 
-                if (enum_is_bullet(other.label) == false)
+                if (other.label < PLAYER_BULLET || other.label > REE_BULLET)
                 {
-                    this.lightsource.position = other.position;
-                    this.lightsource.diffuse  = this.hit_colors[bullet_type];
-
-                    this.bodies[i].velocity = [0, 0];
-                    this.bodies[i].position = [-1000, -1000];
-                    this.visible[i] = false;
-                    this.active -= 1;
+                    this.destroyBullet(i, ...other.position);
                 }
             };
 
 
             if (dist(...pos, ix, iy) <= deltaTime*vmag)
             {
-                this.lightsource.position = [ix - 16*Math.sign(vel[0]), iy - 16*Math.sign(vel[1])];
-                this.lightsource.diffuse  = this.hit_colors[bullet_type];
-
-                this.bodies[i].velocity = [0, 0];
-                this.bodies[i].position = [-1000, -1000];
-                this.visible[i] = false;
-                this.active -= 1;
+                this.destroyBullet(i, ix - 16*Math.sign(vel[0]), iy - 16*Math.sign(vel[1]));
 
                 dowith_probability(blocktype_hardness(blocktype), () => {
                     terrain.placeSphere(ix, iy, BLOCK_AIR, 1, 16);
@@ -159,6 +130,7 @@ class BulletSystem
     createBullet( x, y, dx, dy, spread=0.0, type=PLAYER_BULLET )
     {
         const terrain = engine.getSystem("terrain");
+        const TYPE = type - BULLET_OFFSET;
 
         this.lightsource2.position   = [x, y];
         this.lightsource2.diffuse    = MUZZLE_FLASH_COLOR;
@@ -177,15 +149,15 @@ class BulletSystem
         this.bodies[idx].velocity[0] = 4*dir[0];
         this.bodies[idx].velocity[1] = 4*dir[1];
         this.bodies[idx].hasDrag = false;
-        this.bodies[idx].label = BULLET_ENUM + type;
+        this.bodies[idx].label = type;
 
-        this.types[idx] = type;
+        this.types[idx] = TYPE;
         this.visible[idx] = true;
         this.active += 1;
 
         this.current = (this.current + 1) % MAX_BULLETS;
 
-        this.sounds[type].play();
+        this.sounds[TYPE].play();
     };
 
 
@@ -193,6 +165,37 @@ class BulletSystem
     {
         const dir = vec2_dir([endx, endy], [startx, starty]);
         this.createBullet(startx, starty, ...dir, spread, type);
+    };
+
+
+    destroyBullet( id, x, y )
+    {
+        const bullet_type = this.types[id];
+
+        this.lightsource.position[0] = x;
+        this.lightsource.position[1] = y;
+        this.lightsource.diffuse  = this.hit_colors[bullet_type];
+
+        this.bodies[id].velocity = [0, 0];
+        this.bodies[id].position = [-1000, -1000 - 100*id];
+        this.visible[id] = false;
+        this.active -= 1;
+    };
+
+
+    addBodies()
+    {
+        const physics = engine.getSystem("physics");
+    
+        for (let i=0; i<MAX_BULLETS; i++)
+        {
+            if (this.visible[i] == false)
+            {
+                continue;
+            }
+        
+            physics.grid.addBody(this.bodies[i]);
+        }
     };
 
 };

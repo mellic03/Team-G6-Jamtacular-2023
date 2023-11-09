@@ -27,7 +27,9 @@ class Factory
 
     createAgent( type )
     {
-        const cost = costof_agent(type);
+        const cost = engine.getSystem("agent").costOf(type);
+
+        console.log(type);
 
         if (this.monies >= cost)
         {
@@ -39,8 +41,6 @@ class Factory
     };
 
 };
-
-
 
 
 

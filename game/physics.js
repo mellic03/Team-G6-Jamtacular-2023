@@ -29,6 +29,8 @@ class PhysicsBody
         this.width  = w;
         this.height = h;
         this.radius = w;
+
+        this.label = label;
     };
 
 
@@ -122,9 +124,9 @@ class CollisionGrid
     };
 
 
-    addBody( x, y, body )
+    addBody( body )
     {
-        const cell = this.world_to_grid(x, y);
+        const cell = this.world_to_grid(...body.position);
         this.grid[cell[0]][cell[1]].push(body);
     };
 
@@ -176,6 +178,12 @@ class CollisionGrid
         }
 
         return bodies;
+    };
+
+
+    getBodiesXY( x, y, range=1 )
+    {
+        return this.getBodies(...this.world_to_grid(x, y));
     };
 
 
@@ -243,11 +251,22 @@ class PhysicsSystem
                 continue;
             }
 
-            const radius = max(body1.radius, body2.radius);
+            const radiusSQ = max(body1.radius, body2.radius)**2;
+            const distanceSQ = distance2(...body1.position, ...body2.position);
 
-            if (distance2(...body1.position, ...body2.position) < radius*radius)
+            if (distanceSQ < deltaTime*deltaTime*body1.velocity_magSq)
             {
-                body1.resolution(body2);
+                const line_dist_SQ = point_line_dist_SQ(
+                    ...body2.position,
+                    ...body1.position,
+                    ...vec2_add(body1.position, body1.velocity)
+                );
+
+                if (line_dist_SQ < radiusSQ)
+                {
+                    body1.resolution(body2);
+                    body2.resolution(body1); 
+                }
             }
         }
     };
@@ -263,10 +282,10 @@ class PhysicsSystem
             for (let col=0; col<COLLISION_SECTORS_X; col++)
             {
                 const neighbours = this.grid.getBodies(row, col);
+
                 for (let body of grid[row][col])
                 {
                     circle(...render.world_to_screen(...body.position), render.world_to_screen_dist(body.radius));
-
                     this.dothing(body, neighbours);
                 }
             }

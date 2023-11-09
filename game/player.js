@@ -20,7 +20,7 @@ class Player
     block_ksize = 8.0;
 
     move_speed   = 2.5;
-    acceleration = 0.225;
+    acceleration = 0.0125;
     drag         = 0.01;
     max_velocity = 1.0;
 
@@ -43,10 +43,12 @@ class Player
 
     };
 
+
     preload()
     {
         this.player_img = loadImage("game/assets/rifle/rifle1.png");
     };
+
 
     setup()
     {
@@ -287,6 +289,7 @@ class Player
 
         else
         {
+            // this.sprite.image(this.player_img);
             this.timer = this.weapon_cooldown;
         }
 

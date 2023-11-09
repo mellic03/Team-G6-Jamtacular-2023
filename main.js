@@ -36,9 +36,14 @@ function draw()
     const viewport_w = render.viewport_w;
     const viewport_h = render.viewport_h;
 
+
+    engine.getSystem("bullet").addBodies();
+    engine.getSystem("agent").addBodies();
+
     terrain.unlock(...render.view_pos, viewport_w, viewport_h);
     engine.draw();
     terrain.lock();
+
 
     avg = (164/165)*avg + (1/165)*frameRate();
     text(avg, 300, 100);

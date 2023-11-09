@@ -1,28 +1,4 @@
-
-const AGENT_GATHERER = 0;
-const AGENT_GUARD    = 1;
-const AGENT_ATTACKER = 2;
-const AGENT_REE      = 3;
-
-const COST_GATHERER = 10.0;
-const COST_GUARD    = 50.0;
-const COST_ATTACKER = 200.0;
-
-
-const AGENT_COSTS = [
-    COST_GATHERER,
-    COST_GUARD,
-    COST_ATTACKER
-];
-
-function costof_agent( type )
-{
-    return AGENT_COSTS[type];
-}
-
-
 let guard0, guard1, guard2, guard3;
-
 
 
 class Agent
@@ -31,6 +7,8 @@ class Agent
     body;
     health = 100.0;
     parent = undefined;
+
+    friendly  = false;
 
     selected  = false;
     energy    = 10.0;
@@ -48,6 +26,21 @@ class Agent
         this.body = new PhysicsBody(random(-150, 150), random(-150, 150), 32, 32, "agent");
         this.body.drag = 0.2;
         this.sprite = sprite;
+
+        this.body.resolution = (other) => {
+
+            if (other.label == PLAYER_BULLET)
+            {
+                console.log("Agent hit!!!");
+                this.health -= 25;
+            }
+        };
+    };
+
+
+    reset()
+    {
+        this.setResolution();
     };
 
 
@@ -142,16 +135,21 @@ class Agent
 
     };
 
+
+    setResolution()
+    {
+        const agent = this;
+
+
+    };
+
+
     onHit()
     {
 
     };
 
 };
-
-
-const SILVER_VALUE = 1.0;
-const GOLD_VALUE   = 10.0;
 
 
 class Gatherer extends Agent
@@ -288,6 +286,8 @@ class Gatherer extends Agent
 };
 
 
+
+
 class Attacker extends Agent
 {
     weapon_spread   = 0.3;
@@ -364,6 +364,36 @@ class REE extends Agent
 
     behaviour()
     {
+        if (this.friendly)
+        {
+            this.friendly_behaviour();
+        }
+
+        else
+        {
+            this.unfriendly_behaviour();
+        }
+    
+        this.timer += deltaTime;
+    };
+
+
+    friendly_behaviour()
+    {
+        const physics = engine.getSystem("physics");
+
+        // Search for unfriendlies
+        const bodies = physics.grid.getBodiesXY(...this.body.position);
+        
+        for (let body of bodies)
+        {
+
+        }
+    };
+
+
+    unfriendly_behaviour()
+    {
         const terrain = engine.getSystem("terrain");
         const player = engine.getSystem("player");
         const render = engine.getSystem("render");
@@ -387,249 +417,15 @@ class REE extends Agent
                 this.timer = 0.0;
             }
         }
-    
-        this.timer += deltaTime;
     };
 
 };
 
 
-
-const NUM_FACTORIES = 4;
-const MAX_AGENTS = 100;
-
-
-
-function rerere2(a, b)
+class Guard extends Agent
 {
-    console.log("WOWOPWOPWOPW");
-}
-
-
-class AgentSystem
-{
-    agentGroup;
-    sprites      = [  ];
-    costs        = [  ];
-    constructors = [  ];
-
-    agents       = [  ];
-    active       = [  ];
-    num_active   = 0;
-    current_idx  = 0;
-
-
-    preload( engine )
+    behaviour()
     {
-        this.agentGroup = new Group();
-
-        this.sprites[AGENT_GATHERER] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_GATHERER].image(loadImage("gatherer.png"));
-
-        this.sprites[AGENT_GUARD] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_GUARD].image(loadImage("guard.png"));
-
-        this.sprites[AGENT_ATTACKER] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_ATTACKER].image(loadImage("attacker.png"));
-
-        this.sprites[AGENT_REE] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_REE].image(loadImage("game/assets/rifle/rifle1.png"));
-
-        guard0 = loadImage("game/assets/guard/0.png", (img) => {img.resize(32, 64)});
-        guard1 = loadImage("game/assets/guard/1.png", (img) => {img.resize(32, 64)});
-        guard2 = loadImage("game/assets/guard/2.png", (img) => {img.resize(32, 64)});
-        guard3 = loadImage("game/assets/guard/3.png", (img) => {img.resize(32, 64)});
-
-    };
-
-
-    setup( engine )
-    {
-        this.costs[AGENT_GATHERER] = 10;
-        this.costs[AGENT_GUARD]    = 50;
-        this.costs[AGENT_ATTACKER] = 100;
-
-        this.constructors[AGENT_GATHERER] = Gatherer;
-        this.constructors[AGENT_GUARD]    = Guard;
-        this.constructors[AGENT_ATTACKER] = Attacker;
-        this.constructors[AGENT_REE]      = REE;
-
-        for (let i=0; i<MAX_AGENTS; i++)
-        {
-            this.agents.push(null);
-            this.active.push(false);
-        }
-
-        this.createAgent(AGENT_REE, undefined);
-    };
-
-
-    draw( engine )
-    {
-        const terrain = engine.getSystem("terrain");
-        const player  = engine.getSystem("player");
-        const physics = engine.getSystem("physics");
-        const grid = physics.grid;
-
-        if (this.num_active == 0)
-        {
-            return;
-        }
-
-        const data = engine.getEvent("player", "selection");
-        this.find_selected(data);
-
-        for (let i=0; i<MAX_AGENTS; i++)
-        {
-            if (this.active[i] == false)
-            {
-                continue;
-            }
-
-            const agent = this.agents[i];
-            agent.draw();
-
-
-            grid.addBody(...agent.body.position, agent.body);
-
-            agent.body.resolution = (other) => {
-                if (other.label == BULLET_ENUM+PLAYER_BULLET)
-                {
-                    console.log("Agent hit!!!");
-                    agent.health -= 25;
-                }
-            };
-
-
-            if (agent.health <= 0.0)
-            {
-                this.active[i] = false;
-            }
-        }
-    };
-
-
-    for_each( lambda )
-    {
-        for (let i=0; i<MAX_AGENTS; i++)
-        {
-            if (this.active[i] == false)
-            {
-                continue;
-            }
-
-            lambda(this.agents[i], i);
-        }
-    };
-
-
-    find_selected( data )
-    {
-        if (data == undefined)
-        {
-            this.deselect_all();
-            return;
-        }
-
-        if (data.header == "target")
-        {
-
-            for (let i=0; i<MAX_AGENTS; i++)
-            {
-                if (this.active[i] == false)
-                {
-                    continue;
-                }
-    
-                const collector = this.agents[i];
-
-                if (collector.selected == true)
-                {
-                    collector.set_target(data.target);
-                    collector.selected = false;
-                }
-            }
-        }
-
-        else if (data.header == "selection")
-        {
-            const tl = data.tl;
-            const br = data.br;
-
-            const xmin = tl[0];
-            const ymin = tl[1];
-            const xmax = br[0];
-            const ymax = br[1];
-
-
-            for (let i=0; i<MAX_AGENTS; i++)
-            {
-                if (this.active[i] == false)
-                {
-                    continue;
-                }
-    
-                const collector = this.agents[i];
-            
-                const px = collector.body.position[0];
-                const py = collector.body.position[1];
-
-                if (xmin < px && px < xmax && ymin < py && py < ymax)
-                {
-                    const screenspace = engine.getSystem("render").world_to_screen(px, py);
-                    collector.selected = true;
-                    circle(...screenspace, 20);
-                }
-
-                else
-                {
-                    collector.selected = false;
-                }
-            }
-        }
-    };
-
-
-    deselect_all()
-    {
-        for (let i=0; i<MAX_AGENTS; i++)
-        {
-            if (this.active[i] == false)
-            {
-                continue;
-            }
-
-            const collector = this.agents[i];
-            collector.selected = false;
-        }
-    };
-
-
-    createAgent( type, parent=undefined )
-    {
-        const id = valueof(this.current_idx);
-
-        this.agents[id] = new this.constructors[type](this.sprites[type]);
-        this.agents[id].parent = parent;
-        this.active[id] = true;
-        this.num_active += 1;
-
-        this.current_idx = (this.current_idx + 1) % MAX_AGENTS;
-
-        return id;
-    };
-
-
-    destroyAgent( id )
-    {
-        this.active[id] = true;
-        this.num_active -= 1;
-    };
-
-
-    costOf( type )
-    {
-        return this.costs[type];
+        
     };
 };
-
