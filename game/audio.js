@@ -2,6 +2,7 @@
 
 class AudioSystem
 {
+    bgm = [0];
 
     constructor()
     {
@@ -10,11 +11,13 @@ class AudioSystem
 
     preload( engine )
     {
+        this.bgm[0] = loadSound("game/assets/bgm.mp3");
 
     };
 
     setup( engine )
     {
+        bgm[0].loop();
 
     };
 
