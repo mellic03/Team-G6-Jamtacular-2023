@@ -94,6 +94,10 @@ class UISystem
 
         this.UIgrid.background(100);
 
+
+
+        this.UIgrid.menuButton(1, 0, "Heath: " + player.health);
+
         let row = 2;
         this.UIgrid.menuButton(row+0, 0, "$" + playerFactory.monies);
         this.UIgrid.menuButton(row+0, 1, "Ammo: " + player.ammo);

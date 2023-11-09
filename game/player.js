@@ -20,7 +20,7 @@ class Player
     block_ksize = 8.0;
 
     move_speed   = 2.5;
-    acceleration = 0.0125;
+    acceleration = 0.225;
     drag         = 0.01;
     max_velocity = 1.0;
 
@@ -50,7 +50,7 @@ class Player
 
     setup()
     {
-        this.sprite = new BSprite();
+        this.sprite = new BSprite(32, 32, 64, 64, allSprites);
         this.sprite.image(this.player_img);
 
         this.player_img.resize(128, 128);
@@ -85,8 +85,10 @@ class Player
         if (this.health <= 0)
         {
             this.position = [0, 0];
-            this.ammo = 0.0;
+            // this.ammo = 0.0;
             this.velocity = [0, 0];
+
+            this.health = 100;
         }
 
     };
@@ -254,25 +256,30 @@ class Player
     {
         const render = engine.getSystem("render");
         const keylog = engine.getSystem("keylog");
+        const terrain = engine.getSystem("terrain");
         const bulletSys = engine.getSystem("bullet");
-        
-        // const screenspace = render.world_to_screen(...this.position);
 
         let dir = vec2_dir(render.mouse_worldspace, this.position);
-        // let end = [screenspace[0]+64*dir[0], screenspace[1]+64*dir[1]];
+        let tangent = vec2_tangent(dir);
+        let origin = vec2_add(this.position, vec2_mult(tangent, 7));
 
-        // stroke(255, 255, 255, 100);
-        // strokeWeight(4);
-        // line(...screenspace, ...end);
-        // strokeWeight(1);
+
+        const data = terrain.nearest_intersection(...origin, ...dir);
+        const end = [data[0], data[1]];
+
+        stroke(255, 0, 0, 100);
+        fill(255, 0, 0, 100);
+        line(...render.world_to_screen(...origin), ...render.world_to_screen(...end));
+        circle(...render.world_to_screen(...end), 10);
 
         if (keylog.mouseDown())
         {
             if (this.timer >= this.weapon_cooldown && this.ammo > 0)
             {
-                bulletSys.createBullet(...this.position, ...dir, this.weapon_spread);
+
+                bulletSys.createBullet(...origin, ...dir, this.weapon_spread);
                 this.ammo -= 1;
-                this.view_offset2 = vec2_sub(this.view_offset2, vec2_mult(dir, 15.0));
+                this.view_offset2 = vec2_sub(this.view_offset2, vec2_mult(dir, 150/deltaTime));
 
                 this.timer = 0;
             }
@@ -280,7 +287,6 @@ class Player
 
         else
         {
-            // this.sprite.image(this.player_img);
             this.timer = this.weapon_cooldown;
         }
 

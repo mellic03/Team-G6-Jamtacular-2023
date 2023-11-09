@@ -54,7 +54,7 @@ class FactorySystem
 
     preload( engine )
     {
-        this.sprites[FACTORY_PLAYER] = new BSprite();
+        this.sprites[FACTORY_PLAYER] = new BSprite(0, 0, 32, 32);
         this.sprites[FACTORY_PLAYER].image(loadImage("factory.png"));
     };
 

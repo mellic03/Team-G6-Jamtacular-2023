@@ -59,8 +59,13 @@ function vec2_normalize( v )
 }
 
 
-
 function vec2_valueof( v )
 {
     return [ valueof(v[0]), valueof(v[1]) ];
+}
+
+
+function vec2_angle( v )
+{
+    return atan2(v[1], v[0]);
 }

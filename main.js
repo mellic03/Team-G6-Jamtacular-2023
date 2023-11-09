@@ -10,6 +10,7 @@ engine.addSystem( new AgentSystem(),   "agent"   );
 engine.addSystem( new BulletSystem(),  "bullet"  );
 engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new Player(),        "player"  );
+engine.addSystem( new PhysicsSystem(), "physics" );
 engine.addSystem( new UISystem(),      "ui"      );
 
 
@@ -39,6 +40,6 @@ function draw()
     engine.draw();
     terrain.lock();
 
-    avg = (59/60)*avg + (1/60)*frameRate();
+    avg = (164/165)*avg + (1/165)*frameRate();
     text(avg, 300, 100);
 }

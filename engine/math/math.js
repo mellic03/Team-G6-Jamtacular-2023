@@ -12,16 +12,16 @@ function dowith_probability( p, callback )
 
 /** Random number between 0-1 which almost follows a normal distribution.
  */
-function basicallyNormalDistribution( iterations=1 )
+function basicallyNormalDistribution( sigma=1 )
 {
     let total = 0.0;
 
-    for (let i=1; i<=iterations; i++)
+    for (let i=1; i<=sigma; i++)
     {
         total += random(-1/i, +1/i);
     }
 
-    return total / iterations;
+    return total / sigma;
 };
 
 
