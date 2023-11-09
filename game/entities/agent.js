@@ -121,13 +121,15 @@ class Agent
 
     retreat_and_return()
     {
+        if (this.parent == undefined)
+        {
+            return;
+        }
+
         if (this.at_home())
         {
-            console.log("At home!");
-
             this.health = 100.0;
             this.set_target(this.last_target);
-            console.log("REVERSED: ", this.last_target);
             this.retreating = false;
         }
 
@@ -401,7 +403,7 @@ class Human extends Agent
             this.unfriendly_behaviour();
         }
 
-        if (this.health < 90.0)
+        if (this.health < 25.0)
         {
             this.retreat_and_return();
         }
@@ -413,21 +415,21 @@ class Human extends Agent
     attack( body )
     {
         const dir = vec2_dir(body.position, this.body.position);
-        const tangent = vec2_tangent(dir);
+        // const tangent = vec2_tangent(dir);
 
         const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
         this.body.setRotation(vec2_angle(dir));
 
-        const radiusSQ = max(this.body.radius, body.radius)**2;
+        // const radiusSQ = max(this.body.radius, body.radius)**2;
 
-        if (distance2(...this.body.position, ...body.position) < 2*radiusSQ);
-        {
-            this.body.position[0] -= dir[0] * 0.02*deltaTime;
-            this.body.position[1] -= dir[1] * 0.02*deltaTime;
-        }
+        // if (distance2(...this.body.position, ...body.position) < 2*radiusSQ);
+        // {
+        //     this.body.position[0] -= dir[0] * 0.02*deltaTime;
+        //     this.body.position[1] -= dir[1] * 0.02*deltaTime;
+        // }
 
-        this.body.position[0] += tangent[0] * 0.02*deltaTime;
-        this.body.position[1] += tangent[1] * 0.02*deltaTime;
+        // this.body.position[0] += tangent[0] * 0.02*deltaTime;
+        // this.body.position[1] += tangent[1] * 0.02*deltaTime;
 
         if (this.timer >= this.weapon.cooldown)
         {
@@ -483,7 +485,7 @@ class Human extends Agent
                 continue;
             }
 
-            // this.attack(body);
+            this.attack(body);
         }
 
 
