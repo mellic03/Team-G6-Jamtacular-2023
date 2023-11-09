@@ -40,7 +40,7 @@ class TerrainSystem
     pathfinder = new PathFinder();
 
     shaders  = [  ];
-    fidelity = 1;
+    fidelity = 3;
 
     mapimg;
     maptxt;
@@ -128,6 +128,12 @@ class TerrainSystem
 
     draw( engine )
     {
+        if (this.is_devmode())
+        {
+            this.__draw_devmode();
+            return;
+        }
+
         const render = engine.getSystem("render");
         const player = engine.getSystem("player");
         const pg = render.offlineContext(0);
@@ -179,6 +185,43 @@ class TerrainSystem
             this.pathfinder.draw();
         }
 
+    };
+
+
+    __draw_devmode()
+    {
+        const render = engine.getSystem("render");
+        const player = engine.getSystem("player");
+        const pg = render.offlineContext(0);
+
+        const viewport_w = render.viewport_w;
+        const viewport_h = render.viewport_h;
+
+
+        pg.background(0);
+        pg.shader(this.getShader());
+
+        this.__set_common_uniforms(engine);
+
+        this.getShader().setUniform("un_view_pos", render.view_pos);
+        this.getShader().setUniform("mouseX", mouseX - viewport_w/2);
+        this.getShader().setUniform("mouseY", mouseY - viewport_h/2);
+
+
+        let row = 0;
+        let col = 0;
+
+        for (let row=0; row<SECTORS_Y; row++)
+        {
+            for (let col=0; col<SECTORS_X; col++)
+            {
+                this.getShader().setUniform("un_quadtree", this.sectors[row][col].buffer());
+                this.getShader().setUniform("un_quadtree_pos", [col*QUADTREE_SPAN, row*QUADTREE_SPAN]);
+                pg.rect(0, 0, viewport_w, viewport_h);
+            }
+        }
+
+        image(pg, 0, 0, viewport_w, viewport_h);
     };
 
 

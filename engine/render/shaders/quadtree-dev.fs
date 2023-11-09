@@ -32,15 +32,8 @@ uniform int QUADTREE_HALF_SPAN;
 // uniform sampler2D un_quadtree;
 // uniform vec2 un_quadtree_pos;
 
-uniform sampler2D un_quadtree0;
-uniform sampler2D un_quadtree1;
-uniform sampler2D un_quadtree2;
-uniform sampler2D un_quadtree3;
-
-uniform vec2 un_quadtree_pos0;
-uniform vec2 un_quadtree_pos1;
-uniform vec2 un_quadtree_pos2;
-uniform vec2 un_quadtree_pos3;
+uniform sampler2D un_quadtree;
+uniform vec2 un_quadtree_pos;
 
 uniform vec2 un_view_pos;
 uniform vec2 un_player_pos;
@@ -111,7 +104,6 @@ float blocktype_parallax( int blocktype )
 }
 
 
-
 struct QuadNode
 {
     int idx;
@@ -134,7 +126,7 @@ vec2 uv_to_screen( vec2 uv )
     uv.y = 1.0 - uv.y;
     uv -= 0.5;
 
-    uv *= 2.0;
+    uv *= 4.0;
 
     return vec2(VIEWPORT_W, VIEWPORT_H) * uv;
 }
@@ -164,21 +156,12 @@ float rand( vec2 seed )
 }
 
 
-QuadNode node_from_texture( int group_id, int quadrant, int quadtree_idx )
+QuadNode node_from_texture( int group_id, int quadrant )
 {
     int idx = 4*group_id + quadrant;
     ivec2 uv = xy_from_idx(idx);
 
-    vec4 data;
-
-    switch (quadtree_idx)
-    {
-        default:
-        case 0: data = texelFetch(un_quadtree0, uv, 0); break;
-        case 1: data = texelFetch(un_quadtree1, uv, 0); break;
-        case 2: data = texelFetch(un_quadtree2, uv, 0); break;
-        case 3: data = texelFetch(un_quadtree3, uv, 0); break;
-    }
+    vec4 data = texelFetch(un_quadtree, uv, 0);
 
     QuadNode node;
 
@@ -215,62 +198,15 @@ vec2 get_offset( int quadrant, vec2 center, float span )
 }
 
 
-int get_quadtree_idx( vec2 pos )
+QuadNode get_quadnode( vec2 pos )
 {
-    float dist0 = distance(pos, un_quadtree_pos0);
-    float dist1 = distance(pos, un_quadtree_pos1);
-    float dist2 = distance(pos, un_quadtree_pos2);
-    float dist3 = distance(pos, un_quadtree_pos3);
-
-    float min_dist = min(dist0, min(dist1, min(dist2, dist3)));
-
-    if (min_dist == dist0)
-    {
-        return 0;
-    }
-
-    if (min_dist == dist1)
-    {
-        return 1;
-    }
-
-    if (min_dist == dist2)
-    {
-        return 2;
-    }
-
-    if (min_dist == dist3)
-    {
-        return 3;
-    }
-
-
-    return -1;
-}
-
-
-vec2 quadtree_pos( int idx )
-{
-    switch (idx)
-    {
-        default:
-        case 0: return un_quadtree_pos0;
-        case 1: return un_quadtree_pos1;
-        case 2: return un_quadtree_pos2;
-        case 3: return un_quadtree_pos3;
-    }
-}
-
-
-QuadNode get_quadnode( vec2 pos, int quadtree_idx )
-{
-    vec2 center  = quadtree_pos(quadtree_idx);
+    vec2 center  = un_quadtree_pos;
     float span   = float(QUADTREE_SPAN);
 
     int group_id = 0;
     int quadrant = get_quadrant(pos, center);
 
-    QuadNode node = node_from_texture(group_id, quadrant, quadtree_idx);
+    QuadNode node = node_from_texture(group_id, quadrant);
 
     center += get_offset(quadrant, center, span);
     span /= 2.0;
@@ -281,7 +217,7 @@ QuadNode get_quadnode( vec2 pos, int quadtree_idx )
 
         group_id = node.children_id;
 
-        node = node_from_texture(group_id, quadrant, quadtree_idx);
+        node = node_from_texture(group_id, quadrant);
 
         center += get_offset(quadrant, center, span);
         span /= 2.0;
@@ -347,19 +283,16 @@ float attenuation_function( float dist, float constant, float linear, float quad
 #define SOLID_QUADRATIC 1.0
 
 
-float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight light )
+float trace_direct_multiTree( vec2 start, vec2 end, Pointlight light )
 {
-    int end_idx = get_quadtree_idx(light.position);
-
-
     vec2 ray_pos = start;
     vec2 ray_dir = normalize(end - start);
     float ray_length = 0.0;
 
     float dist = distance(start, end);
 
-    QuadNode end_node = get_quadnode(end, end_idx);
-    QuadNode node = get_quadnode(ray_pos, start_idx);
+    QuadNode end_node = get_quadnode(end);
+    QuadNode node = get_quadnode(ray_pos);
 
 
     if (node.blocktype > 0)
@@ -378,8 +311,7 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight li
         ray_length += step_size;
         ray_pos += step_size*ray_dir;
 
-        int quadtree_idx = get_quadtree_idx(ray_pos);
-        node = get_quadnode(ray_pos, quadtree_idx);
+        node = get_quadnode(ray_pos);
 
         if (node.blocktype > 0)
         {
@@ -434,12 +366,22 @@ float trace_direct( vec2 start, vec2 end, int quadtree_idx )
 vec3 render_quadtree()
 {
     vec2 worldspace = un_view_pos + uv_to_screen(fsin_texcoord);
-    int frag_quadtree_idx = get_quadtree_idx(worldspace);
-    int view_quadtree_idx = get_quadtree_idx(un_view_pos);
 
-    vec2 screenspace = worldspace - quadtree_pos(frag_quadtree_idx);
+    float half_span = float(QUADTREE_HALF_SPAN);
 
-    QuadNode node = get_quadnode(worldspace, frag_quadtree_idx);
+    if (worldspace.x < un_quadtree_pos.x - half_span || worldspace.x > un_quadtree_pos.x + half_span)
+    {
+        discard;
+    }
+
+    if (worldspace.y < un_quadtree_pos.y - half_span || worldspace.y > un_quadtree_pos.y + half_span)
+    {
+        discard;
+    }
+
+    vec2 screenspace = worldspace - un_quadtree_pos;
+
+    QuadNode node = get_quadnode(worldspace);
     
     float coarseness = blocktype_coarseness(node.blocktype);
     vec2  parallax   = blocktype_parallax(node.blocktype) * un_view_pos;
