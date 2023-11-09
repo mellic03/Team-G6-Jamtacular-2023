@@ -13,7 +13,7 @@ class Agent
     energy    = 10.0;
     inventory = [ 0, 0, 0, 0 ];
 
-    last_target = [ 0, 0 ];
+    last_target    = [ 0, 0 ];
     current_target = [ 0, 0 ];
 
     path = [  ];
@@ -28,6 +28,16 @@ class Agent
         this.body = new PhysicsBody(random(-150, 150), random(-150, 150), 32, 32, "agent");
         this.body.drag = 0.2;
         this.sprite = sprite;
+    
+                
+        this.body.resolution = (other) => {
+
+            if (other.label >= PLAYER_BULLET && other.label <= REE_BULLET)
+            {
+                const damage = other.generic_data;
+                this.health -= damage;
+            }
+        };
     };
 
 
@@ -379,15 +389,7 @@ class Human extends Agent
     constructor( sprite )
     {
         super(sprite);
-        
-        this.body.resolution = (other) => {
 
-            if (other.label >= PLAYER_BULLET && other.label <= REE_BULLET)
-            {
-                const damage = other.generic_data;
-                this.health -= damage;
-            }
-        };
     };
 
 
@@ -488,28 +490,6 @@ class Human extends Agent
             this.attack(body);
         }
 
-
-        // const dir = vec2_dir(player.position, this.body.position);
-        // const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
-
-        // const data = terrain.nearest_intersection(...origin, ...dir);
-        // const end = player.position;
-
-        // if (this.player_visible())
-        // {
-        //     stroke(255, 0, 0, 100);
-        //     fill(255, 0, 0, 100);
-        //     line(...render.world_to_screen(...origin), ...render.world_to_screen(...end));
-        //     circle(...render.world_to_screen(...end), 10);
-
-        //     this.body.setRotation(vec2_angle(dir));
-
-        //     if (this.timer >= this.weapon.cooldown)
-        //     {
-        //         this.weapon.pew(...origin, ...dir);
-        //         this.timer = 0.0;
-        //     }
-        // }
     };
 
 };
