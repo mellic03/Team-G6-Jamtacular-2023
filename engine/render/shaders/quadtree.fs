@@ -347,7 +347,7 @@ float attenuation_function( float dist, float constant, float linear, float quad
 
 float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight light )
 {
-    int end_idx = get_quadtree_idx(light.position);
+    int end_idx = get_quadtree_idx(end);
 
     vec2 ray_pos = start;
     vec2 ray_dir = normalize(end - start);
@@ -390,8 +390,8 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight li
 
 uniform float un_increment;
 
-#define DIAMETER 32.0
-#define RADIUS   16.0
+#define DIAMETER 64.0
+#define RADIUS   32.0
 
 
 float trace_soft( vec2 frag_pos, int frag_quadtree_idx, Pointlight light )
@@ -417,7 +417,6 @@ float trace_soft( vec2 frag_pos, int frag_quadtree_idx, Pointlight light )
 }
 
 
-
 vec3 render_quadtree()
 {
     vec2 worldspace = un_view_pos + uv_to_screen(fsin_texcoord);
@@ -432,10 +431,6 @@ vec3 render_quadtree()
     vec2  parallax   = blocktype_parallax(node.blocktype) * un_view_pos;
     float intensity  = rand(vec2(ivec2(coarseness*(worldspace - parallax))));
     float variation  = blocktype_variation(node.blocktype);
-
-    // float direct_0 = trace_direct_multiTree(worldspace, un_pointlight_0.position, frag_quadtree_idx, un_pointlight_0);
-    // float direct_1 = trace_direct_multiTree(worldspace, un_pointlight_1.position, frag_quadtree_idx, un_pointlight_1);
-    // float direct_2 = trace_direct_multiTree(worldspace, un_pointlight_2.position, frag_quadtree_idx, un_pointlight_2);
 
     float direct_0 = trace_soft(worldspace, frag_quadtree_idx, un_pointlight_0);
     float direct_1 = trace_soft(worldspace, frag_quadtree_idx, un_pointlight_1);
