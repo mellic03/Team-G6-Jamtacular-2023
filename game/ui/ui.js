@@ -138,22 +138,22 @@ class UISystem
 
 
 
-        this.UIgrid.menuButton(row+6, 0, "Map", () => {
+        this.UIgrid.menuButton(row+4, 0, "Map", () => {
             player.tool_mode = TOOL_NONE;
             this.modals[MODAL_MAP].show();
         });
 
-        this.UIgrid.menuButton(row+6, 1, "Settings", () => {
+        this.UIgrid.menuButton(row+4, 1, "Settings", () => {
             player.tool_mode = TOOL_NONE;
             this.modals[MODAL_SETTINGS].show();
         });
 
 
-        this.UIgrid.menuButton(row+7, 0, "light A", () => {
+        this.UIgrid.menuButton(row+5, 0, "light A", () => {
             player.tool_mode = TOOL_LIGHT_A;
         }, player.tool_mode == TOOL_LIGHT_A);
 
-        this.UIgrid.menuButton(row+7, 1, "light B", () => {
+        this.UIgrid.menuButton(row+5, 1, "light B", () => {
             player.tool_mode = TOOL_LIGHT_B;
         }, player.tool_mode == TOOL_LIGHT_B);
 
@@ -164,7 +164,7 @@ class UISystem
 
         this.UIgrid.menuButton(row+0, 0, "Rect", () => {
             player.tool_mode = TOOL_RECT
-        }, player.tool_mode == TOOL_RECT);
+        }, player.tool_mode === TOOL_RECT);
 
         this.UIgrid.menuButton(row+0, 1, "Flip", () => {
             [player.rect_w, player.rect_h] = [player.rect_h, player.rect_w];
@@ -181,13 +181,19 @@ class UISystem
 
         this.UIgrid.menuButton(row+2, 0, "Height/2", () => {
             player.rect_h /= 2;
-
         });
 
         this.UIgrid.menuButton(row+2, 1, "Height*2", () => {
             player.rect_h *= 2;
         });
 
+        this.UIgrid.menuButton(row+3, 0, "-22.5", () => {
+            player.rect_r -= 22.5;
+        });
+
+        this.UIgrid.menuButton(row+3, 1, "+22.5", () => {
+            player.rect_r += 22.5;
+        });
 
     };
 
@@ -228,24 +234,28 @@ class UISystem
 
         let row = 4;
 
-        this.BRUSHgrid.menuButton(row+0, 0, "span*2", () => {
+        this.BRUSHgrid.menuButton(row+0, 0, "Circle", () => {
+            player.tool_mode = TOOL_TERRAIN
+        }, player.tool_mode === TOOL_TERRAIN);
+
+        this.BRUSHgrid.menuButton(row+1, 0, "span*2", () => {
             blockspan *= 2;
         });
-        this.BRUSHgrid.menuButton(row+0, 1, "span/2", () => {
+        this.BRUSHgrid.menuButton(row+1, 1, "span/2", () => {
             blockspan /= 2;
         });
 
-        this.BRUSHgrid.menuButton(row+1, 0, "ksize*2", () => {
+        this.BRUSHgrid.menuButton(row+2, 0, "ksize*2", () => {
             ksize *= 2;
         });
-        this.BRUSHgrid.menuButton(row+1, 1, "ksize/2", () => {
+        this.BRUSHgrid.menuButton(row+2, 1, "ksize/2", () => {
             ksize /= 2;
         });
 
 
         row = 8;
 
-        let using_terrain = player.tool_mode == TOOL_TERRAIN;
+        let using_terrain = player.tool_mode === TOOL_TERRAIN || player.tool_mode === TOOL_RECT;
 
         this.BRUSHgrid.menuButton(row+0, 0, "air", () => {
             player.tool_mode = TOOL_TERRAIN;

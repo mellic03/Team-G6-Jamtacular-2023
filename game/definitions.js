@@ -41,8 +41,8 @@ const AGENT_COSTS = [
 // --------------------------------------------------------
 const BULLET_OFFSET = 1000;
 
-const MUZZLE_FLASH_COLOR = [2, 2, 1];
-const HIT_FLASH_COLOR    = [2, 2, 1];
+const MUZZLE_FLASH_COLOR = [0.5, 0.5, 0.25];
+const HIT_FLASH_COLOR    = [0.5, 0.5, 0.25];
 const BULLET_COLOR       = [200, 200, 100];
 
 

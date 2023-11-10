@@ -171,11 +171,17 @@ class MenuGrid
         let rectfill = 100;
         let textfill = 255;
 
-        if (selected || point_in_AABB(mouseX, mouseY, ...position, width, height))
+        if (selected)
         {
             rectfill = 255;
             textfill = 100;
-            
+        }
+
+        if (point_in_AABB(mouseX, mouseY, ...position, width, height))
+        {
+            rectfill = 255;
+            textfill = 100;
+
             if (keylog.mouseClicked() && callback != undefined)
             {
                 callback();

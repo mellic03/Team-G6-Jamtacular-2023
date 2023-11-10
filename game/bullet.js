@@ -37,7 +37,7 @@ class BulletSystem
         this.bullet_colors[ATTACKER_BULLET_IDX] = [125, 255, 255];
         this.bullet_colors[REE_BULLET_IDX]      = [255, 155, 155];
 
-        this.hit_colors[PLAYER_BULLET_IDX]   = [1, 1, 0.5];
+        this.hit_colors[PLAYER_BULLET_IDX]   = [0.5, 0.5, 0.25];
         this.hit_colors[GUARD_BULLET_IDX]    = [1, 1, 0.5];
         this.hit_colors[ATTACKER_BULLET_IDX] = [0.5, 1, 1];
         this.hit_colors[REE_BULLET_IDX]      = [1, 0.5, 0.5];
@@ -146,8 +146,8 @@ class BulletSystem
 
         this.bodies[idx].position[0] = x;
         this.bodies[idx].position[1] = y;
-        this.bodies[idx].velocity[0] = 4*dir[0];
-        this.bodies[idx].velocity[1] = 4*dir[1];
+        this.bodies[idx].velocity[0] = 3*dir[0];
+        this.bodies[idx].velocity[1] = 3*dir[1];
         this.bodies[idx].hasDrag = false;
         this.bodies[idx].label = type;
         this.bodies[idx].generic_data = 10;

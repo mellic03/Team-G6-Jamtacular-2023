@@ -35,6 +35,7 @@ class Player
     tool_mode     = TOOL_TERRAIN;
     rect_w        = 128;
     rect_h        = 64;
+    rect_r        = 0.0;
 
     position      = [0.0, 0.1];
     view_offset   = [0.0, 0.0];
@@ -252,21 +253,44 @@ class Player
 
         let screen_w   = render.world_to_screen_dist(this.rect_w);
         let screen_h   = render.world_to_screen_dist(this.rect_h);
-        rect(mouseX, mouseY, screen_w, screen_h);
+
 
         let world_pos = render.mouse_worldspace;
+
+        world_pos[0] = 16 * Math.floor(world_pos[0] / 16);
+        world_pos[1] = 16 * Math.floor(world_pos[1] / 16);
+
+        let screenspace = render.world_to_screen(...world_pos);
+
+        translate(+screenspace[0], +screenspace[1]);
+        rotate(this.rect_r)
+        translate(-screenspace[0], -screenspace[1]);
+
+        rect(...screenspace, screen_w, screen_h);
+
+        translate(+screenspace[0], +screenspace[1]);
+        rotate(-this.rect_r)
+        translate(-screenspace[0], -screenspace[1]);
+
 
 
         if (mouseIsPressed)
         {
+            const sinr = sin(this.rect_r);
+            const cosr = cos(this.rect_r);
+
             for (let y=-this.rect_h/2; y<+this.rect_h/2; y++)
             {
                 for (let x=-this.rect_w/2; x<+this.rect_w/2; x++)
                 {
-                    terrain.placeBlock(world_pos[0]+x, world_pos[1]+y, this.block_type, 16);
+                    const X = x*cosr - y*sinr;
+                    const Y = y*cosr + x*sinr;
+
+                    terrain.placeBlock(world_pos[0]+X, world_pos[1]+Y, this.block_type, 8);
                 }
             }
         }
+
 
     };
 
