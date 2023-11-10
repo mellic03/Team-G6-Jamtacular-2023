@@ -13,14 +13,14 @@ class AudioSystem
     preload( engine )
     {
         this.bgm[TRACK_1] = loadSound("game/assets/bgm.mp3");
-        this.bgm[TRACK_2] = loadSound("game/assets/bgm2.mp3");
+        this.bgm[TRACK_2] = loadSound("game/assets/bgm3.mp3");
 
 
     };
 
     setup( engine )
     {
-        this.bgm[TRACK_1].play();
+        this.bgm[TRACK_2].loop();
         //this.bgm[TRACK_2].play();
 
     };
