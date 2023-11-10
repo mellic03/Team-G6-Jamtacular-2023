@@ -389,8 +389,8 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight li
 
 uniform float un_increment;
 
-#define DIAMETER 64.0
-#define RADIUS   32.0
+#define DIAMETER 32.0
+#define RADIUS   16.0
 
 
 float trace_soft( vec2 frag_pos, int frag_quadtree_idx, Pointlight light )
