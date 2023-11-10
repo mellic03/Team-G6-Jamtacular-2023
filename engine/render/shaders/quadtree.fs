@@ -315,7 +315,6 @@ float next_step( vec2 pos, vec2 dir, vec2 center, float span )
     float lengthSq_v = vdx*vdx + vdy*vdy;
     float EPSILON  = 0.07;
 
-
     float result = (lengthSq_h < lengthSq_v) ? sqrt(lengthSq_h) : sqrt(lengthSq_v);
 
     return result + EPSILON;
