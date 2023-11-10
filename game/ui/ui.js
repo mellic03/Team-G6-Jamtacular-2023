@@ -158,6 +158,11 @@ class UISystem
         }, player.tool_mode == TOOL_LIGHT_B);
 
 
+        this.UIgrid.menuButton(row+6, 0, "x: " + floor(player.position[0]));
+        this.UIgrid.menuButton(row+6, 1, "y: " + floor(player.position[1]));
+
+
+
 
 
         row = 11;

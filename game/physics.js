@@ -150,13 +150,19 @@ class CollisionGrid
     };
 
 
-    getNeighbours( row, col )
+    first = true;
+
+    getNeighbours( row, col, range=1 )
     {
-        let neighbours = [
-            [row,   col+1], [row-1, col+1], [row+1, col+1],
-            [row-1, col],   [row-1, col-1], [row,   col-1],
-            [row+1, col],   [row+1, col-1], [row,   col]
-        ];
+        let neighbours = [  ];
+
+        for (let r=row+1-range; r<row+range; r++)
+        {
+            for (let c=col+1-range; c<col+range; c++)
+            {
+                neighbours.push([r, c]);
+            }
+        }
 
 
         let filtered = [  ];
@@ -180,9 +186,9 @@ class CollisionGrid
     };
 
 
-    getBodies( row, col )
+    getBodies( row, col, range=1 )
     {
-        const neighbours = this.getNeighbours(row, col);
+        const neighbours = this.getNeighbours(row, col, 3);
 
         let bodies = [  ];
 
@@ -202,7 +208,7 @@ class CollisionGrid
 
     getBodiesXY( x, y, range=1 )
     {
-        return this.getBodies(...this.world_to_grid(x, y));
+        return this.getBodies(...this.world_to_grid(x, y, range));
     };
 
 
@@ -226,7 +232,7 @@ class CollisionGrid
 
         rectMode(CENTER);
         noFill();
-
+        stroke(0);
         const size = render.world_to_screen_dist(COLLISION_SECTOR_SPAN);
 
         for (let row=0; row<COLLISION_SECTORS_Y; row++)
@@ -239,6 +245,23 @@ class CollisionGrid
                 rect(...screenspace, size, size);
             }
         }
+
+        fill(255, 0, 0, 25);
+
+        for (let row=0; row<COLLISION_SECTORS_Y; row++)
+        {
+            for (let col=0; col<COLLISION_SECTORS_X; col++)
+            {
+                for (let body of this.grid[row][col])
+                {
+                    let worldspace = this.grid_to_world(row, col);
+                    let screenspace = render.world_to_screen(...worldspace);
+
+                    rect(...screenspace, size, size);
+                }
+            }
+        }
+
     };
 };
 
@@ -247,7 +270,7 @@ class CollisionGrid
 class PhysicsSystem
 {
     grid = new CollisionGrid();
-
+    visualize_grid = true;
 
     preload()
     {
@@ -300,14 +323,20 @@ class PhysicsSystem
         {
             for (let col=0; col<COLLISION_SECTORS_X; col++)
             {
-                const neighbours = this.grid.getBodies(row, col);
+                const neighbours = this.grid.getBodies(row, col, 3);
 
                 for (let body of grid[row][col])
                 {
                     // circle(...render.world_to_screen(...body.position), render.world_to_screen_dist(body.radius));
                     this.dothing(body, neighbours);
                 }
+
             }
+        }
+
+        if (this.visualize_grid)
+        {
+            this.grid.draw();
         }
 
         this.grid.clear();

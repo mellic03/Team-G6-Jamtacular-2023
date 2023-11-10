@@ -32,15 +32,15 @@ class BulletSystem
         this.sounds[ATTACKER_BULLET_IDX].loop = false;
         this.sounds[REE_BULLET_IDX].loop      = false;
 
-        this.bullet_colors[PLAYER_BULLET_IDX]   = [200, 200, 0];
+        this.bullet_colors[PLAYER_BULLET_IDX]   = [255, 255, 200];
         this.bullet_colors[GUARD_BULLET_IDX]    = [200, 200, 0];
         this.bullet_colors[ATTACKER_BULLET_IDX] = [125, 255, 255];
-        this.bullet_colors[REE_BULLET_IDX]      = [255, 155, 155];
+        this.bullet_colors[REE_BULLET_IDX]      = [255, 255, 200];
 
         this.hit_colors[PLAYER_BULLET_IDX]   = [0.5, 0.5, 0.25];
         this.hit_colors[GUARD_BULLET_IDX]    = [1, 1, 0.5];
         this.hit_colors[ATTACKER_BULLET_IDX] = [0.5, 1, 1];
-        this.hit_colors[REE_BULLET_IDX]      = [1, 0.5, 0.5];
+        this.hit_colors[REE_BULLET_IDX]      = [0.5, 0.5, 0.25];
     };
 
 
@@ -48,7 +48,7 @@ class BulletSystem
     {
         for (let i=0; i<MAX_BULLETS; i++)
         {
-            this.bodies.push(new PhysicsBody(0, 0, 8, 8, "bullet"));
+            this.bodies.push(new PhysicsBody(-1000, -1000, 8, 8, "bullet"));
             this.types.push(PLAYER_BULLET_IDX);
         }
 

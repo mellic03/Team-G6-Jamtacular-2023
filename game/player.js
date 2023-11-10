@@ -20,7 +20,7 @@ class Player
     block_width = 8.0;
     block_ksize = 8.0;
 
-    move_speed   = 2.5;
+    body;
     acceleration = 0.0125;
     drag         = 0.01;
     max_velocity = 1.0;
@@ -60,6 +60,8 @@ class Player
         this.sprite.image(this.player_img);
 
         this.player_img.resize(128, 128);
+
+        this.body = new PhysicsBody(0, 0, 32, 32, "PLAYER");
     };
 
 
@@ -95,6 +97,25 @@ class Player
 
             this.health = 100;
         }
+
+        // const physics = engine.getSystem("physics");
+
+        // const cells = physics.grid.getNeighbours(
+        //     ...physics.grid.world_to_grid(...this.position),
+        //     3
+        // );
+
+        // fill(255, 0, 0, 25);
+        // rectMode(CENTER);
+        // const size = render.world_to_screen_dist(COLLISION_SECTOR_SPAN);
+
+        // for (let cell of cells)
+        // {
+        //     let worldspace = physics.grid.grid_to_world(cell[0], cell[1]);
+        //     let screenspace = render.world_to_screen(...worldspace);
+
+        //     rect(...screenspace, size, size);
+        // }
 
     };
 
@@ -190,7 +211,7 @@ class Player
         {
             this.selecting = false;
 
-            const size = render.world_to_screen_dist(64.0);
+            const size = render.world_to_screen_dist(32.0);
 
             const nodespace  = terrain.pathfinder.world_to_node(...render.mouse_worldspace);
             const worldspace = terrain.pathfinder.node_to_world(nodespace);
@@ -208,6 +229,7 @@ class Player
                 fill(0, 155, 0, 50);
             }
 
+            rectMode(CENTER);
             rect(...screenspace, size, size);
         }
 

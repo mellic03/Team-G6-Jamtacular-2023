@@ -35,7 +35,8 @@ class SettingsModal
     draw()
     {
         const terrain = engine.getSystem("terrain");
-        const player = engine.getSystem("player");
+        const physics = engine.getSystem("physics");
+        // const player = engine.getSystem("player");
 
         if (this.visible == false)
         {
@@ -101,6 +102,18 @@ class SettingsModal
             }, terrain.visualize_pathfinding == true);
         }
 
+        ui.nextRow(6);
+        {
+            ui.menuLabel(0, 1, "Collision Grid");
+
+            ui.menuButton2(0, 3, "No", () => {
+                physics.visualize_grid = false;
+            }, physics.visualize_grid == false);
+
+            ui.menuButton2(0, 4, "Yes", () => {
+                physics.visualize_grid = true;
+            }, physics.visualize_grid == true);
+        }
         ui.menuButton(-1, -1, "Close", () => { this.hide(); });
     };
 

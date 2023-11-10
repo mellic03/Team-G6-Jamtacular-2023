@@ -26,8 +26,8 @@ class AgentSystem
         this.sprites[AGENT_GUARD_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
         this.sprites[AGENT_GUARD_IDX].image(loadImage("guard.png"));
 
-        this.sprites[AGENT_ATTACKER_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_ATTACKER_IDX].image(loadImage("attacker.png"));
+        this.sprites[AGENT_SECURITY_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
+        this.sprites[AGENT_SECURITY_IDX].image(loadImage("security.png"));
 
         this.sprites[AGENT_REE_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
         this.sprites[AGENT_REE_IDX].image(loadImage("game/assets/rifle/rifle1.png"));
@@ -43,12 +43,12 @@ class AgentSystem
     {
         this.costs[AGENT_GATHERER_IDX] = 10;
         this.costs[AGENT_GUARD_IDX]    = 50;
-        this.costs[AGENT_ATTACKER_IDX] = 100;
+        this.costs[AGENT_SECURITY_IDX] = 100;
         this.costs[AGENT_REE_IDX]      = 0;
 
         this.constructors[AGENT_GATHERER_IDX] = Gatherer;
         this.constructors[AGENT_GUARD_IDX]    = Guard;
-        this.constructors[AGENT_ATTACKER_IDX] = Attacker;
+        this.constructors[AGENT_SECURITY_IDX] = Attacker;
         this.constructors[AGENT_REE_IDX]      = Human;
 
         for (let i=0; i<MAX_AGENTS; i++)
@@ -56,8 +56,6 @@ class AgentSystem
             this.agents.push(null);
             this.active.push(false);
         }
-
-        this.createAgent(AGENT_REE, engine.getSystem("factory").player_factory);
     };
 
 
@@ -182,6 +180,18 @@ class AgentSystem
 
         this.agents[id] = new this.constructors[TYPE](this.sprites[TYPE]);
         this.agents[id].parent = parent;
+
+        if (parent != undefined)
+        {
+            this.agents[id].body.position[0] = parent.position[0] + random(-200, +200);
+            this.agents[id].body.position[1] = parent.position[1] + random(-200, +200);
+
+            // this.agents[id].set_target(
+            //     parent.position[0] + random(-200, +200),
+            //     parent.position[1] + random(-200, +200)
+            // );
+        }
+
         this.agents[id].body.label = type;
         this.agents[id].body.generic_data = this.agents[id];
         this.active[id] = true;
@@ -195,8 +205,6 @@ class AgentSystem
 
     destroyAgent( id )
     {
-        // this.agents[id].parent = undefined;
-        // this.agents[id].reset();
         this.active[id] = false;
         this.num_active -= 1;
     };

@@ -6,13 +6,13 @@ engine.addSystem( new LightSystem(),   "light"   );
 engine.addSystem( new Keylog(),        "keylog"  );
 engine.addSystem( new TerrainSystem(), "terrain" );
 
-engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new AgentSystem(),   "agent"   );
+engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new BulletSystem(),  "bullet"  );
 engine.addSystem( new Player(),        "player"  );
 engine.addSystem( new PhysicsSystem(), "physics" );
 engine.addSystem( new UISystem(),      "ui"      );
-engine.addSystem( new AudioSystem(),   "audio"   );
+// engine.addSystem( new AudioSystem(),   "audio"   );
 
 
 function preload()

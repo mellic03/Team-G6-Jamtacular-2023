@@ -63,15 +63,12 @@ class FactoryModal
             agentSys.createAgent(AGENT_GUARD, playerFactory);
         });
 
-        ui.menuButton2(0, 5, "Attacker", () => {
-            agentSys.createAgent(AGENT_ATTACKER, playerFactory);
+        ui.menuButton2(0, 5, "Security", () => {
+            agentSys.createAgent(AGENT_SECURITY, playerFactory);
         });
 
-        ui.menuButton2(0, 6, "Good H", () => {
+        ui.menuButton2(0, 6, "Human?", () => {
             agentSys.createAgent(AGENT_REE, playerFactory);
-        });
-        ui.menuButton2(0, 7, "Bad H", () => {
-            agentSys.createAgent(AGENT_REE, null);
         });
 
 

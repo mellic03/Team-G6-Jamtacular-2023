@@ -13,8 +13,9 @@ class Factory
     collectors = [  ];
 
 
-    constructor( sprite)
+    constructor( x, y, sprite )
     {
+        this.position = [x, y];
         this.sprite = sprite;
     };
 
@@ -61,8 +62,12 @@ class FactorySystem
 
     setup( engine )
     {
-        this.player_factory = new Factory(this.sprites[FACTORY_PLAYER], FACTORY_PLAYER);
-        this.player_factory.createAgent(AGENT_GATHERER);
+        this.player_factory = new Factory(0, 0, this.sprites[FACTORY_PLAYER]);
+        this.player_factory.createAgent(AGENT_REE);
+
+        this.enemy_factories.push(new Factory(0, 1500, this.sprites[FACTORY_PLAYER]));
+        this.enemy_factories[0].createAgent(AGENT_REE);
+
         allSprites.autoDraw = false;
     };
 
@@ -70,6 +75,12 @@ class FactorySystem
     draw( engine )
     {
         this.player_factory.draw(engine);
+
+        for (let factory of this.enemy_factories)
+        {
+            factory.draw(engine);
+        }
+
     };
 
 
