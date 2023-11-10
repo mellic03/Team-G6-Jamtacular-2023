@@ -171,28 +171,28 @@ class UISystem
         });
 
 
-        this.UIgrid.menuButton(row+1, 0, "Width/2", () => {
+        
+        this.UIgrid.menuButton(row+1, 0, "Width*2", () => {
+            player.rect_w *= 2;
+        });
+        this.UIgrid.menuButton(row+1, 1, "Width/2", () => {
             player.rect_w /= 2;
         });
 
-        this.UIgrid.menuButton(row+1, 1, "Width*2", () => {
-            player.rect_w *= 2;
+        
+        this.UIgrid.menuButton(row+2, 0, "Height*2", () => {
+            player.rect_h *= 2;
         });
-
-        this.UIgrid.menuButton(row+2, 0, "Height/2", () => {
+        this.UIgrid.menuButton(row+2, 1, "Height/2", () => {
             player.rect_h /= 2;
         });
 
-        this.UIgrid.menuButton(row+2, 1, "Height*2", () => {
-            player.rect_h *= 2;
-        });
-
-        this.UIgrid.menuButton(row+3, 0, "-22.5", () => {
-            player.rect_r -= 22.5;
-        });
-
-        this.UIgrid.menuButton(row+3, 1, "+22.5", () => {
+        
+        this.UIgrid.menuButton(row+3, 0, "+22.5", () => {
             player.rect_r += 22.5;
+        });
+        this.UIgrid.menuButton(row+3, 1, "-22.5", () => {
+            player.rect_r -= 22.5;
         });
 
     };
