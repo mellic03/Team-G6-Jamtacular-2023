@@ -170,7 +170,6 @@ class UISystem
             [player.rect_w, player.rect_h] = [player.rect_h, player.rect_w];
         });
 
-
         
         this.UIgrid.menuButton(row+1, 0, "Width*2", () => {
             player.rect_w *= 2;
@@ -258,40 +257,33 @@ class UISystem
         let using_terrain = player.tool_mode === TOOL_TERRAIN || player.tool_mode === TOOL_RECT;
 
         this.BRUSHgrid.menuButton(row+0, 0, "air", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_AIR;
         }, blocktype === BLOCK_AIR && using_terrain);
 
         this.BRUSHgrid.menuButton(row+0, 1, "grass", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_GRASS;
         },  blocktype === BLOCK_GRASS && using_terrain);
 
 
         this.BRUSHgrid.menuButton(row+1, 0, "dirt", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_DIRT;
         },  blocktype === BLOCK_DIRT && using_terrain);
 
         this.BRUSHgrid.menuButton(row+1, 1, "stone", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_STONE;
         }, blocktype === BLOCK_STONE && using_terrain);
 
 
         this.BRUSHgrid.menuButton(row+2, 0, "silver", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_SILVER;
         },  blocktype === BLOCK_SILVER && using_terrain);
 
         this.BRUSHgrid.menuButton(row+2, 1, "gold", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_GOLD;
         },  blocktype == BLOCK_GOLD && using_terrain);
 
 
         this.BRUSHgrid.menuButton(row+3, 0, "bedrock", () => {
-            player.tool_mode = TOOL_TERRAIN;
             blocktype = BLOCK_BEDROCK;
         },  blocktype == BLOCK_BEDROCK && using_terrain);
 
