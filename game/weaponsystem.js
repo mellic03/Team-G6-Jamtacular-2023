@@ -46,7 +46,7 @@ class WeaponSystem
     };
 
 
-    createWeapon( weapon_type, bullet_type=PLAYER_BULLET )
+    createWeapon( weapon_type, bullet_type )
     {
         const weapon = new this.constructors[weapon_type](bullet_type);
         weapon.sound = this.sounds[weapon_type];

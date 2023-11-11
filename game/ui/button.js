@@ -132,15 +132,15 @@ class MenuGrid
     };
 
 
-    nextRow( num_cols=5 )
+    nextRow( num_cols=5, num_rows=1 )
     {
         this.num_cols = num_cols;
         this.col_width  = this.width / num_cols;
-        this.current_row += 1;
+        this.current_row += num_rows;
     };
 
     
-    menuLabel( row, col, string )
+    menuLabel( row, col, string, h=LEFT, v=CENTER )
     {
         const position = this.originof2(row, col);
         const width  = this.col_width;
@@ -154,10 +154,19 @@ class MenuGrid
         // fill(rectfill);
         // rect(...position, width, height);
 
-        textAlign(LEFT, CENTER);
+        textAlign(h, v);
         fill(textfill);
         textSize(this.text_scale*0.85*this.row_height);
-        text(string, position[0]-0.5*this.col_width, position[1]);
+
+        if (h == LEFT)
+        {
+            text(string, position[0]-0.5*this.col_width, position[1]);
+        }
+
+        else
+        {
+            text(string, position[0], position[1]);
+        }
     };
 
     menuButton( row, col, string, callback, selected=false )

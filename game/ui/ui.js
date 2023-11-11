@@ -2,7 +2,6 @@
 const MODAL_SETTINGS  = 0;
 const MODAL_INVENTORY = 1;
 const MODAL_FACTORY   = 2;
-const MODAL_MAP       = 3;
 
 
 class UISystem
@@ -21,7 +20,6 @@ class UISystem
         this.modals.push(new SettingsModal(1, 1, 1, 1));
         this.modals.push(new InventoryModal(1, 1, 1, 1));
         this.modals.push(new FactoryModal(1, 1, 1, 1));
-        this.modals.push(new MapModal(1, 1, 1, 1));
     }
 
     onWindowResize( engine )
@@ -66,13 +64,14 @@ class UISystem
 
         this.onWindowResize(engine);
 
-        const factory = engine.getSystem("factory");
-        factory.createFactory(FACTORY_PLAYER);
+        // const factory = engine.getSystem("factory");
+        // factory.createFactory(FACTORY_PLAYER);
     };
 
 
     draw( engine )
     {
+        const player = engine.getSystem("player");
         const keylog  = engine.getSystem("keylog");
 
         // Reset mouse lock, if mouse is still over UI then enable it again
@@ -89,7 +88,11 @@ class UISystem
 
         // this.draw_sector_memusage(engine);
         this.draw_game_ui(engine);
-        this.draw_dev_ui(engine);
+
+        if (player.can_terrain)
+        {
+            this.draw_dev_ui(engine);
+        }
 
         for (let modal of this.modals)
         {
@@ -105,108 +108,76 @@ class UISystem
         const factorySys = engine.getSystem("factory");
         const playerFactory = factorySys.player_factory;
 
-        this.UIgrid.background(100);
+
+        const ui = this.UIgrid;
+
+        ui.reset();
+        ui.background(100);
+        ui.text_scale = 0.7;
+        ui.nextRow(2);
+
+        ui.menuLabel(0, 0, "Monies: ", CENTER, CENTER);
+        ui.menuLabel(0, 1, playerFactory.monies, LEFT, CENTER);
+        ui.nextRow(2);
+
+        ui.menuLabel(0, 0, "Health:  ",   CENTER, CENTER);
+        ui.menuLabel(0, 1, player.health, LEFT,   CENTER);
+        ui.nextRow(2);
+
+        ui.menuLabel(0, 0, "Ammo:  ",   CENTER, CENTER);
+        ui.menuLabel(0, 1, player.ammo, LEFT,   CENTER);
+        ui.nextRow(2);
+        ui.nextRow(2);
 
 
-        this.UIgrid.menuButton(1, 0, "Heath: " + player.health);
-
-        let row = 2;
-        this.UIgrid.menuButton(row+0, 0, "$" + playerFactory.monies);
-        this.UIgrid.menuButton(row+0, 1, "Ammo: " + player.ammo);
-        this.UIgrid.text_scale = 0.8;
-
-        this.UIgrid.menuButton(row+1, 0, "Gun", () => {
+        ui.menuButton2(0, 0, "Gun", () => {
             player.tool_mode = TOOL_WEAPON;
             player.active_weapon = WEAPON_RIFLE;
         }, player.tool_mode == TOOL_WEAPON && player.active_weapon == WEAPON_RIFLE);
 
-        this.UIgrid.menuButton(row+1, 1, "Gunnn", () => {
+        ui.menuButton2(0, 1, "Gunnn", () => {
             player.tool_mode = TOOL_WEAPON;
             player.active_weapon = WEAPON_SHOTGUN;
         }, player.tool_mode == TOOL_WEAPON && player.active_weapon == WEAPON_SHOTGUN);
-
-        // this.UIgrid.menuButton(row+1, 1, "Gunnn", () => {
-        //     player.tool_mode = TOOL_WEAPON;
-        //     player.weapon_spread = 0.3;
-        //     player.weapon_cooldown = 50;
-        // }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.3);
+        ui.nextRow(2);
+        ui.nextRow(2);
 
 
-
-        this.UIgrid.menuButton(row+2, 0, "Inspect", () => {
+        ui.menuButton2(0, 0, "Inspect", () => {
             player.tool_mode = TOOL_INSPECT;
         }, player.tool_mode == TOOL_INSPECT);
 
-        this.UIgrid.menuButton(row+2, 1, "Select", () => {
+        ui.menuButton2(0, 1, "Select", () => {
             player.tool_mode = TOOL_SELECT;
         }, player.tool_mode == TOOL_SELECT);
+        ui.nextRow(2);
 
-        this.UIgrid.menuButton(row+3, 0, "Control", () => {
+
+        ui.menuButton2(0, 0, "Control", () => {
             player.tool_mode = TOOL_CONTROL;
         }, player.tool_mode == TOOL_CONTROL);
+        ui.nextRow(2);
+        ui.nextRow(2);
 
-
-        this.UIgrid.menuButton(row+4, 0, "Map", () => {
-            player.tool_mode = TOOL_NONE;
-            this.modals[MODAL_MAP].show();
-        });
-
-        this.UIgrid.menuButton(row+4, 1, "Settings", () => {
+        ui.menuButton2(0, 0, "Settings", () => {
             player.tool_mode = TOOL_NONE;
             this.modals[MODAL_SETTINGS].show();
         });
+        ui.nextRow(2);
 
 
-        this.UIgrid.menuButton(row+5, 0, "light A", () => {
+        ui.menuButton2(0, 0, "light A", () => {
             player.tool_mode = TOOL_LIGHT_A;
         }, player.tool_mode == TOOL_LIGHT_A);
 
-        this.UIgrid.menuButton(row+5, 1, "light B", () => {
+        ui.menuButton2(0, 1, "light B", () => {
             player.tool_mode = TOOL_LIGHT_B;
         }, player.tool_mode == TOOL_LIGHT_B);
+        ui.nextRow(2);
 
-
-        this.UIgrid.menuButton(row+6, 0, "x: " + floor(player.position[0]));
-        this.UIgrid.menuButton(row+6, 1, "y: " + floor(player.position[1]));
-
-
-
-
-
-        row = 11;
-
-        this.UIgrid.menuButton(row+0, 0, "Rect", () => {
-            player.tool_mode = TOOL_RECT
-        }, player.tool_mode === TOOL_RECT);
-
-        this.UIgrid.menuButton(row+0, 1, "Flip", () => {
-            [player.rect_w, player.rect_h] = [player.rect_h, player.rect_w];
-        });
-
-        
-        this.UIgrid.menuButton(row+1, 0, "Width*2", () => {
-            player.rect_w *= 2;
-        });
-        this.UIgrid.menuButton(row+1, 1, "Width/2", () => {
-            player.rect_w /= 2;
-        });
-
-        
-        this.UIgrid.menuButton(row+2, 0, "Height*2", () => {
-            player.rect_h *= 2;
-        });
-        this.UIgrid.menuButton(row+2, 1, "Height/2", () => {
-            player.rect_h /= 2;
-        });
-
-        
-        this.UIgrid.menuButton(row+3, 0, "+22.5", () => {
-            player.rect_r += 22.5;
-        });
-        this.UIgrid.menuButton(row+3, 1, "-22.5", () => {
-            player.rect_r -= 22.5;
-        });
-
+        ui.menuButton2(0, 0, "x: " + floor(player.position[0]));
+        ui.menuButton2(0, 1, "y: " + floor(player.position[1]));
+        ui.nextRow(2);
     };
 
 
@@ -234,76 +205,140 @@ class UISystem
     };
 
 
+
+    draw_rect_ui()
+    {
+        const player  = engine.getSystem("player");
+        const ui = this.BRUSHgrid;
+
+        ui.menuButton2(0, 1, "Flip", () => {
+            [player.rect_w, player.rect_h] = [player.rect_h, player.rect_w];
+        });
+
+
+        ui.nextRow(2);
+        ui.menuButton2(0, 0, "Width*2", () => {
+            player.rect_w *= 2;
+        });
+        ui.menuButton2(0, 1, "Width/2", () => {
+            player.rect_w /= 2;
+        });
+
+        
+        ui.nextRow(2);
+        ui.menuButton2(0, 0, "Height*2", () => {
+            player.rect_h *= 2;
+        });
+        ui.menuButton2(0, 1, "Height/2", () => {
+            player.rect_h /= 2;
+        });
+
+        
+        ui.nextRow(2);
+        ui.menuButton2(0, 0, "+22.5", () => {
+            player.rect_r += 22.5;
+        });
+        ui.menuButton2(0, 1, "-22.5", () => {
+            player.rect_r -= 22.5;
+        });
+    };
+
+
+    draw_circle_ui()
+    {
+        const player  = engine.getSystem("player");
+        const ui = this.BRUSHgrid;
+
+        ui.menuButton2(0, 0, "Radius*2", () => {
+            player.block_ksize *= 2;
+        });
+        ui.menuButton2(0, 1, "Radius/2", () => {
+            player.block_ksize /= 2;
+        });
+
+        ui.nextRow(2);
+
+        ui.menuButton2(0, 1, "Blocksize*2", () => {
+            player.block_width /= 2;
+            player.block_ksize *= 2;
+        });
+
+        ui.menuButton2(0, 0, "Blocksize/2", () => {
+            player.block_width *= 2;
+            player.block_ksize /= 2;
+        });
+    };
+
+
     draw_dev_ui( engine )
     {
         const render  = engine.getSystem("render");
         const terrain = engine.getSystem("terrain");
         const player  = engine.getSystem("player");
 
-        let blocktype  = player.block_type;
-        let blockspan  = player.block_width;
-        let ksize      = player.block_ksize;
+        const ui = this.BRUSHgrid;
+        ui.reset();
+        ui.text_scale = 0.7;
 
-        let row = 4;
+        ui.nextRow(2);
+        ui.menuButton2(0, 0, "Rect", () => {
+            player.tool_mode = TOOL_RECT
+        }, player.tool_mode === TOOL_RECT);
 
-        this.BRUSHgrid.menuButton(row+0, 0, "Circle", () => {
+        ui.menuButton2(0, 1, "Circle", () => {
             player.tool_mode = TOOL_TERRAIN
         }, player.tool_mode === TOOL_TERRAIN);
 
-        this.BRUSHgrid.menuButton(row+1, 0, "span*2", () => {
-            blockspan *= 2;
-        });
-        this.BRUSHgrid.menuButton(row+1, 1, "span/2", () => {
-            blockspan /= 2;
-        });
+        ui.nextRow(2);
 
-        this.BRUSHgrid.menuButton(row+2, 0, "ksize*2", () => {
-            ksize *= 2;
-        });
-        this.BRUSHgrid.menuButton(row+2, 1, "ksize/2", () => {
-            ksize /= 2;
-        });
+        if (player.tool_mode == TOOL_RECT)
+        {
+            this.draw_rect_ui();
+        }
 
+        else if (player.tool_mode == TOOL_TERRAIN)
+        {
+            this.draw_circle_ui();
+        }
 
-        row = 8;
 
         let using_terrain = player.tool_mode === TOOL_TERRAIN || player.tool_mode === TOOL_RECT;
 
-        this.BRUSHgrid.menuButton(row+0, 0, "air", () => {
-            blocktype = BLOCK_AIR;
-        }, blocktype === BLOCK_AIR && using_terrain);
+        ui.menuButton(8, 0, "air", () => {
+            player.block_type = BLOCK_AIR;
+        }, player.block_type === BLOCK_AIR && using_terrain);
 
-        this.BRUSHgrid.menuButton(row+0, 1, "grass", () => {
-            blocktype = BLOCK_GRASS;
-        },  blocktype === BLOCK_GRASS && using_terrain);
-
-
-        this.BRUSHgrid.menuButton(row+1, 0, "dirt", () => {
-            blocktype = BLOCK_DIRT;
-        },  blocktype === BLOCK_DIRT && using_terrain);
-
-        this.BRUSHgrid.menuButton(row+1, 1, "stone", () => {
-            blocktype = BLOCK_STONE;
-        }, blocktype === BLOCK_STONE && using_terrain);
+        ui.menuButton(8, 1, "grass", () => {
+            player.block_type = BLOCK_GRASS;
+        },  player.block_type === BLOCK_GRASS && using_terrain);
 
 
-        this.BRUSHgrid.menuButton(row+2, 0, "silver", () => {
-            blocktype = BLOCK_SILVER;
-        },  blocktype === BLOCK_SILVER && using_terrain);
+        ui.menuButton(9, 0, "dirt", () => {
+            player.block_type = BLOCK_DIRT;
+        },  player.block_type === BLOCK_DIRT && using_terrain);
 
-        this.BRUSHgrid.menuButton(row+2, 1, "gold", () => {
-            blocktype = BLOCK_GOLD;
-        },  blocktype == BLOCK_GOLD && using_terrain);
-
-
-        this.BRUSHgrid.menuButton(row+3, 0, "bedrock", () => {
-            blocktype = BLOCK_BEDROCK;
-        },  blocktype == BLOCK_BEDROCK && using_terrain);
+        ui.menuButton(9, 1, "stone", () => {
+            player.block_type = BLOCK_STONE;
+        }, player.block_type === BLOCK_STONE && using_terrain);
 
 
-        player.block_type  = blocktype;
-        player.block_width = blockspan;
-        player.block_ksize = ksize;
+        ui.menuButton(10, 0, "silver", () => {
+            player.block_type = BLOCK_SILVER;
+        },  player.block_type === BLOCK_SILVER && using_terrain);
+
+        ui.menuButton(10, 1, "gold", () => {
+            player.block_type = BLOCK_GOLD;
+        },  player.block_type == BLOCK_GOLD && using_terrain);
+
+
+        ui.menuButton(11, 0, "bedrock", () => {
+            player.block_type = BLOCK_BEDROCK;
+        },  player.block_type == BLOCK_BEDROCK && using_terrain);
+
+
+        ui.menuButton(13, 0, "Save", () => {
+            terrain.toFile("map.txt");
+        });
 
     };
 

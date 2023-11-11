@@ -1,5 +1,6 @@
 
 const FACTORY_PLAYER = 0;
+const FACTORY_ENEMY  = 1;
 
 
 /*
@@ -8,21 +9,81 @@ const FACTORY_PLAYER = 0;
 class Factory
 {
     sprite;
+    body;
+    health = 100;
+    alive  = true;
+
     position   = [0, 0];
     monies     = 1000.0;
     collectors = [  ];
 
 
-    constructor( x, y, sprite )
+    constructor( x, y, sprite, friendly=false )
     {
-        this.position = [x, y];
+        const terrain = engine.getSystem("terrain");
+        terrain.placeSphere(x, y, BLOCK_STONE, 36, 8);
+        terrain.placeSphere(x, y, BLOCK_AIR,   32, 8);
+        terrain.placeRect(x+256, y, BLOCK_AIR, 64, 64);
+        terrain.placeRect(x-256, y, BLOCK_AIR, 64, 64);
+        terrain.placeRect(x, y+256, BLOCK_AIR, 64, 64);
+        terrain.placeRect(x, y-256, BLOCK_AIR, 64, 64);
+
+        terrain.placeRect(x+150, y, BLOCK_STONE, 16, 64);
+        terrain.placeRect(x-150, y, BLOCK_STONE, 16, 64);
+        terrain.placeRect(x, y+150, BLOCK_STONE, 64, 16);
+        terrain.placeRect(x, y-150, BLOCK_STONE, 64, 16);
+
         this.sprite = sprite;
+        this.body = new PhysicsBody(x, y, 32, 32, "FACTORY");
+        this.position = this.body.position;
+
+
+        if (friendly)
+        {
+            this.body.body_resolution = (other) => {
+
+                if (other.label == UNFRIENDLY_BULLET)
+                {
+                    this.health -= 5;
+                }
+            };
+        }
+
+        else
+        {
+            this.body.body_resolution = (other) => {
+
+                if (other.label == PLAYER_BULLET || other.label == FRIENDLY_BULLET)
+                {
+                    this.health -= 5;
+                }
+            };
+        }
+    };
+
+
+    death()
+    {
+        const terrain = engine.getSystem("terrain");
+        terrain.placeSphere(...this.position, BLOCK_GOLD, 8, 8);
     };
 
 
     draw( engine )
     {
+        if (this.health <= 0)
+        {
+            if (this.alive)
+            {
+                this.death();
+                this.alive = false;
+            }
+
+            return;
+        }
+
         this.sprite.draw(...this.position);
+        this.draw_health();
 
         const render = engine.getSystem("render");
         const player = engine.getSystem("player");
@@ -53,6 +114,29 @@ class Factory
                 UIsys.modals[MODAL_FACTORY].show(this);
             }
         }
+
+    };
+
+
+    draw_health()
+    {
+        const render  = engine.getSystem("render");
+
+        let screenspace = render.world_to_screen(
+            this.body.position[0],
+            this.body.position[1] - 2*this.body.radius
+        );
+
+        const w = render.world_to_screen_dist(2*this.body.radius);
+        const h = render.world_to_screen_dist(8);
+
+        rectMode(CENTER);
+
+        fill(255, 0, 0);
+        rect(...screenspace, w, h);
+
+        fill(0, 255, 0);
+        rect(...screenspace, w*(this.health/100), h);
     };
 
 
@@ -76,7 +160,7 @@ class Factory
 class FactorySystem
 {
     player_factory;
-    enemy_factories = [  ];
+    factories = [  ];
 
     sprites = [  ];
 
@@ -85,17 +169,14 @@ class FactorySystem
     {
         this.sprites[FACTORY_PLAYER] = new BSprite(0, 0, 32, 32);
         this.sprites[FACTORY_PLAYER].image(loadImage("factory.png"));
+
+        this.sprites[FACTORY_ENEMY] = new BSprite(0, 0, 32, 32);
+        this.sprites[FACTORY_ENEMY].image(loadImage("factory.png"));
     };
 
 
     setup( engine )
     {
-        this.player_factory = new Factory(0, 0, this.sprites[FACTORY_PLAYER]);
-        this.player_factory.createAgent(AGENT_REE);
-
-        this.enemy_factories.push(new Factory(0, 1500, this.sprites[FACTORY_PLAYER]));
-        this.enemy_factories[0].createAgent(AGENT_REE);
-
         allSprites.autoDraw = false;
     };
 
@@ -104,25 +185,19 @@ class FactorySystem
     {
         this.player_factory.draw(engine);
 
-        for (let factory of this.enemy_factories)
+        for (let factory of this.factories)
         {
             factory.draw(engine);
         }
-
     };
 
 
-    createFactory( type )
+    createFactory( x, y, type )
     {
-        // const sprite = new BSprite(0, 0, 100, 100);
-        // sprite.image(this.factory_imgs[type]);
+        const factory = new Factory(x, y, this.sprites[type], type == FACTORY_PLAYER);
+        this.factories.push(factory);
 
-        // const factory_id = this.allocator.create([sprite]);
-        // this.factory_ids.push(factory_id);
-
-        // this.allocator.get(factory_id).sprite = sprite;
-
-        // return factory_id;
+        return factory;
     };
 
 
@@ -139,6 +214,24 @@ class FactorySystem
         //     factory.agents.push(collector_id);
         //     factory.monies -= cost;
         // }
+    };
+
+
+    addBodies()
+    {
+        const physics = engine.getSystem("physics");
+    
+        for (let i=0; i<this.factories.length; i++)
+        {
+            const factory = this.factories[i];
+
+            if (factory.health <= 0)
+            {
+                continue;
+            }
+        
+            physics.grid.addBody(factory.body);
+        }
     };
 
 };

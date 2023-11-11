@@ -1,11 +1,17 @@
-let guard0, guard1, guard2, guard3;
+
+const SOLDIER_HEALTH  = 100;
+const SECURITY_HEALTH = 200;
 
 
 class Agent
 {
     sprite;
     body;
-    health = 100.0;
+    movespeed = 0.05;
+    rotation  = true;
+
+    maxhealth = 100.0;
+    health    = this.maxhealth;
     parent = undefined;
     friendly = false;
 
@@ -32,9 +38,9 @@ class Agent
 
         this.body.body_resolution = (other) => {
 
-            if (other.label >= PLAYER_BULLET && other.label <= FRIENDLY_BULLET)
+            if (other.label >= PLAYER_BULLET && other.label <= UNFRIENDLY_BULLET)
             {
-                const damage = other.generic_data;
+                const damage = 10;
                 this.health -= damage;
             }
 
@@ -55,7 +61,7 @@ class Agent
         this.sprite = sprite;
         this.parent = parent;
         this.last_target = [valueof(parent.position[0]), valueof(parent.position[1])];
-        this.health = 100.0;
+        this.health = valueof(this.maxhealth);
 
         this.subreset();
     };
@@ -86,8 +92,8 @@ class Agent
 
         if (this.at_home())
         {
-            this.health += 0.025*deltaTime;
-            this.health = min(100, this.health);
+            this.health += 0.005*deltaTime;
+            this.health = min(valueof(this.maxhealth), this.health);
         }
 
         if (this.selected == true)
@@ -113,7 +119,7 @@ class Agent
             this.behaviour();
         }
 
-        this.sprite.setRotation(this.body.rotation);
+        this.sprite.setRotation(this.rotation * this.body.rotation);
         this.sprite.draw(...this.body.position);
         this.draw_health();
     };
@@ -137,7 +143,7 @@ class Agent
         rect(...screenspace, w, h);
 
         fill(0, 255, 0);
-        rect(...screenspace, w*(this.health/100), h);
+        rect(...screenspace, w*(this.health/this.maxhealth), h);
     };
 
 
@@ -145,7 +151,7 @@ class Agent
     {
         const target = this.path[this.path_idx];
 
-        this.body.applyForceTowards(...target, 0.05);
+        this.body.applyForceTowards(...target, this.movespeed);
 
         const r = vec2_angle(vec2_normalize(this.body.velocity));
         this.body.setRotation(r);
@@ -253,13 +259,6 @@ class Gatherer extends Agent
     was_on_gold = false;
     am_on_gold  = false;
 
-    returning_home = false;
-
-    return_home()
-    {
-        this.set_target(...this.parent.position);
-    };
-
 
     behaviour()
     {
@@ -305,9 +304,9 @@ class Gatherer extends Agent
         const data = terrain.nearest_intersection(...this.body.position, dx, dy);
         const blocktype = data[4];
 
-        stroke(255);
-        strokeWeight(4);
-        line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
+        // stroke(255);
+        // strokeWeight(4);
+        // line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
 
         if (blocktype == BLOCK_SILVER || blocktype == BLOCK_GOLD)
         {
@@ -322,20 +321,20 @@ class Gatherer extends Agent
 
                 this.materials[blocktype - BLOCK_SILVER] += 2*2*16;
                 this.holdings += 1;
-                strokeWeight(8);
+                // strokeWeight(8);
             }
 
             else
             {
                 this.body.applyForce(dx, dy, 0.001*deltaTime);
-                stroke(255, 255, 255, 100);
-                strokeWeight(1);
+                // stroke(255, 255, 255, 100);
+                // strokeWeight(1);
             }
 
             this.am_on_gold = true;
 
-            line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
-            strokeWeight(1);
+            // line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
+            // strokeWeight(1);
         }
 
         else
@@ -347,7 +346,7 @@ class Gatherer extends Agent
         {
             this.rdir *= -1.0;
         }
-        strokeWeight(1);
+        // strokeWeight(1);
 
         this.was_on_gold = valueof(this.am_on_gold);
 
@@ -367,17 +366,98 @@ class Security extends Agent
     {
         super( sprite );
 
-        this.weapon = engine.getSystem("weapon").createWeapon(WEAPON_RIFLE);
+        this.movespeed = 0.25;
+        this.maxhealth = SECURITY_HEALTH;
+        this.weapon = engine.getSystem("weapon").createWeapon(WEAPON_SHOTGUN);
     }
+
+    subreset()
+    {
+        if (this.isFriendly())
+        {
+            this.weapon.bullet_type = FRIENDLY_BULLET;
+        }
+        else
+        {
+            this.weapon.bullet_type = UNFRIENDLY_BULLET;
+        }
+
+        this.rotation = false;
+    };
 
     behaviour()
     {
-        const player = engine.getSystem("player");
-        const terrain = engine.getSystem("terrain");
+        if (this.isFriendly())
+        {
+            this.friendly_behaviour();
+        }
+
+        else
+        {
+            this.unfriendly_behaviour();
+        }
+
+        if (this.health < 25.0 || this.retreating)
+        {
+            this.retreat_and_return(() => { return this.health >= this.maxhealth; });
+        }
+    };
 
 
+    attack( body )
+    {
+        if (this.body_visible(body) == false)
+        {
+            return;
+        }
 
-        this.time_since_player += deltaTime;
+        const dir = vec2_dir(body.position, this.body.position);
+        const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
+        this.body.setRotation(vec2_angle(dir));
+
+        this.weapon.pew(...origin, ...dir);
+    };
+
+
+    friendly_behaviour()
+    {
+        const physics = engine.getSystem("physics");
+        const bodies = physics.grid.getBodiesXY(...this.body.position);
+        
+        for (let body of bodies)
+        {
+            if (body.label != UNFRIENDLY_AGENT)
+            {
+                continue;
+            }
+
+            if (this.body_visible(body))
+            {
+                this.attack(body);
+                break;
+            }
+        }
+    };
+
+
+    unfriendly_behaviour()
+    {
+        const physics = engine.getSystem("physics");
+        const bodies = physics.grid.getBodiesXY(...this.body.position);
+
+        for (let body of bodies)
+        {
+            if (body.label != FRIENDLY_AGENT)
+            {
+                continue;
+            }
+
+            if (this.body_visible(body))
+            {
+                this.attack(body);
+                break;
+            }
+        }
     };
 
 };
@@ -393,6 +473,7 @@ class Human extends Agent
     {
         super(sprite);
         this.weapon = engine.getSystem("weapon").createWeapon(WEAPON_RIFLE);
+        this.maxhealth = SOLDIER_HEALTH;
     };
 
     subreset()
@@ -403,7 +484,7 @@ class Human extends Agent
         }
         else
         {
-            this.weapon.bullet_type = ATTACKER_BULLET;
+            this.weapon.bullet_type = UNFRIENDLY_BULLET;
         }
     };
 
@@ -422,7 +503,7 @@ class Human extends Agent
 
         if (this.health < 50.0 || this.retreating)
         {
-            this.retreat_and_return(() => { return this.health >= 100.0; });
+            this.retreat_and_return(() => { return this.health >= valueof(this.maxhealth); });
         }
     };
 
@@ -449,31 +530,20 @@ class Human extends Agent
 
     friendly_behaviour()
     {
-        const render = engine.getSystem("render");
         const physics = engine.getSystem("physics");
-
-        // Search for unfriendlies
         const bodies = physics.grid.getBodiesXY(...this.body.position);
         
         for (let body of bodies)
         {
-            if (body.label == "PLAYER")
+            if (body.label != UNFRIENDLY_AGENT)
             {
                 continue;
             }
 
-            else if (body.label != AGENT_REE || body == this.body)
+            if (this.body_visible(body))
             {
-                continue;
-            }
-
-            else if (body.generic_data.isFriendly() == false)
-            {
-                if (this.body_visible(body))
-                {
-                    this.attack(body);
-                    break;
-                }
+                this.attack(body);
+                break;
             }
         }
     };
@@ -481,35 +551,22 @@ class Human extends Agent
 
     unfriendly_behaviour()
     {
-        const terrain = engine.getSystem("terrain");
-        const player = engine.getSystem("player");
-        const render = engine.getSystem("render");
         const physics = engine.getSystem("physics");
         const bodies = physics.grid.getBodiesXY(...this.body.position);
 
         for (let body of bodies)
         {
-            if (body.label == "PLAYER" && this.body_visible(body))
-            {
-                this.attack(body);
-                break;
-            }
-
-            if ((body.label != AGENT_REE) || body == this.body)
+            if (body.label != FRIENDLY_AGENT)
             {
                 continue;
             }
 
-            if (body.generic_data.isFriendly() == true || body.label == "PLAYER")
+            if (this.body_visible(body))
             {
-                if (this.body_visible(body))
-                {
-                    this.attack(body);
-                    break;
-                }
+                this.attack(body);
+                break;
             }
         }
-
     };
 
 };

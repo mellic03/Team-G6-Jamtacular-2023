@@ -312,10 +312,8 @@ class TerrainSystem
     {
         let row = floor((y + HALF_SPAN) / QUADTREE_SPAN) % SECTORS_Y;
 
-        // if (row < 0)
-        // {
-        //     row = SECTORS_Y + row;
-        // }
+        if (row < 0)          { row = 0;           };
+        if (row >= SECTORS_Y) { row = SECTORS_Y-1; };
 
         return row; 
     };
@@ -325,10 +323,8 @@ class TerrainSystem
     {
         let col = Math.floor((x + HALF_SPAN) / QUADTREE_SPAN) % SECTORS_X;
 
-        // if (col < 0)
-        // {
-        //     col = SECTORS_X + col;
-        // }
+        if (col < 0)          { col = 0;           };
+        if (col >= SECTORS_X) { col = SECTORS_X-1; };
 
         return col; 
     };
@@ -393,7 +389,7 @@ class TerrainSystem
 
     unlock( x, y, w, h )
     {
-        if (this.dev_zoom)
+        if (is_devmode())
         {
             this.unlockAll();
             return;
@@ -475,6 +471,18 @@ class TerrainSystem
                 {
                     this.placeBlock(j, i, blocktype, span);
                 }
+            }
+        }
+    };
+
+
+    placeRect( x, y, blocktype, width, height )
+    {
+        for (let wy=-height/2; wy<+height/2; wy++)
+        {
+            for (let wx=-width/2; wx<+width/2; wx++)
+            {
+                this.placeBlock(x+wx, y+wy, blocktype, 8);
             }
         }
     };

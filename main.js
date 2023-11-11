@@ -25,6 +25,18 @@ function preload()
 function setup()
 {
     engine.setup();
+
+    const terrain = engine.getSystem("terrain");
+    terrain.unlockAll();
+    const factorySys = engine.getSystem("factory");
+
+    factorySys.player_factory = factorySys.createFactory(0, 0, FACTORY_PLAYER);
+    factorySys.player_factory.createAgent(AGENT_SOLDIER);
+
+    const efactory = factorySys.createFactory(0, 1500, FACTORY_ENEMY);
+    efactory.createAgent(AGENT_SOLDIER);
+
+    terrain.lock();
 }
 
 
@@ -42,8 +54,18 @@ function draw()
     engine.getSystem("bullet").addBodies();
     engine.getSystem("agent").addBodies();
     engine.getSystem("player").addBodies();
+    engine.getSystem("factory").addBodies();
 
-    terrain.unlock(...render.view_pos, viewport_w, viewport_h);
+    if (is_devmode())
+    {
+        terrain.unlockAll();
+    }
+
+    else
+    {
+        terrain.unlock(...render.view_pos, viewport_w, viewport_h);
+    }
+
     engine.draw();
     terrain.lock();
 

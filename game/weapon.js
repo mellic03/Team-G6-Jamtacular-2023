@@ -11,7 +11,7 @@ class Weapon
     recoil = 0;
     shake  = 0;
 
-    constructor( cooldown, spread, bullet_type=PLAYER_BULLET )
+    constructor( cooldown, spread, bullet_type )
     {
         this.cooldown    = cooldown;
         this.spread      = spread;
@@ -42,7 +42,7 @@ const RIFLE_AMMO_COST     = 1;
 
 class Rifle extends Weapon
 {
-    constructor( bullet_type=PLAYER_BULLET )
+    constructor( bullet_type )
     {
         super(RIFLE_COOLDOWN, RIFLE_SPREAD, bullet_type);
         this.recoil    = RIFLE_RECOIL;
@@ -81,7 +81,7 @@ const SHOTGUN_SHAKE         = 1200;
 
 class Shotgun extends Weapon
 {
-    constructor( bullet_type=PLAYER_BULLET )
+    constructor( bullet_type )
     {
         super(SHOTGUN_COOLDOWN, SHOTGUN_SPREAD, bullet_type);
         this.recoil    = SHOTGUN_RECOIL;
@@ -106,6 +106,7 @@ class Shotgun extends Weapon
                 );
             }
             this.sound.play();
+
             return true;
         }
 

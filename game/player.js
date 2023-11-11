@@ -11,7 +11,6 @@ const TOOL_LIGHT_A = 7;
 const TOOL_LIGHT_B = 8;
 
 
-
 class Player
 {
     player_img;
@@ -33,7 +32,8 @@ class Player
     ammo    = 100;
     timer   = 0.0;
 
-    tool_mode     = TOOL_TERRAIN;
+    tool_mode     = TOOL_INSPECT;
+    can_terrain   = false;
     rect_w        = 128;
     rect_h        = 64;
     rect_r        = 0.0;
@@ -43,6 +43,7 @@ class Player
     view_offset2  = [0.0, 0.0];
     view_shake    = 0.0;
     velocity      = [0.0, 0.0];
+
 
     constructor()
     {
@@ -64,18 +65,18 @@ class Player
         this.sprite.image(this.player_img);
         this.player_img.resize(128, 128);
 
-        this.weapons[WEAPON_RIFLE] = weaponSys.createWeapon(WEAPON_RIFLE);
+        this.weapons[WEAPON_RIFLE] = weaponSys.createWeapon(WEAPON_RIFLE, FRIENDLY_BULLET);
         this.weapons[WEAPON_RIFLE].hair_trigger = true;
-        this.weapons[WEAPON_SHOTGUN] = weaponSys.createWeapon(WEAPON_SHOTGUN);
+        this.weapons[WEAPON_SHOTGUN] = weaponSys.createWeapon(WEAPON_SHOTGUN, FRIENDLY_BULLET);
 
-        this.body = new PhysicsBody(10, 10, 16, 16, "PLAYER");
+        this.body = new PhysicsBody(10, 10, 16, 16, FRIENDLY_AGENT);
         this.body.fast_collisions = false;
 
         this.body.body_resolution = (other) => {
 
-            if (other.label > PLAYER_BULLET && other.label <= FRIENDLY_BULLET)
+            if (other.label == UNFRIENDLY_BULLET)
             {
-                const damage = other.generic_data;
+                const damage = 10;
                 this.health -= damage;
             }
         };
@@ -428,10 +429,8 @@ class Player
         let dir = vec2_sub(mouse_worldspace, this.position);
         dir = vec2_mult(dir, 0.35);
 
-        const alpha = min(0.005*deltaTime, 0.9);
-
-        this.view_offset[0] = lerp(this.view_offset[0], dir[0], alpha);
-        this.view_offset[1] = lerp(this.view_offset[1], dir[1], alpha);
+        this.view_offset[0] = dir[0];
+        this.view_offset[1] = dir[1];
 
         this.view_offset2[0] *= 0.95;
         this.view_offset2[1] *= 0.95;

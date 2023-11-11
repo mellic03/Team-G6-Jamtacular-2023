@@ -4,13 +4,13 @@ class Pointlight
     position  = [0, 0];
     diffuse   = [0, 1, 0];
 
-    constant  = 0.0;
-    linear    = 2.0;
-    quadratic = 8.0;
+    constant  = 1.0;
+    linear    = 5.0;
+    quadratic = 55.0;
 
-    s_constant  = 0.0;
-    s_linear    = 1.0;
-    s_quadratic = 20.0;
+    s_constant  = 1.0;
+    s_linear    = 5.0;
+    s_quadratic = 55.0;
 
     radius = QUADTREE_SPAN;
 
@@ -72,10 +72,10 @@ class LightSystem
         }
 
         this.pointlights[0].diffuse  = [1, 2, 2];
-        this.pointlights[0].position = [-100, -100];
+        this.pointlights[0].position = [0, -1];
 
         this.pointlights[3].diffuse  = [2, 2, 1];
-        this.pointlights[3].position = [+100, -100];
+        this.pointlights[3].position = [0, -1];
     };
 
 

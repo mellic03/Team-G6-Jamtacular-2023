@@ -65,17 +65,14 @@ class FactoryModal
             factory.createAgent(AGENT_GATHERER);
         });
 
-        ui.menuButton2(0, 2, "Guard", () => {
-            factory.createAgent(AGENT_GUARD);
-        });
-
         ui.menuButton2(0, 3, "Security", () => {
             factory.createAgent(AGENT_SECURITY);
         });
 
-        ui.menuButton2(0, 4, "Human?", () => {
-            factory.createAgent(AGENT_REE);
+        ui.menuButton2(0, 4, "Soldier", () => {
+            factory.createAgent(AGENT_SOLDIER);
         });
+
 
         ui.nextRow(6);
 

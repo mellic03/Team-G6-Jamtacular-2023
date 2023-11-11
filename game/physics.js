@@ -2,7 +2,6 @@
 class PhysicsBody
 {
     label;
-    generic_data;
 
     position;
     velocity;

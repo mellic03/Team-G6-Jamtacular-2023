@@ -150,6 +150,22 @@ class SettingsModal
             }, physics.visualize_grid == true);
         }
 
+
+           
+        ui.nextRow(6);
+        {
+            ui.menuLabel(0, 1, "Terrain Tools");
+
+            ui.menuButton2(0, 3, "No", () => {
+                player.can_terrain = false;
+            }, player.can_terrain == false);
+
+            ui.menuButton2(0, 4, "Yes", () => {
+                player.can_terrain = true;
+            }, player.can_terrain == true);
+        }
+
+
         ui.menuButton(-1, -1, "Close", () => { this.hide(); });
     };
 

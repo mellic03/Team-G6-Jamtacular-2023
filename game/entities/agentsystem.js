@@ -6,6 +6,8 @@ const MAX_AGENTS = 100;
 class AgentSystem
 {
     agentGroup;
+
+    images       = [  ];
     sprites      = [  ];
     costs        = [  ];
     constructors = [  ];
@@ -21,35 +23,38 @@ class AgentSystem
         this.agentGroup = new Group();
 
         this.sprites[AGENT_GATHERER_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_GATHERER_IDX].image(loadImage("gatherer.png"));
+        this.images[AGENT_GATHERER_IDX]  = loadImage("gatherer.png");
 
         this.sprites[AGENT_GUARD_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_GUARD_IDX].image(loadImage("guard.png"));
+        this.images[AGENT_GUARD_IDX]  = loadImage("guard.png");
 
         this.sprites[AGENT_SECURITY_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_SECURITY_IDX].image(loadImage("security.png"));
+        this.images[AGENT_SECURITY_IDX]  = loadImage("game/assets/security/0.png");
 
-        this.sprites[AGENT_REE_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
-        this.sprites[AGENT_REE_IDX].image(loadImage("game/assets/rifle/rifle1.png"));
+        this.sprites[AGENT_SOLDIER_IDX] = new BSprite(0, 0, 64, 64, this.agentGroup);
+        this.images[AGENT_SOLDIER_IDX]  = loadImage("game/assets/rifle/rifle1.png");
 
-        guard0 = loadImage("game/assets/guard/0.png", (img) => {img.resize(32, 64)});
-        guard1 = loadImage("game/assets/guard/1.png", (img) => {img.resize(32, 64)});
-        guard2 = loadImage("game/assets/guard/2.png", (img) => {img.resize(32, 64)});
-        guard3 = loadImage("game/assets/guard/3.png", (img) => {img.resize(32, 64)});
     };
 
 
     setup( engine )
     {
+        this.images[AGENT_SECURITY_IDX].resize(32, 64);
+
+        for (let i=0; i<=AGENT_SOLDIER_IDX; i++)
+        {
+            this.sprites[i].image(this.images[i]);
+        }
+
         this.costs[AGENT_GATHERER_IDX] = 10;
         this.costs[AGENT_GUARD_IDX]    = 50;
         this.costs[AGENT_SECURITY_IDX] = 100;
-        this.costs[AGENT_REE_IDX]      = 0;
+        this.costs[AGENT_SOLDIER_IDX]      = 0;
 
         this.constructors[AGENT_GATHERER_IDX] = Gatherer;
         this.constructors[AGENT_GUARD_IDX]    = Guard;
         this.constructors[AGENT_SECURITY_IDX] = Security;
-        this.constructors[AGENT_REE_IDX]      = Human;
+        this.constructors[AGENT_SOLDIER_IDX]      = Human;
 
         for (let i=0; i<MAX_AGENTS; i++)
         {
@@ -139,7 +144,7 @@ class AgentSystem
     
                 const collector = this.agents[i];
 
-                if (collector.isFriendly() == false)
+                if (collector.isFriendly() == false && is_devmode() == false)
                 {
                     continue;
                 }
@@ -190,15 +195,18 @@ class AgentSystem
         {
             this.agents[id].body.position[0] = parent.position[0] + random(-200, +200);
             this.agents[id].body.position[1] = parent.position[1] + random(-200, +200);
-
-            // this.agents[id].set_target(
-            //     parent.position[0] + random(-200, +200),
-            //     parent.position[1] + random(-200, +200)
-            // );
         }
 
-        this.agents[id].body.label = type;
-        this.agents[id].body.generic_data = this.agents[id];
+        if (this.agents[id].isFriendly())
+        {            
+            this.agents[id].body.label = FRIENDLY_AGENT;
+        }
+
+        else
+        {
+            this.agents[id].body.label = UNFRIENDLY_AGENT;
+        }
+
         this.active[id] = true;
 
         this.num_active += 1;
