@@ -6,17 +6,9 @@ function type_is_bullet( t )
 }
 
 
+let __slow_bullets      = false;
 let __bullet_speed_mult = 2.0;
 
-function set_bullet_speed( s )
-{
-    __bullet_speed_mult = s;
-}
-
-function get_bullet_speed()
-{
-    return valueof(__bullet_speed_mult);
-}
 
 class BulletSystem
 {
@@ -55,6 +47,11 @@ class BulletSystem
 
             this.bodies[i].body_resolution = (other) => {
 
+                if (this.bodies[i].label == FRIENDLY_BULLET && other.label == PLAYER_AGENT)
+                {
+                    return;
+                }
+
                 if (type_is_bullet(other.label) == false)
                 {
                     this.destroyBullet(i, ...other.position);
@@ -77,6 +74,7 @@ class BulletSystem
 
         const lightSys = engine.getSystem("light");
         this.lightsource = lightSys.getPointlight(2);
+        this.lightsource.radius = QUADTREE_SPAN;
         this.muzzle_flash = lightSys.getPointlight(1);
 
     };
@@ -84,10 +82,22 @@ class BulletSystem
 
     draw( engine )
     {
+        if (__slow_bullets == true)
+        {
+            __bullet_speed_mult = 0.5;
+        }
+
+        else
+        {
+            __bullet_speed_mult = 2.0;
+        }
+
         const render  = engine.getSystem("render");
 
-        this.lightsource.position = [-1000, -1000];
+        this.lightsource.position  = [-1000, -1000];
         this.muzzle_flash.position = [-1000, -1000];
+        this.lightsource.diffuse   = [0, 0, 0];
+        this.muzzle_flash.diffuse  = [0, 0, 0];
 
         if (this.active == 0)
         {
@@ -124,10 +134,12 @@ class BulletSystem
 
     createBullet( x, y, dx, dy, spread=0.0, type, length=1, speed=1 )
     {
-        this.muzzle_flash.position   = [x, y];
-        this.muzzle_flash.diffuse    = MUZZLE_FLASH_COLOR;
-        this.muzzle_flash.s_constant = 1000;
-        this.muzzle_flash.radius     = QUADTREE_SPAN;
+        const light = this.muzzle_flash;
+
+        light.position   = [x, y];
+        light.diffuse    = MUZZLE_FLASH_COLOR;
+        light.s_quadratic = 5;
+        light.radius     = QUADTREE_SPAN;
 
         let tangent = vec2_tangent([dx, dy]);
         let r = abnormalDist(4);
@@ -166,10 +178,22 @@ class BulletSystem
     {
         const bullet_type = this.types[id];
 
-        this.lightsource.position[0] = x;
-        this.lightsource.position[1] = y;
-        this.lightsource.diffuse  = this.hit_colors[bullet_type];
+        const light = this.lightsource;
 
+        light.position[0] = x;
+        light.position[1] = y;
+        light.diffuse = this.hit_colors[bullet_type];
+
+        // light.constant    = 1.0;
+        // light.linear      = 1.0;
+        light.s_quadratic   = 10;
+
+        // light.s_constant  = 1.0;
+        // light.s_linear    = 5.0;
+        // light.s_quadratic = 5.0;
+        // light.s_radius    = 8.0;
+
+    
         this.bodies[id].velocity = [0, 0];
         this.bodies[id].position = [-1000, -1000 - 100*id];
         this.visible[id] = false;

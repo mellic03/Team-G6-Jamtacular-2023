@@ -85,5 +85,38 @@ function vec2_point_to_line( point, start, end )
 
 
     return vec2_add(vec2_mult(dir, a/b), start);
+};
+
+
+
+function vec3_mag( x, y, z )
+{
+    return Math.sqrt(x*x + y*y + z*z);
+}
+
+
+function vec3_normalize( x, y, z )
+{
+    const mag = vec3_mag(x, y, z);
+    return [ x/mag, y/mag, z/mag ];
+}
+
+
+function vec3_rand( a, b )
+{
+    let v = [ random(a, b), random(a, b), random(a, b) ];
+    v = vec3_normalize(...v);
+
+    let q = 1.0 - max(...v);
+
+    v[0] += q;
+    v[1] += q;
+    v[2] += q;
+
+    v[0] *= 2;
+    v[1] *= 2;
+    v[2] *= 2;
+
+    return v;
 
 };

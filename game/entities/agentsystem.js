@@ -47,14 +47,12 @@ class AgentSystem
         }
 
         this.costs[AGENT_GATHERER_IDX] = 10;
-        this.costs[AGENT_GUARD_IDX]    = 50;
-        this.costs[AGENT_SECURITY_IDX] = 100;
-        this.costs[AGENT_SOLDIER_IDX]      = 0;
+        this.costs[AGENT_SECURITY_IDX] = 1000;
+        this.costs[AGENT_SOLDIER_IDX]  = 200;
 
         this.constructors[AGENT_GATHERER_IDX] = Gatherer;
-        this.constructors[AGENT_GUARD_IDX]    = Guard;
         this.constructors[AGENT_SECURITY_IDX] = Security;
-        this.constructors[AGENT_SOLDIER_IDX]      = Human;
+        this.constructors[AGENT_SOLDIER_IDX]  = Human;
 
         for (let i=0; i<MAX_AGENTS; i++)
         {
@@ -183,19 +181,16 @@ class AgentSystem
     };
 
 
-    createAgent( type, parent=undefined )
+    createAgent( type, x, y, parent=undefined )
     {
-        const id = this.current_idx;
+        const id = valueof(this.current_idx);
         const TYPE = type - AGENT_OFFSET;
 
         this.agents[id] = new this.constructors[TYPE](this.sprites[TYPE]);
         this.agents[id].reset(this.sprites[TYPE], parent);
 
-        if (parent != undefined)
-        {
-            this.agents[id].body.position[0] = parent.position[0] + random(-200, +200);
-            this.agents[id].body.position[1] = parent.position[1] + random(-200, +200);
-        }
+        this.agents[id].body.position[0] = x;
+        this.agents[id].body.position[1] = y;
 
         if (this.agents[id].isFriendly())
         {            
@@ -212,7 +207,7 @@ class AgentSystem
         this.num_active += 1;
         this.current_idx = (this.current_idx + 1) % MAX_AGENTS;
 
-        return id;
+        return this.agents[id];
     };
 
 

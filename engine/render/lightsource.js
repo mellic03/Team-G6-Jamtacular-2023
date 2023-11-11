@@ -5,14 +5,15 @@ class Pointlight
     diffuse   = [0, 1, 0];
 
     constant  = 1.0;
-    linear    = 5.0;
-    quadratic = 55.0;
+    linear    = 1.0;
+    quadratic = 1.0;
 
     s_constant  = 1.0;
-    s_linear    = 5.0;
-    s_quadratic = 55.0;
+    s_linear    = 1.0;
+    s_quadratic = 1.0;
 
-    radius = QUADTREE_SPAN;
+    radius   = QUADTREE_SPAN/2;
+    s_radius = 16.0;
 
     constructor( r, g, b )
     {
@@ -32,7 +33,8 @@ class Pointlight
         program.setUniform( name + ".s_linear",    this.s_linear    );
         program.setUniform( name + ".s_quadratic", this.s_quadratic );
 
-        program.setUniform( name + ".radius",     this.radius     );
+        program.setUniform( name + ".radius",    this.radius   );
+        program.setUniform( name + ".s_radius",  this.s_radius );
     };
 
 
@@ -52,7 +54,8 @@ class Pointlight
         this.s_linear    = valueof(light.s_linear);
         this.s_quadratic = valueof(light.s_quadratic);
 
-        this.radius = valueof(light.radius);
+        this.radius   = valueof(light.radius);
+        this.s_radius = valueof(light.s_radius);
     }
 
 };

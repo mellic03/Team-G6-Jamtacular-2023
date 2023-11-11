@@ -60,7 +60,7 @@ vec3 blocktype_color( int blocktype )
     switch (blocktype)
     {
         default:             return vec3(1.0, 0.0, 0.0);
-        case BLOCK_AIR:      return vec3(0.6);
+        case BLOCK_AIR:      return vec3(0.9);
         case BLOCK_GRASS:    return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
         case BLOCK_DIRT:     return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
         case BLOCK_STONE:    return vec3(0.67, 0.69, 0.71);
@@ -75,7 +75,7 @@ float blocktype_variation( int blocktype )
     switch (blocktype)
     {
         default:             return 0.0;
-        case BLOCK_AIR:      return 0.05;
+        case BLOCK_AIR:      return 0.5;
         case BLOCK_GRASS:    return 0.2;
         case BLOCK_DIRT:     return 0.1;
         case BLOCK_STONE:    return 0.1;
@@ -106,7 +106,7 @@ float blocktype_parallax( int blocktype )
     switch (blocktype)
     {
         default:           return 0.0;
-        case BLOCK_AIR:    return 0.2;
+        case BLOCK_AIR:    return 0.1;
     }
 }
 
@@ -295,7 +295,7 @@ QuadNode get_quadnode( vec2 pos, int quadtree_idx )
 
 
 
-float next_step( vec2 pos, vec2 dir, vec2 center, float span )
+float next_step( vec2 pos, vec2 dir, float span )
 {
     float mx = dir.y / dir.x;
     float my = dir.x / dir.y;
@@ -319,8 +319,8 @@ float next_step( vec2 pos, vec2 dir, vec2 center, float span )
     float result = (lengthSq_h < lengthSq_v) ? sqrt(lengthSq_h) : sqrt(lengthSq_v);
 
     return result + EPSILON;
-
 }
+
 
 
 float attenuation_function( float dist, float constant, float linear, float quadratic, float radius )
@@ -344,35 +344,37 @@ float attenuation_function( float dist, float constant, float linear, float quad
 #define SOLID_QUADRATIC 1.0
 
 
-float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight light )
+float trace_direct_multiTree( vec2 start, QuadNode start_node, Pointlight light )
 {
-    int end_idx = get_quadtree_idx(light.position);
-
-
     vec2 ray_pos = start;
-    vec2 ray_dir = normalize(end - start);
-    float ray_length = 0.0;
+    vec2 ray_dir = normalize(light.position - start);
 
-    float dist = distance(start, end);
+    float dist = distance(start, light.position);
 
-    QuadNode end_node = get_quadnode(end, end_idx);
+    int end_idx = get_quadtree_idx(light.position);
+    QuadNode end_node = get_quadnode(light.position, end_idx);
+
+    int start_idx = get_quadtree_idx(ray_pos);
     QuadNode node = get_quadnode(ray_pos, start_idx);
 
 
     if (node.blocktype > 0)
     {
-        return attenuation_function(dist, light.s_constant, light.s_linear, light.s_quadratic, light.radius);
+        return attenuation_function(
+            dist, light.s_constant, light.s_linear, light.s_quadratic, light.radius
+        );
     }
 
     for (int i=0; i<64; i++)
     {
         if (node.idx == end_node.idx)
         {
-            return attenuation_function(dist, light.constant, light.linear, light.quadratic, light.radius);
+            return attenuation_function(
+                dist, light.constant, light.linear, light.quadratic, light.radius
+            );
         }
 
-        float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
-        ray_length += step_size;
+        float step_size = next_step(ray_pos, ray_dir, node.span);
         ray_pos += step_size*ray_dir;
 
         int quadtree_idx = get_quadtree_idx(ray_pos);
@@ -384,48 +386,9 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight li
         }
     }
 
-    return 1.0;
+    return 0.0;
 }
 
-
-float trace_direct( vec2 start, vec2 end, int quadtree_idx )
-{
-    // vec2 ray_pos = start;
-    // vec2 ray_dir = normalize(end - start);
-    // float ray_length = 0.0;
-
-    // float dist = distance(start, end);
-
-    // QuadNode end_node = get_quadnode(end, quadtree_idx);
-    // QuadNode node = get_quadnode(ray_pos, quadtree_idx);
-
-
-    // if (node.blocktype > 0)
-    // {
-    //     return attenuation_function(dist, SOLID_CONSTANT, SOLID_LINEAR, SOLID_QUADRATIC);
-    // }
-
-    // for (int i=0; i<64; i++)
-    // {
-    //     if (node.idx == end_node.idx)
-    //     {
-    //         return attenuation_function(dist, AIR_CONSTANT, AIR_LINEAR, AIR_QUADRATIC);
-    //     }
-
-    //     float step_size = next_step(ray_pos, ray_dir, node.center, node.span);
-    //     ray_length += step_size;
-    //     ray_pos += step_size*ray_dir;
-
-    //     node = get_quadnode(ray_pos, quadtree_idx);
-
-    //     if (node.blocktype > 0)
-    //     {
-    //         return 0.0;
-    //     }
-    // }
-
-    return 1.0;
-}
 
 
 vec3 render_quadtree()
@@ -443,10 +406,10 @@ vec3 render_quadtree()
     float intensity  = rand(vec2(ivec2(coarseness*(worldspace - parallax))));
     float variation  = blocktype_variation(node.blocktype);
 
-    float direct_0 = trace_direct_multiTree(worldspace, un_pointlight_0.position, frag_quadtree_idx, un_pointlight_0);
-    float direct_1 = trace_direct_multiTree(worldspace, un_pointlight_1.position, frag_quadtree_idx, un_pointlight_1);
-    float direct_2 = trace_direct_multiTree(worldspace, un_pointlight_2.position, frag_quadtree_idx, un_pointlight_2);
-    float direct_3 = trace_direct_multiTree(worldspace, un_pointlight_3.position, frag_quadtree_idx, un_pointlight_3);
+    float direct_0 = trace_direct_multiTree(worldspace, node, un_pointlight_0);
+    float direct_1 = trace_direct_multiTree(worldspace, node, un_pointlight_1);
+    float direct_2 = trace_direct_multiTree(worldspace, node, un_pointlight_2);
+    float direct_3 = trace_direct_multiTree(worldspace, node, un_pointlight_3);
 
     vec3 illumination_0 = direct_0 * un_pointlight_0.diffuse;
     vec3 illumination_1 = direct_1 * un_pointlight_1.diffuse;
@@ -460,8 +423,41 @@ vec3 render_quadtree()
 
 
 
-#define GAMMA 2.0
-#define EXPOSURE 1.0
+const mat3 ACESInputMat = mat3(
+    0.59719, 0.35458, 0.04823,
+    0.07600, 0.90834, 0.01566,
+    0.02840, 0.13383, 0.83777
+);
+
+// ODT_SAT => XYZ => D60_2_D65 => sRGB
+const mat3 ACESOutputMat = mat3(
+     1.60475, -0.53108, -0.07367,
+    -0.10208,  1.10813, -0.00605,
+    -0.00327, -0.07276,  1.07602
+);
+
+vec3 RRTAndODTFit(vec3 v)
+{
+    vec3 a = v * (v + 0.0245786) - 0.000090537;
+    vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+    return a / b;
+}
+
+vec3 ACESFitted(vec3 color)
+{
+    color = color * ACESInputMat;
+
+    // Apply RRT and ODT
+    color = RRTAndODTFit(color);
+
+    color = color * ACESOutputMat;
+
+    // Clamp to [0, 1]
+    color = clamp(color, 0.0, 1.0);
+
+    return color;
+}
+
 
 void main()
 {
@@ -469,8 +465,7 @@ void main()
     float half_span = float(QUADTREE_HALF_SPAN);
 
     vec3 color = render_quadtree();
-    color = vec3(1.0) - exp(-color * EXPOSURE);
-    color = pow(color, vec3(1.0 / GAMMA));
+    color = ACESFitted(color);
   
     fsout_frag_color = vec4(color, 1.0);
 }

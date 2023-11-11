@@ -328,6 +328,16 @@ class PhysicsSystem
             const dtSQ       = deltaTime**2;
             const next_pos   = vec2_add(body1.position, body1.velocity);
 
+
+            // Firstly, are the bodies simply overlapping?
+            if (distance2(...body1.position, ...body2.position) < radiiSQ)
+            {
+                body1.body_resolution(body2);
+                body2.body_resolution(body1);
+                continue;
+            }
+
+
             const line_dist_SQ = point_line_dist_SQ(
                 ...body2.position,
                 ...body1.position,

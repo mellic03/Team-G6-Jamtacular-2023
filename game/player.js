@@ -29,6 +29,7 @@ class Player
 
     weapons = [  ];
     active_weapon = WEAPON_RIFLE;
+    mega_shotgun  = false;
     ammo    = 100;
     timer   = 0.0;
 
@@ -69,7 +70,7 @@ class Player
         this.weapons[WEAPON_RIFLE].hair_trigger = true;
         this.weapons[WEAPON_SHOTGUN] = weaponSys.createWeapon(WEAPON_SHOTGUN, FRIENDLY_BULLET);
 
-        this.body = new PhysicsBody(10, 10, 16, 16, FRIENDLY_AGENT);
+        this.body = new PhysicsBody(10, 10, 16, 16, PLAYER_AGENT);
         this.body.fast_collisions = false;
 
         this.body.body_resolution = (other) => {
@@ -85,6 +86,16 @@ class Player
 
     draw( engine )
     {
+        if (this.mega_shotgun)
+        {
+            this.weapons[WEAPON_SHOTGUN].num_bullets = 50;
+        }
+
+        else
+        {
+            this.weapons[WEAPON_SHOTGUN].num_bullets = SHOTGUN_NUM_BULLETS;
+        }
+
         const render = engine.getSystem("render");
 
         const dir = vec2_dir(render.mouse_worldspace, this.position);
@@ -93,26 +104,65 @@ class Player
 
 
         const lightSys = engine.getSystem("light");
-        lightSys.getPointlight(0).diffuse  = [1, 2, 2];
-        lightSys.getPointlight(0).position = this.position;
-        lightSys.getPointlight(0).quadratic   = 100.0;
-        lightSys.getPointlight(0).s_constant  = 50.0;
-        lightSys.getPointlight(0).s_quadratic = 20.0;
+        const light    = lightSys.getPointlight(0);
+
+        light.diffuse  = [0.5, 0.5, 0.5];
+        light.position = this.position;
+        light.radius   = QUADTREE_SPAN;
+
+        light.constant    = 1.0;
+        light.linear      = 1.5;
+        light.quadratic   = 0.5;
+
+        light.s_constant  = 1.0;
+        light.s_linear    = 0.5;
+        light.s_quadratic = 2.0;
+        light.s_radius    = 8.0;
 
 
+        this.draw_health();
         this.input(engine);
 
         if (this.health <= 0)
         {
-            this.body.position = [0, 0];
+            const factorySys = engine.getSystem("factory");
+            this.body.position = vec2_valueof(factorySys.player_factory.position);
             this.body.velocity = [0, 0];
-
             this.health = 100;
         }
 
         this.timer += deltaTime;
 
-        this.draw_health();
+        if (dist(...this.position, ...engine.getSystem("factory").player_factory.position) < 128)
+        {
+            this.health += 0.005*deltaTime;
+            this.health = min(100, this.health);
+        }
+
+
+        this.factory_light();
+    };
+
+
+    factory_light()
+    {
+        const factorySys = engine.getSystem("factory");
+
+        let min_distSQ  = Infinity;
+        let min_factory;
+
+        for (let factory of factorySys.factories)
+        {
+            const distSQ = distance2(...this.position, ...factory.position);
+
+            if (distSQ < min_distSQ)
+            {
+                min_distSQ  = valueof(distSQ);
+                min_factory = factory;
+            }
+        };
+
+        min_factory.enable_light();
     };
 
 
@@ -130,6 +180,7 @@ class Player
 
         rectMode(CENTER);
 
+        stroke(0);
         fill(255, 0, 0);
         rect(...screenspace, w, h);
 
@@ -299,14 +350,31 @@ class Player
             const sinr = sin(this.rect_r);
             const cosr = cos(this.rect_r);
 
-            for (let y=-this.rect_h/2; y<+this.rect_h/2; y++)
+            if (this.block_type == BLOCK_AIR)
             {
-                for (let x=-this.rect_w/2; x<+this.rect_w/2; x++)
+                for (let y=-(this.rect_h-8)/2; y<=(this.rect_h-8)/2; y++)
                 {
-                    const X = x*cosr - y*sinr;
-                    const Y = y*cosr + x*sinr;
+                    for (let x=-(this.rect_w-8)/2; x<=(this.rect_w-8)/2; x++)
+                    {
+                        const X = x*cosr - y*sinr;
+                        const Y = y*cosr + x*sinr;
 
-                    terrain.placeBlock(world_pos[0]+X, world_pos[1]+Y, this.block_type, 8);
+                        terrain.placeBlock(world_pos[0]+X, world_pos[1]+Y, this.block_type, 8);
+                    }
+                }
+            }
+
+            else
+            {
+                for (let y=-this.rect_h/2; y<this.rect_h/2; y++)
+                {
+                    for (let x=-this.rect_w/2; x<this.rect_w/2; x++)
+                    {
+                        const X = x*cosr - y*sinr;
+                        const Y = y*cosr + x*sinr;
+
+                        terrain.placeBlock(world_pos[0]+X, world_pos[1]+Y, this.block_type, 8);
+                    }
                 }
             }
         }
@@ -322,8 +390,8 @@ class Player
 
         let dir = vec2_dir(render.mouse_worldspace, this.position);
         let tangent = vec2_tangent(dir);
-        let origin = vec2_add(this.position, vec2_mult(dir, this.body.radius+1));
-        origin = vec2_add(origin, vec2_mult(tangent, 7));
+        // let origin = vec2_add(this.position, vec2_mult(dir, this.body.radius+1));
+        let origin = vec2_add(this.position, vec2_mult(tangent, 7));
 
         const data = terrain.nearest_intersection(...origin, ...dir);
         const end = [data[0], data[1]];

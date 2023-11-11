@@ -21,15 +21,16 @@ const KEY_UP     = 0;
 const KEY_DOWN   = 1;
 const KEY_TAPPED = 2;
 
-const MOUSE_UP      = 0;
-const MOUSE_DOWN    = 1;
-const MOUSE_CLICKED = 2;
-const MOUSE_DRAGGED = 3;
+const MOUSE_UP       = 0;
+const MOUSE_DOWN     = 1;
+const MOUSE_CLICKED  = 2;
+const MOUSE_CLICKED2 = 3;
+const MOUSE_DRAGGED  = 4;
 
 const CLICK_MS = 100;
 
-let states      = [ false, false, false, false ];
-let last_states = [ false, false, false, false ];
+let states      = [ false, false, false, false, false ];
+let last_states = [ false, false, false, false, false ];
 let time_down = 0;
 
 
@@ -87,6 +88,25 @@ class Keylog
     };
 
 
+    __check_clicked2()
+    {
+        const c0 = last_states[MOUSE_DOWN] == true;
+        const c1 = states[MOUSE_DOWN]      == false;
+
+        const passes = c0 && c1;
+
+        if (last_states[MOUSE_UP] == false && states[MOUSE_UP] == true && time_down < CLICK_MS)
+        {
+            return true;
+        }
+
+        else
+        {
+            return false;
+        }
+    };
+
+
     __check_dragged()
     {
         if (states[MOUSE_DOWN] == false)
@@ -111,11 +131,13 @@ class Keylog
         last_states[MOUSE_DOWN]    = valueof(states[MOUSE_DOWN]);
         last_states[MOUSE_UP]      = valueof(states[MOUSE_UP]);
         last_states[MOUSE_CLICKED] = valueof(states[MOUSE_CLICKED]);
+        last_states[MOUSE_CLICKED2] = valueof(states[MOUSE_CLICKED2]);
         last_states[MOUSE_DRAGGED] = valueof(states[MOUSE_DRAGGED]);
 
         states[MOUSE_DOWN]    = this.__check_down();
         states[MOUSE_UP]      = this.__check_up();
         states[MOUSE_CLICKED] = this.__check_clicked();
+        states[MOUSE_CLICKED2] = this.__check_clicked2();
         states[MOUSE_DRAGGED] = this.__check_dragged();
 
 
@@ -178,6 +200,11 @@ class Keylog
     mouseClicked()
     {
         return states[MOUSE_CLICKED];
+    };
+
+    mouseClicked2()
+    {
+        return states[MOUSE_CLICKED2];
     };
 
     mouseDragged()

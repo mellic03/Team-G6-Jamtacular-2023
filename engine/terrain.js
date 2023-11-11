@@ -69,6 +69,12 @@ class TerrainSystem
             "engine/render/shaders/quadtree.fs"
         );
 
+
+        this.shaders[4] = loadShader(
+            "engine/render/shaders/screenquad.vs",
+            "engine/render/shaders/quadtree-vhigh.fs"
+        );
+
         this.shaders[3] = loadShader(
             "engine/render/shaders/screenquad.vs",
             "engine/render/shaders/quadtree-dev.fs"
@@ -122,7 +128,6 @@ class TerrainSystem
         }
 
         this.lock();
-
     };
 
 
@@ -463,9 +468,9 @@ class TerrainSystem
 
     placeSphere( x, y, blocktype, radius, span )
     {
-        for (let i=y-radius*span; i<y+radius*span; i+=span)
+        for (let i=y-radius*span; i<=y+radius*span; i+=span)
         {
-            for (let j=x-radius*span; j<x+radius*span; j+=span)
+            for (let j=x-radius*span; j<=x+radius*span; j+=span)
             {
                 if (dist(j, i, x, y) < radius*span)
                 {
@@ -476,13 +481,19 @@ class TerrainSystem
     };
 
 
-    placeRect( x, y, blocktype, width, height )
+    placeRect( x, y, blocktype, width, height, angle=0.0 )
     {
-        for (let wy=-height/2; wy<+height/2; wy++)
+        const sinr = sin(angle);
+        const cosr = cos(angle);
+
+        for (let wy=-height/2; wy<height/2; wy+=4)
         {
-            for (let wx=-width/2; wx<+width/2; wx++)
+            for (let wx=-width/2; wx<width/2; wx+=4)
             {
-                this.placeBlock(x+wx, y+wy, blocktype, 8);
+                const X = wx*cosr - wy*sinr;
+                const Y = wy*cosr + wx*sinr;
+
+                this.placeBlock(x+X, y+Y, blocktype, 8);
             }
         }
     };

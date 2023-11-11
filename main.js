@@ -9,9 +9,9 @@ engine.addSystem( new TerrainSystem(), "terrain" );
 engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new BulletSystem(),  "bullet"  );
 engine.addSystem( new AgentSystem(),   "agent"   );
-engine.addSystem( new Player(),        "player"  );
 engine.addSystem( new WeaponSystem(),  "weapon"  );
 engine.addSystem( new PhysicsSystem(), "physics" );
+engine.addSystem( new Player(),        "player"  );
 engine.addSystem( new UISystem(),      "ui"      );
 // engine.addSystem( new AudioSystem(),   "audio"   );
 
@@ -28,14 +28,7 @@ function setup()
 
     const terrain = engine.getSystem("terrain");
     terrain.unlockAll();
-    const factorySys = engine.getSystem("factory");
-
-    factorySys.player_factory = factorySys.createFactory(0, 0, FACTORY_PLAYER);
-    factorySys.player_factory.createAgent(AGENT_SOLDIER);
-
-    const efactory = factorySys.createFactory(0, 1500, FACTORY_ENEMY);
-    efactory.createAgent(AGENT_SOLDIER);
-
+    enemy_factory_init();
     terrain.lock();
 }
 

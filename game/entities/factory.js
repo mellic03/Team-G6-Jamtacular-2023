@@ -3,6 +3,13 @@ const FACTORY_PLAYER = 0;
 const FACTORY_ENEMY  = 1;
 
 
+const OUTER_RADIUS     = 360;
+const OUTER_THICKNESS  = 4;
+
+const INNER_RADIUS     = 224;
+const INNER_THICKNESS  = 4;
+
+
 /*
     Factories create entities like collectors.
 */
@@ -10,36 +17,60 @@ class Factory
 {
     sprite;
     body;
-    health = 100;
+    health = 500;
     alive  = true;
 
     position   = [0, 0];
-    monies     = 1000.0;
+    monies     = 20.0;
     collectors = [  ];
+    timer = 0.0;
+
+    lightsource = new Pointlight(1, 0, 1);
 
 
     constructor( x, y, sprite, friendly=false )
     {
         const terrain = engine.getSystem("terrain");
-        terrain.placeSphere(x, y, BLOCK_STONE, 36, 8);
-        terrain.placeSphere(x, y, BLOCK_AIR,   32, 8);
-        terrain.placeRect(x+256, y, BLOCK_AIR, 64, 64);
-        terrain.placeRect(x-256, y, BLOCK_AIR, 64, 64);
-        terrain.placeRect(x, y+256, BLOCK_AIR, 64, 64);
-        terrain.placeRect(x, y-256, BLOCK_AIR, 64, 64);
 
-        terrain.placeRect(x+150, y, BLOCK_STONE, 16, 64);
-        terrain.placeRect(x-150, y, BLOCK_STONE, 16, 64);
-        terrain.placeRect(x, y+150, BLOCK_STONE, 64, 16);
-        terrain.placeRect(x, y-150, BLOCK_STONE, 64, 16);
+        let mid, outer, inner;
+
+        // Outer shell
+        // -------------------------------------------------------------
+        outer = floor(OUTER_RADIUS/8) + OUTER_THICKNESS/2;
+        inner = floor(OUTER_RADIUS/8) - OUTER_THICKNESS/2;
+        mid   = OUTER_RADIUS;
+
+        terrain.placeSphere(x, y, BLOCK_STONE, outer, 8);
+        terrain.placeSphere(x, y, BLOCK_AIR,   inner, 8);
+
+        terrain.placeRect(x+mid, y, BLOCK_AIR, 64, 128);
+        terrain.placeRect(x-mid, y, BLOCK_AIR, 64, 128);
+        terrain.placeRect(x, y+mid, BLOCK_AIR, 128, 64);
+        terrain.placeRect(x, y-mid, BLOCK_AIR, 128, 64);
+        // -------------------------------------------------------------
+
+        // Inner shell
+        // -------------------------------------------------------------
+        outer = floor(INNER_RADIUS/8) + INNER_THICKNESS/2;
+        inner = floor(INNER_RADIUS/8) - INNER_THICKNESS/2;
+        mid   = INNER_RADIUS - 16*INNER_THICKNESS;
+
+        terrain.placeSphere(x, y, BLOCK_STONE, outer, 8);
+        terrain.placeSphere(x, y, BLOCK_AIR,   inner, 8);
+
+        terrain.placeRect(x-mid, y-mid, BLOCK_AIR, 128, 128, +45);
+        terrain.placeRect(x-mid, y+mid, BLOCK_AIR, 128, 128, -45);
+        terrain.placeRect(x+mid, y-mid, BLOCK_AIR, 128, 128, +45);
+        terrain.placeRect(x+mid, y+mid, BLOCK_AIR, 128, 128, -45);
+        // -------------------------------------------------------------
+
 
         this.sprite = sprite;
-        this.body = new PhysicsBody(x, y, 32, 32, "FACTORY");
-        this.position = this.body.position;
 
 
         if (friendly)
         {
+            this.body = new PhysicsBody(x, y, 32, 32, "PLAYER_FACTORY");
             this.body.body_resolution = (other) => {
 
                 if (other.label == UNFRIENDLY_BULLET)
@@ -51,6 +82,7 @@ class Factory
 
         else
         {
+            this.body = new PhysicsBody(x, y, 32, 32, "ENEMY_FACTORY");
             this.body.body_resolution = (other) => {
 
                 if (other.label == PLAYER_BULLET || other.label == FRIENDLY_BULLET)
@@ -59,6 +91,27 @@ class Factory
                 }
             };
         }
+    
+        this.position = this.body.position;
+
+        this.lightsource.diffuse = vec3_rand(0.0, 1.0);
+        this.lightsource.position[0] = this.position[0];
+        this.lightsource.position[1] = this.position[1];
+        this.lightsource.linear      = 0.5;
+        this.lightsource.quadratic   = 0.5;
+
+        this.lightsource.s_constant  = 0.0;
+        this.lightsource.s_linear    = 0.5;
+        this.lightsource.s_quadratic = 0.5;
+        this.lightsource.s_radius    = 64.0;
+
+    };
+
+
+    enable_light()
+    {
+        const light = engine.getSystem("light");
+        light.getPointlight(3).copy(this.lightsource);
     };
 
 
@@ -66,6 +119,9 @@ class Factory
     {
         const terrain = engine.getSystem("terrain");
         terrain.placeSphere(...this.position, BLOCK_GOLD, 8, 8);
+
+        this.lightsource.diffuse  = [0, 0, 0];
+        this.lightsource.position = [-1000, -1000];
     };
 
 
@@ -82,8 +138,18 @@ class Factory
             return;
         }
 
+        else
+        {
+            this.health = min(500, this.health + 0.001*deltaTime);
+        }
+
         this.sprite.draw(...this.position);
         this.draw_health();
+
+        if (this != engine.getSystem("factory").player_factory)
+        {
+            this.unfriendly_behaviour();
+        }
 
         const render = engine.getSystem("render");
         const player = engine.getSystem("player");
@@ -109,12 +175,51 @@ class Factory
             const size = render.world_to_screen_dist(64);
             rect(...render.world_to_screen(...this.position), size, size);
 
-            if (keylog.mouseClicked())
+            if (keylog.mouseClicked2())
             {
                 UIsys.modals[MODAL_FACTORY].show(this);
             }
         }
 
+    };
+
+
+    unfriendly_behaviour()
+    {
+        const factorySys = engine.getSystem("factory");
+
+        if (this.timer > 1000 * 30)
+        {
+            // dowith_probability(0.25, () => {
+
+            //     this.monies += 1000;
+            //     this.launch_attack(factorySys.player_factory);
+            // });
+
+            this.timer = 0.0;
+        }
+
+        this.timer += deltaTime;
+    };
+
+    
+    launch_attack( factory )
+    {
+        const pos = factory.position;
+
+        const mid = INNER_RADIUS - 16*INNER_THICKNESS;
+        const offsets = [
+            [pos[0]-mid, pos[1]-mid],
+            [pos[0]-mid, pos[1]+mid],
+            [pos[0]+mid, pos[1]-mid],
+            [pos[0]+mid, pos[1]+mid]
+        ];
+
+        for (let i=0; i<4; i++)
+        {
+            const soldier = this.createAgent(AGENT_SOLDIER);
+            soldier.set_target(offsets[i]);
+        }
     };
 
 
@@ -136,7 +241,7 @@ class Factory
         rect(...screenspace, w, h);
 
         fill(0, 255, 0);
-        rect(...screenspace, w*(this.health/100), h);
+        rect(...screenspace, w*(this.health/500), h);
     };
 
 
@@ -147,13 +252,66 @@ class Factory
         if (this.monies >= cost)
         {
             const agentSys = engine.getSystem("agent");
-            agentSys.createAgent(type, this);
+         
+            const bound = INNER_RADIUS - 16*INNER_THICKNESS;
+            let x = this.position[0] + random(-bound, +bound);
+            let y = this.position[1] + random(-bound, +bound);
+
+            const agent = agentSys.createAgent(type, x, y, this);
+
+            x = this.position[0] + random(-bound, +bound);
+            y = this.position[1] + random(-bound, +bound);
+            agent.set_target([x, y]);
 
             this.monies -= cost;
+
+            return agent;
         }
     };
 
 };
+
+
+
+
+function enemy_factory_init()
+{
+    const factorySys = engine.getSystem("factory");
+    const terrain    = engine.getSystem("terrain");
+
+
+    factorySys.player_factory = factorySys.createFactory(1200, -48, FACTORY_PLAYER);
+    factorySys.player_factory.createAgent(AGENT_SOLDIER);
+    factorySys.player_factory.createAgent(AGENT_GATHERER);
+    // factorySys.player_factory.monies = 100000; // (AGENT_GATHERER);
+
+    const player = engine.getSystem("player");
+    player.body.position = vec2_valueof(factorySys.player_factory.position);
+
+
+
+    let enemy_positions = [ [64, 1504], [2000, 2856] ];
+
+    for (let pos of enemy_positions)
+    {
+        const factory = factorySys.createFactory(...pos, FACTORY_ENEMY);
+        // factory.createAgent(AGENT_SOLDIER);
+    }
+
+
+    for (let i=0; i<256; i++)
+    {
+        terrain.pathfinder.refine(terrain);
+    }
+
+
+    factorySys.factories[1].monies += 1000;
+    const SEC = factorySys.factories[1].createAgent(AGENT_SECURITY);
+    SEC.set_target([624, 1504]);
+
+};
+
+
 
 
 
@@ -198,22 +356,6 @@ class FactorySystem
         this.factories.push(factory);
 
         return factory;
-    };
-
-
-    createAgent( factory_id, type )
-    {
-        // const agentSys = engine.getSystem("agent");
-
-        // const factory = this.getFactory(factory_id);
-        // const cost    = agentSys.costOf(type);
-
-        // if (factory.monies >= cost)
-        // {
-        //     const collector_id = agentSys.createCollector(type);
-        //     factory.agents.push(collector_id);
-        //     factory.monies -= cost;
-        // }
     };
 
 

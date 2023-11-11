@@ -35,9 +35,10 @@ class SettingsModal
     draw()
     {
         const terrain = engine.getSystem("terrain");
-        const bullet = engine.getSystem("bullet");
+        const bullet  = engine.getSystem("bullet");
         const physics = engine.getSystem("physics");
-        const player = engine.getSystem("player");
+        const player  = engine.getSystem("player");
+        const factory = engine.getSystem("factory").player_factory;
 
         if (this.visible == false)
         {
@@ -47,19 +48,24 @@ class SettingsModal
         rectMode(CORNERS);
 
         const ui = this.UIgrid;
-
-        ui.background(100);
-
         ui.reset(3);
-        ui.menuTitle("Settings", 1);
-        ui.nextRow(3);
-        ui.nextRow(3);
+        ui.background(100);
+        ui.padding[0] = 50;
+        ui.padding[1] = 50;
 
+
+        ui.nextRow(3);
         ui.menuTitle("Lighting Quality", 1);
         ui.nextRow(6);
-        ui.nextRow(6);
+        ui.nextRow(5);
 
-        ui.menuButton2(0, 1, "Low", () => {
+
+        ui.menuButton2(0, 0, "Dev", () => {
+            terrain.fidelity = 3;
+            set_devmode(true);
+        }, is_devmode());
+
+        ui.menuButton2(0, 1, "Off", () => {
             terrain.fidelity = 0;
             set_devmode(false);
         }, terrain.fidelity == 0);
@@ -73,97 +79,67 @@ class SettingsModal
             terrain.fidelity = 2;
             set_devmode(false);
         }, terrain.fidelity == 2);
-    
-        ui.menuButton2(0, 4, "Dev", () => {
-            terrain.fidelity = 3;
-            set_devmode(true);
-        }, is_devmode());
-    
+
+        ui.menuButton2(0, 4, "Blazed", () => {
+            terrain.fidelity = 4;
+            set_devmode(false);
+        }, terrain.fidelity == 4);
+
 
         ui.nextRow(3);
         ui.nextRow(3);
-        ui.menuTitle("Debugging", 1);
+        ui.menuTitle("Visualizations", 1);
         ui.nextRow(6);
-        ui.nextRow(6);
+        ui.nextRow(3);
         {
-            ui.menuLabel(0, 1, "Quadtree");
+            terrain.visualize_quadtree = ui.toggleButton(
+                0, 0, "Quadtree", terrain.visualize_quadtree
+            );
 
-            ui.menuButton2(0, 3, "No", () => {
-                terrain.visualize_quadtree = false;
-            }, terrain.visualize_quadtree == false);
+            terrain.visualize_pathfinding = ui.toggleButton(
+                0, 1, "Pathfinding", terrain.visualize_pathfinding
+            );
 
-            ui.menuButton2(0, 4, "Yes", () => {
-                terrain.visualize_quadtree = true;
-            }, terrain.visualize_quadtree == true);
-        }
-
-        ui.nextRow(6);
-        {
-            ui.menuLabel(0, 1, "Pathfinding");
-
-            ui.menuButton2(0, 3, "No", () => {
-                terrain.visualize_pathfinding = false;
-            }, terrain.visualize_pathfinding == false);
-
-            ui.menuButton2(0, 4, "Yes", () => {
-                terrain.visualize_pathfinding = true;
-            }, terrain.visualize_pathfinding == true);
-        }
-
-        ui.nextRow(6);
-        {
-            ui.menuLabel(0, 1, "Collision Grid");
-
-            ui.menuButton2(0, 3, "No", () => {
-                physics.visualize_grid = false;
-            }, physics.visualize_grid == false);
-
-            ui.menuButton2(0, 4, "Yes", () => {
-                physics.visualize_grid = true;
-            }, physics.visualize_grid == true);
+            physics.visualize_grid = ui.toggleButton(
+                0, 2, "Collision Grid", physics.visualize_grid
+            );
         }
 
         ui.nextRow(3);
-        ui.nextRow(3);
-        ui.menuTitle("Fun", 1);
+        ui.nextRow(1);
+        ui.menuTitle("Fun", 0);
         ui.nextRow(5);
 
-        ui.nextRow(6);
+
+        ui.nextRow(3);
         {
-            ui.menuButton2(0, 1, "Ammo", () => {
+            ui.menuButton2(0, 0, "Inf. Money", () => {
+                factory.monies = Infinity;
+            }, factory.monies == Infinity);
+
+            ui.menuButton2(0, 1, "Inf. Health", () => {
+                player.health = Infinity;
+            }, player.health == Infinity);
+
+            ui.menuButton2(0, 2, "Inf. Ammo", () => {
                 player.ammo = Infinity;
-            });
-            ui.menuButton2(0, 3, "Health", () => {
-                player.ammo = Infinity;
-            });
+            }, player.ammo == Infinity);
+
         }
     
-        ui.nextRow(6);
+        ui.nextRow(3);
         {
-            ui.menuLabel(0, 1, "Slow Bullets");
+            player.can_terrain = ui.toggleButton(
+                0, 0, "Terrain Edit", player.can_terrain
+            );
 
-            ui.menuButton2(0, 3, "No", () => {
-                set_bullet_speed(2.0);
-            }, get_bullet_speed() == 2.0);
+            __slow_bullets = ui.toggleButton(
+                0, 1, "Slow Bullets", __slow_bullets
+            );
 
-            ui.menuButton2(0, 4, "Yes", () => {
-                set_bullet_speed(0.5);
-            }, get_bullet_speed() == 0.5);
-        }
-
-
-           
-        ui.nextRow(6);
-        {
-            ui.menuLabel(0, 1, "Terrain Tools");
-
-            ui.menuButton2(0, 3, "No", () => {
-                player.can_terrain = false;
-            }, player.can_terrain == false);
-
-            ui.menuButton2(0, 4, "Yes", () => {
-                player.can_terrain = true;
-            }, player.can_terrain == true);
+            player.mega_shotgun = ui.toggleButton(
+                0, 2, "Big Shotgun", player.mega_shotgun
+            );
         }
 
 

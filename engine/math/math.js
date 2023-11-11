@@ -51,9 +51,7 @@ function clamp( n, low, high )
 
 function swap( a, b )
 {
-    const temp = a;
-    a = b;
-    b = temp;
+    [a, b] = [b, a];
 }
 
 
@@ -82,3 +80,22 @@ function swept_circle( x1, y1, dx1, dy1, r1, x2, y2, dx2, ry2, r2 )
 }
 
 
+
+
+function point_in_AABB( px, py, bx, by, bw, bh )
+{
+    const half_w = bw/2;
+    const half_h = bh/2;
+
+    if (px < bx-half_w || px > bx+half_w)
+    {
+        return false;
+    }
+
+    if (py < by-half_h || py > by+half_h)
+    {
+        return false;
+    }
+
+    return true;
+}

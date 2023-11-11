@@ -13,6 +13,7 @@ struct Pointlight
     vec3 diffuse;
     float constant, linear, quadratic;
     float s_constant, s_linear, s_quadratic;
+    float s_radius;
     float radius;
 };
 
@@ -58,7 +59,7 @@ vec3 blocktype_color( int blocktype )
     switch (blocktype)
     {
         default:             return vec3(1.0, 0.0, 0.0);
-        case BLOCK_AIR:      return vec3(0.6);
+        case BLOCK_AIR:      return vec3(0.9);
         case BLOCK_GRASS:    return vec3(100.0/255.0, 155.0/255.0, 86.0/255.0);
         case BLOCK_DIRT:     return vec3(177.0/255.0, 127.0/255.0, 88.0/255.0);
         case BLOCK_STONE:    return vec3(0.67, 0.69, 0.71);
@@ -73,7 +74,7 @@ float blocktype_variation( int blocktype )
     switch (blocktype)
     {
         default:             return 0.0;
-        case BLOCK_AIR:      return 0.05;
+        case BLOCK_AIR:      return 0.5;
         case BLOCK_GRASS:    return 0.2;
         case BLOCK_DIRT:     return 0.1;
         case BLOCK_STONE:    return 0.1;
@@ -104,10 +105,9 @@ float blocktype_parallax( int blocktype )
     switch (blocktype)
     {
         default:           return 0.0;
-        case BLOCK_AIR:    return 0.2;
+        case BLOCK_AIR:    return 0.1;
     }
 }
-
 
 
 
@@ -318,7 +318,6 @@ float next_step( vec2 pos, vec2 dir, vec2 center, float span )
     float result = (lengthSq_h < lengthSq_v) ? sqrt(lengthSq_h) : sqrt(lengthSq_v);
 
     return result + EPSILON;
-
 }
 
 
@@ -389,8 +388,8 @@ float trace_direct_multiTree( vec2 start, vec2 end, int start_idx, Pointlight li
 
 uniform float un_increment;
 
-#define DIAMETER 32.0
-#define RADIUS   16.0
+#define I_SAMPLES 3
+#define F_SAMPLES 3.0
 
 
 float trace_soft( vec2 frag_pos, int frag_quadtree_idx, Pointlight light )
@@ -398,12 +397,12 @@ float trace_soft( vec2 frag_pos, int frag_quadtree_idx, Pointlight light )
     vec2 dir = light.position - frag_pos;
     vec2 tangent = normalize(vec2(-dir.y, dir.x));
 
-    float offset = -RADIUS;
-    float step_size = DIAMETER/3.0;
+    float offset    = -light.s_radius;
+    float step_size = (2.0*light.s_radius) / F_SAMPLES;
 
     float direct = 0.0;
 
-    for (int i=0; i<3; i++)
+    for (int i=0; i<I_SAMPLES; i++)
     {
         float variance = step_size * rand(frag_pos);
         vec2 offset_pos = light.position + offset*tangent + variance*tangent;
@@ -412,7 +411,7 @@ float trace_soft( vec2 frag_pos, int frag_quadtree_idx, Pointlight light )
         offset += step_size;
     }
 
-    return direct / 3.0;
+    return direct / F_SAMPLES;
 }
 
 
@@ -448,8 +447,42 @@ vec3 render_quadtree()
 
 
 
-#define GAMMA 2.0
-#define EXPOSURE 1.0
+
+const mat3 ACESInputMat = mat3(
+    0.59719, 0.35458, 0.04823,
+    0.07600, 0.90834, 0.01566,
+    0.02840, 0.13383, 0.83777
+);
+
+// ODT_SAT => XYZ => D60_2_D65 => sRGB
+const mat3 ACESOutputMat = mat3(
+     1.60475, -0.53108, -0.07367,
+    -0.10208,  1.10813, -0.00605,
+    -0.00327, -0.07276,  1.07602
+);
+
+vec3 RRTAndODTFit(vec3 v)
+{
+    vec3 a = v * (v + 0.0245786) - 0.000090537;
+    vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+    return a / b;
+}
+
+vec3 ACESFitted(vec3 color)
+{
+    color = color * ACESInputMat;
+
+    // Apply RRT and ODT
+    color = RRTAndODTFit(color);
+
+    color = color * ACESOutputMat;
+
+    // Clamp to [0, 1]
+    color = clamp(color, 0.0, 1.0);
+
+    return color;
+}
+
 
 void main()
 {
@@ -457,8 +490,7 @@ void main()
     float half_span = float(QUADTREE_HALF_SPAN);
 
     vec3 color = render_quadtree();
-    color = vec3(1.0) - exp(-color * EXPOSURE);
-    color = pow(color, vec3(1.0 / GAMMA));
+    color = ACESFitted(color);
   
     fsout_frag_color = vec4(color, 1.0);
 }

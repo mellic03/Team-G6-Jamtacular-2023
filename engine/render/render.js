@@ -96,7 +96,7 @@ class RenderSystem
 
         if (is_devmode())
         {
-            m = 4;
+            m = 2;
         }
 
         let screen_x = (world_x - this.view_pos[0]) * (this.viewport_w / (m*TERRAIN_VIEW_WIDTH_PIXELS));
@@ -115,7 +115,7 @@ class RenderSystem
 
         if (is_devmode())
         {
-            m = 4;
+            m = 2;
         }
 
         let world_x = this.view_pos[0] + m*(screen_x - this.viewport_w/2);
@@ -134,7 +134,7 @@ class RenderSystem
 
         if (is_devmode())
         {
-            m = 4;
+            m = 2;
         }
 
         return world_dist * (this.viewport_w / 1024) / m;

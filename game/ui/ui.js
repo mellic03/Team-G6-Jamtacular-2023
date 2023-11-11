@@ -218,28 +218,28 @@ class UISystem
 
         ui.nextRow(2);
         ui.menuButton2(0, 0, "Width*2", () => {
-            player.rect_w *= 2;
+            player.rect_w = floor(player.rect_w * 2);
         });
         ui.menuButton2(0, 1, "Width/2", () => {
-            player.rect_w /= 2;
+            player.rect_w = floor(player.rect_w / 2);
         });
 
         
         ui.nextRow(2);
         ui.menuButton2(0, 0, "Height*2", () => {
-            player.rect_h *= 2;
+            player.rect_h = floor(player.rect_h * 2);
         });
         ui.menuButton2(0, 1, "Height/2", () => {
-            player.rect_h /= 2;
+            player.rect_h = floor(player.rect_h / 2);
         });
 
         
         ui.nextRow(2);
-        ui.menuButton2(0, 0, "+22.5", () => {
-            player.rect_r += 22.5;
-        });
-        ui.menuButton2(0, 1, "-22.5", () => {
+        ui.menuButton2(0, 0, "CCWise", () => {
             player.rect_r -= 22.5;
+        });
+        ui.menuButton2(0, 1, "CWise", () => {
+            player.rect_r += 22.5;
         });
     };
 

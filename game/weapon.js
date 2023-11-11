@@ -35,7 +35,7 @@ class Weapon
 
 const RIFLE_COOLDOWN      = 500;
 const RIFLE_SPREAD        = 0.2;
-const RIFLE_BULLET_LENGTH = 64;
+const RIFLE_BULLET_LENGTH = 32;
 const RIFLE_RECOIL        = 150;
 const RIFLE_SHAKE         = 50;
 const RIFLE_AMMO_COST     = 1;
@@ -87,6 +87,7 @@ class Shotgun extends Weapon
         this.recoil    = SHOTGUN_RECOIL;
         this.ammo_cost = SHOTGUN_AMMO_COST;
         this.shake     = SHOTGUN_SHAKE;
+        this.num_bullets = SHOTGUN_NUM_BULLETS;
     };
 
     pew( x, y, dx, dy )
@@ -96,7 +97,7 @@ class Shotgun extends Weapon
             this.timer = 0.0;
             const bulletSys = engine.getSystem("bullet");
 
-            for (let i=0; i<SHOTGUN_NUM_BULLETS; i++)
+            for (let i=0; i<this.num_bullets; i++)
             {
                 bulletSys.createBullet(
                     x, y, dx, dy,
