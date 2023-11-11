@@ -23,14 +23,42 @@ class Factory
     draw( engine )
     {
         this.sprite.draw(...this.position);
+
+        const render = engine.getSystem("render");
+        const player = engine.getSystem("player");
+        const keylog = engine.getSystem("keylog");
+        const UIsys  = engine.getSystem("ui");
+
+        if (player.tool_mode != TOOL_INSPECT)
+        {
+            return;
+        }
+
+
+        if (this != engine.getSystem("factory").player_factory && is_devmode() == false)
+        {
+            return;
+        }
+
+        if (dist(...this.position, ...render.mouse_worldspace) < 32.0)
+        {
+            fill(0, 0, 0, 100);
+            rectMode(CENTER);
+            
+            const size = render.world_to_screen_dist(64);
+            rect(...render.world_to_screen(...this.position), size, size);
+
+            if (keylog.mouseClicked())
+            {
+                UIsys.modals[MODAL_FACTORY].show(this);
+            }
+        }
     };
 
 
     createAgent( type )
     {
         const cost = engine.getSystem("agent").costOf(type);
-
-        console.log(type);
 
         if (this.monies >= cost)
         {

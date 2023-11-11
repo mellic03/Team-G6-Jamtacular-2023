@@ -6,10 +6,11 @@ engine.addSystem( new LightSystem(),   "light"   );
 engine.addSystem( new Keylog(),        "keylog"  );
 engine.addSystem( new TerrainSystem(), "terrain" );
 
-engine.addSystem( new AgentSystem(),   "agent"   );
 engine.addSystem( new FactorySystem(), "factory" );
 engine.addSystem( new BulletSystem(),  "bullet"  );
+engine.addSystem( new AgentSystem(),   "agent"   );
 engine.addSystem( new Player(),        "player"  );
+engine.addSystem( new WeaponSystem(),  "weapon"  );
 engine.addSystem( new PhysicsSystem(), "physics" );
 engine.addSystem( new UISystem(),      "ui"      );
 // engine.addSystem( new AudioSystem(),   "audio"   );
@@ -40,6 +41,7 @@ function draw()
 
     engine.getSystem("bullet").addBodies();
     engine.getSystem("agent").addBodies();
+    engine.getSystem("player").addBodies();
 
     terrain.unlock(...render.view_pos, viewport_w, viewport_h);
     engine.draw();

@@ -51,17 +51,30 @@ const BULLET_COLOR       = [200, 200, 100];
 const PLAYER_BULLET_IDX   = 0;
 const GUARD_BULLET_IDX    = 1;
 const ATTACKER_BULLET_IDX = 2;
-const REE_BULLET_IDX      = 3;
+const FRIENDLY_BULLET_IDX = 3;
 
 const PLAYER_BULLET   =  BULLET_OFFSET + PLAYER_BULLET_IDX;
 const GUARD_BULLET    =  BULLET_OFFSET + GUARD_BULLET_IDX;
 const ATTACKER_BULLET =  BULLET_OFFSET + ATTACKER_BULLET_IDX;
-const REE_BULLET      =  BULLET_OFFSET + REE_BULLET_IDX;
+const FRIENDLY_BULLET =  BULLET_OFFSET + FRIENDLY_BULLET_IDX;
 
 const IMG_BULLET = 0;
 const MAX_BULLETS = 100;
 // --------------------------------------------------------
 
+
+
+let __dev_mode = false;
+
+function is_devmode()
+{
+    return (__dev_mode == true);
+};
+
+function set_devmode( flag )
+{
+    __dev_mode = (flag == true);
+}
 
 
 

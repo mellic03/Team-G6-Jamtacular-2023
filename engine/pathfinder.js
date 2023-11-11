@@ -146,9 +146,7 @@ class PathFinder
         const idx1 = floor(random(0, 4));
         const idx2 = floor(random(0, 4));
 
-        const temp = neighbours[idx1];
-        neighbours[idx2] = neighbours[idx1];
-        neighbours[idx1] = temp;
+        [neighbours[idx1], neighbours[idx2]] = [neighbours[idx2], neighbours[idx1]];
 
 
         let filtered = [  ];

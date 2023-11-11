@@ -5,6 +5,7 @@ class FactoryModal
     UIgrid;
     name    = "Factory";
     visible = false;
+    factory = undefined;
 
     constructor( x, y, w, h )
     {
@@ -17,24 +18,26 @@ class FactoryModal
         this.UIgrid = new MenuGrid(x, y, w, h, 20, 20);
     };
 
-    show()
+    show( factory )
     {
+        this.factory = factory;
         this.visible = true;
     };
 
     hide()
     {
+        this.factory = undefined;
         this.visible = false;
     };
 
-    draw()
+    draw( )
     {
         const terrain = engine.getSystem("terrain");
         const player = engine.getSystem("player");
         const factorySys = engine.getSystem("factory");
         const agentSys = engine.getSystem("agent");
         const playerFactory = factorySys.player_factory;
-
+        
         if (this.visible == false)
         {
             return;
@@ -42,6 +45,7 @@ class FactoryModal
 
         rectMode(CORNERS);
 
+        const factory = this.factory;
         const ui = this.UIgrid;
 
         ui.background(100);
@@ -49,39 +53,53 @@ class FactoryModal
         ui.reset(3);
         ui.menuTitle("Factory", 1);
         ui.nextRow(3);
+        ui.nextRow(3);
 
-        ui.text_scale = 0.8;
+        ui.text_scale = 0.7;
 
         ui.menuTitle("Build", 1);
-        ui.nextRow(7);
+        ui.nextRow(6);
+        ui.nextRow(6);
 
-        ui.menuButton2(0, 3, "Gatherer", () => {
-            agentSys.createAgent(AGENT_GATHERER, playerFactory);
+        ui.menuButton2(0, 1, "Gatherer", () => {
+            factory.createAgent(AGENT_GATHERER);
         });
 
-        ui.menuButton2(0, 4, "Guard", () => {
-            agentSys.createAgent(AGENT_GUARD, playerFactory);
+        ui.menuButton2(0, 2, "Guard", () => {
+            factory.createAgent(AGENT_GUARD);
         });
 
-        ui.menuButton2(0, 5, "Security", () => {
-            agentSys.createAgent(AGENT_SECURITY, playerFactory);
+        ui.menuButton2(0, 3, "Security", () => {
+            factory.createAgent(AGENT_SECURITY);
         });
 
-        ui.menuButton2(0, 6, "Human?", () => {
-            agentSys.createAgent(AGENT_REE, playerFactory);
+        ui.menuButton2(0, 4, "Human?", () => {
+            factory.createAgent(AGENT_REE);
         });
 
+        ui.nextRow(6);
 
-
-        ui.nextRow(3);
-        ui.menuTitle("Buy", 1);
-        ui.nextRow(7);
-
-        ui.menuButton2(0, 3, "Ammo", () => {
-            if (playerFactory.monies >= 10)
+        ui.menuButton2(0, 1, "Ammo x10", () => {
+            if (factory.monies >= 10)
             {
-                playerFactory.monies -= 10;
+                factory.monies -= 10;
                 player.ammo += 10;
+            }
+        });
+
+        ui.menuButton2(0, 2, "Ammo x50", () => {
+            if (factory.monies >= 50)
+            {
+                factory.monies -= 50;
+                player.ammo += 50;
+            }
+        });
+
+        ui.menuButton2(0, 3, "Ammo x100", () => {
+            if (factory.monies >= 100)
+            {
+                factory.monies -= 100;
+                player.ammo += 100;
             }
         });
 

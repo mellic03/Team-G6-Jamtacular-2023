@@ -10,7 +10,7 @@ function dowith_probability( p, callback )
 
 /** Random number between 0-1 which almost follows a normal distribution.
  */
-function basicallyNormalDistribution( sigma=1 )
+function abnormalDist( sigma=1 )
 {
     let total = 0.0;
 
@@ -73,4 +73,12 @@ function point_line_dist( px, py, x1, y1, x2, y2 )
 
     return numerator / denominator;
 }
+
+
+
+function swept_circle( x1, y1, dx1, dy1, r1, x2, y2, dx2, ry2, r2 )
+{
+    
+}
+
 

@@ -1,5 +1,4 @@
 
-
 class PhysicsBody
 {
     label;
@@ -12,13 +11,18 @@ class PhysicsBody
     last_position;
     velocity_mag;
     velocity_magSq;
+    velocity_dir = [  ];
 
     width;
     height;
     radius;
+    radiusSQ;
+    dir_rot = 0.0;
 
     hasDrag = true;
     drag    = 0.05;
+
+    fast_collisions = true;
 
     constructor( x=0, y=0, w=32, h=32, label="" )
     {
@@ -32,6 +36,7 @@ class PhysicsBody
         this.width  = w;
         this.height = h;
         this.radius = w;
+        this.radiusSQ = w*w;
 
         this.label = label;
     };
@@ -53,28 +58,22 @@ class PhysicsBody
 
     update()
     {
-        const terrain = engine.getSystem("terrain");
-        const data = terrain.nearest_intersection(...this.position, ...vec2_normalize(this.velocity));
-        
-        const x = data[0];
-        const y = data[1];
-
-        if (distance2(x, y, ...this.position) <= this.velocity_magSq)
-        {
-            this.velocity = vec2_mult(this.velocity, -0.8);
-        }
-
         this.last_position[0] = valueof(this.position[0]);
         this.last_position[1] = valueof(this.position[1]);
 
         this.position[0] += deltaTime * this.velocity[0];
         this.position[1] += deltaTime * this.velocity[1];
 
-        this.velocity_magSq = vec2_magSq(this.velocity);
-        this.velocity_mag = sqrt(this.velocity_magSq);
+        this.velocity_magSq  = vec2_magSq(this.velocity);
+        this.velocity_mag    = sqrt(this.velocity_magSq);
+        // this.velocity_dir[0] = this.velocity[0] / this.velocity_mag;
+        // this.velocity_dir[1] = this.velocity[1] / this.velocity_mag;
+        this.velocity_dir = vec2_normalize(this.velocity);
 
         if (this.hasDrag)
             this.velocity = velocityDampening(this.drag, ...this.velocity);
+
+        this.dir_rot += deltaTime * Math.PI;
     };
 
 
@@ -84,9 +83,17 @@ class PhysicsBody
     };
 
 
-    resolution( body )
+    body_resolution( body )
     {
 
+    };
+
+
+    terrain_resolution( ix, iy, nx, ny, d, blocktype )
+    {
+        const overlap = this.radius - d;
+        this.position[0] += overlap * nx;
+        this.position[1] += overlap * ny;
     };
 
 };
@@ -98,8 +105,8 @@ COLLISION_SECTOR_SPAN = QUADTREE_SPAN/4;
 
 class CollisionGrid
 {
-    // Grid is a 2D array of lists. Each list contains references to which objects exist there.
-    grid = [];
+    bodies = [  ];
+    grid   = [  ];
 
     constructor()
     {
@@ -141,11 +148,13 @@ class CollisionGrid
         {
             return;
         }
+
         if (cell[0] < 0 || cell[0] > COLLISION_SECTORS_X)
         {
             return;
         }
 
+        this.bodies.push(body);
         this.grid[cell[0]][cell[1]].push(body);
     };
 
@@ -223,6 +232,8 @@ class CollisionGrid
                 this.grid[i][j].length = 0;
             }
         }
+
+        this.bodies.length = 0;
     };
 
 
@@ -262,6 +273,25 @@ class CollisionGrid
             }
         }
 
+
+        stroke(0, 255, 0);
+        noFill();
+
+        for (let row=0; row<COLLISION_SECTORS_Y; row++)
+        {
+            for (let col=0; col<COLLISION_SECTORS_X; col++)
+            {
+                for (let body of this.grid[row][col])
+                {
+                    circle(
+                        ...render.world_to_screen(...body.position),
+                        render.world_to_screen_dist(2*body.radius)
+                    );
+                }
+            }
+        }
+
+        stroke(0);
     };
 };
 
@@ -270,7 +300,7 @@ class CollisionGrid
 class PhysicsSystem
 {
     grid = new CollisionGrid();
-    visualize_grid = true;
+    visualize_grid = false;
 
     preload()
     {
@@ -284,8 +314,10 @@ class PhysicsSystem
     };
 
 
-    dothing( body1, neighbours )
+    body_body_collision( body1, neighbours )
     {
+        const render = engine.getSystem("render");
+
         for (let body2 of neighbours)
         {
             if (body1 == body2)
@@ -293,28 +325,40 @@ class PhysicsSystem
                 continue;
             }
 
-            const radiusSQ = max(body1.radius, body2.radius)**2;
-            const distanceSQ = distance2(...body1.position, ...body2.position);
+            const radiiSQ    = (body1.radius + body2.radius)**2;
+            const dtSQ       = deltaTime**2;
+            const next_pos   = vec2_add(body1.position, body1.velocity);
 
-            if (distanceSQ < deltaTime*deltaTime*body1.velocity_magSq)
+            const line_dist_SQ = point_line_dist_SQ(
+                ...body2.position,
+                ...body1.position,
+                ...next_pos
+            );
+
+            if (line_dist_SQ > radiiSQ)
             {
-                const line_dist_SQ = point_line_dist_SQ(
-                    ...body2.position,
-                    ...body1.position,
-                    ...vec2_add(body1.position, body1.velocity)
-                );
+                continue;
+            }
 
-                if (line_dist_SQ < radiusSQ)
-                {
-                    body1.resolution(body2);
-                    body2.resolution(body1); 
-                }
+
+            let tpos = vec2_point_to_line(
+                body2.position,
+                body1.position,
+                next_pos
+            );
+
+            const tdistSQ = distance2(...body1.position, ...tpos);
+
+            if (tdistSQ < dtSQ * body1.velocity_mag)
+            {
+                body1.body_resolution(body2);
+                body2.body_resolution(body1); 
             }
         }
     };
 
 
-    draw()
+    body_body_collisions()
     {
         const render = engine.getSystem("render");
         const grid = this.grid.grid;
@@ -327,12 +371,128 @@ class PhysicsSystem
 
                 for (let body of grid[row][col])
                 {
-                    // circle(...render.world_to_screen(...body.position), render.world_to_screen_dist(body.radius));
-                    this.dothing(body, neighbours);
+                    this.body_body_collision(body, neighbours);
                 }
-
             }
         }
+    };
+
+
+    body_terrain_slow( body )
+    {
+        const render = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
+
+        const dirs = [
+
+            [-1, 0], [-1, -1], [0, -1], [+1, -1],
+            [+1, 0], [+1, +1], [0, +1], [-1, +1]
+        ];
+
+        for (let dir of dirs)
+        {
+            const data = terrain.nearest_intersection(
+                ...body.position,
+                ...dir
+            );
+    
+            const ix = data[0];
+            const iy = data[1];
+            const nx = data[2];
+            const ny = data[3];
+            const blocktype = data[4];
+
+
+            // line(
+            //     ...render.world_to_screen(...body.position),
+            //     ...render.world_to_screen(...[ix, iy]),
+            // );
+
+            const radiusSQ  = body.radiusSQ;
+            const distSQ    = distance2(...body.position, ix, iy);
+
+            if (distSQ < radiusSQ)
+            {
+                body.terrain_resolution(ix, iy, -nx, -ny, sqrt(distSQ), blocktype);
+            }
+        }
+    };
+
+
+    body_terrain_fast( body )
+    {
+        const render = engine.getSystem("render");
+        const terrain = engine.getSystem("terrain");
+
+        const data = terrain.nearest_intersection(
+            ...body.position,
+            ...body.velocity_dir
+        );
+
+        const ix = data[0];
+        const iy = data[1];
+        const nx = data[2];
+        const ny = data[3];
+        const blocktype = data[4];
+
+
+        // line(
+        //     ...render.world_to_screen(...body.position),
+        //     ...render.world_to_screen(...[ix, iy]),
+        // );
+
+        const radiusSQ  = body.radiusSQ;
+        const distSQ    = distance2(...body.position, ix, iy);
+        const dtSQ      = deltaTime*deltaTime;
+
+        if (distSQ - radiusSQ < dtSQ * body.velocity_magSq)
+        {
+            const line_dist_SQ = point_line_dist_SQ(
+                ix, iy,
+                ...body.position,
+                ...vec2_add(body.position, body.velocity)
+            );
+
+            if (line_dist_SQ <= radiusSQ)
+            {
+                body.terrain_resolution(ix, iy, -nx, -ny, sqrt(distSQ), blocktype);
+                // fill(255, 0, 0);
+                // circle(
+                //     ...render.world_to_screen(...body.position),
+                //     render.world_to_screen_dist(2*body.radius)
+                // );
+            }
+        }
+    };
+
+
+    body_terrain_collisions()
+    {
+        stroke(255, 0, 0);
+
+        for (let body of this.grid.bodies)
+        {
+            if (body.fast_collisions)
+            {
+                this.body_terrain_fast(body);
+            }
+            else
+            {
+                this.body_terrain_slow(body);
+            }
+        }
+    };
+
+
+    draw()
+    {
+        for (let body of this.grid.bodies)
+        {
+            body.update();
+        }
+
+        this.body_body_collisions();
+        this.body_terrain_collisions();
 
         if (this.visualize_grid)
         {

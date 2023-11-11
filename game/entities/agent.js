@@ -13,8 +13,8 @@ class Agent
     energy    = 10.0;
     inventory = [ 0, 0, 0, 0 ];
 
-    last_target    = [ 0, 0 ];
-    current_target = [ 0, 0 ];
+    last_target    = [ NaN, NaN ];
+    current_target = [ NaN, NaN ];
 
     path = [  ];
     reversed_path = [  ];
@@ -25,31 +25,55 @@ class Agent
 
     constructor( sprite )
     {
-        this.body = new PhysicsBody(random(-150, 150), random(-150, 150), 32, 32, "agent");
+        this.body = new PhysicsBody(random(-150, 150), random(-150, 150), 16, 16, "agent");
         this.body.drag = 0.2;
+        this.body.fast_collisions = false;
         this.sprite = sprite;
-    
-                
-        this.body.resolution = (other) => {
 
-            if (other.label >= PLAYER_BULLET && other.label <= REE_BULLET)
+        this.body.body_resolution = (other) => {
+
+            if (other.label >= PLAYER_BULLET && other.label <= FRIENDLY_BULLET)
             {
                 const damage = other.generic_data;
                 this.health -= damage;
+            }
+
+            else
+            {
+                const dir = vec2_dir(other.position, this.body.position);
+
+                this.body.velocity[0] -= 0.05*dir[0] * deltaTime;
+                this.body.velocity[1] -= 0.05*dir[1] * deltaTime;
             }
         };
     };
 
 
-    reset( sprite )
+    reset( sprite, parent )
     {
         this.body.drag = 0.2;
         this.sprite = sprite;
+        this.parent = parent;
+        this.last_target = [valueof(parent.position[0]), valueof(parent.position[1])];
+        this.health = 100.0;
+
+        this.subreset();
+    };
+
+
+    subreset()
+    {
+
     };
 
 
     isFriendly()
     {
+        if (this.parent == undefined)
+        {
+            return false;
+        }
+
         return this.parent == engine.getSystem("factory").player_factory;
     };
 
@@ -89,8 +113,6 @@ class Agent
             this.behaviour();
         }
 
-        this.body.update();
-
         this.sprite.setRotation(this.body.rotation);
         this.sprite.draw(...this.body.position);
         this.draw_health();
@@ -102,14 +124,14 @@ class Agent
         const render  = engine.getSystem("render");
 
         let screenspace = render.world_to_screen(
-            this.body.position[0] - this.body.radius/2,
-            this.body.position[1] - this.body.radius
+            this.body.position[0],
+            this.body.position[1] - 2*this.body.radius
         );
 
-        const w = render.world_to_screen_dist(this.body.radius);
+        const w = render.world_to_screen_dist(2*this.body.radius);
         const h = render.world_to_screen_dist(8);
 
-        rectMode(CORNER);
+        rectMode(CENTER);
 
         fill(255, 0, 0);
         rect(...screenspace, w, h);
@@ -153,18 +175,23 @@ class Agent
 
     at_home()
     {
+        if (this.parent == undefined)
+        {
+            return false;
+        }
+
         return dist(...this.body.position, ...this.parent.position) < 128;
     };
 
 
-    retreat_and_return()
+    retreat_and_return(lambda)
     {
         if (this.parent == undefined)
         {
             return;
         }
 
-        if (this.retreating == true && this.health >= 100)
+        if (this.retreating == true && lambda() == true)
         {
             this.set_target(this.last_target);
             this.retreating = false;
@@ -172,6 +199,10 @@ class Agent
 
         else if (this.retreating == false)
         {
+            if (this.parent == undefined)
+            {
+            }
+
             this.set_target(this.parent.position);
             this.retreating = true;
         }
@@ -211,8 +242,8 @@ class Agent
 class Gatherer extends Agent
 {
     materials = [0.0, 0.0];
-    holdings  = 0.0;
-    capacity  = 5.0;
+    holdings  = 0;
+    capacity  = 1;
 
     dir = [1.0, 0.0];
 
@@ -226,44 +257,37 @@ class Gatherer extends Agent
 
     return_home()
     {
-        this.set_target([0, 0]);
-
-        this.reversed_path = [];
-        for (let i=this.path.length-1; i>=0; i--)
-        {
-            this.reversed_path.push(this.path[i]);
-        }
+        this.set_target(...this.parent.position);
     };
 
 
     behaviour()
     {
-        if (this.at_home() && this.holdings >= this.capacity)
-        {
-            this.parent.monies += SILVER_VALUE * this.materials[0];
-            this.parent.monies += GOLD_VALUE * this.materials[1];
-
-            this.materials[0] = 0;
-            this.materials[1] = 0;
-            this.holdings = 0.0;
-
-            this.path = this.reversed_path;
-            this.path_idx = this.path.length - 2;
-            return;
-        }
-
         if (this.holdings < this.capacity)
         {
             this.gather();
+            return;
         }
 
-        else
-        {
+        this.retreat_and_return(() => {
+
             if (this.at_home() == false)
             {
-                this.return_home();
+                return false;
             }
-        }
+
+            this.parent.monies += SILVER_VALUE * this.materials[0];
+            this.parent.monies += GOLD_VALUE * this.materials[1];
+            
+            this.materials[0] = 0;
+            this.materials[1] = 0;
+            this.holdings = 0.0;
+            
+            this.path = this.reversed_path;
+            this.path_idx = this.path.length - 2;
+
+            return true;
+        });
     };
 
 
@@ -281,9 +305,9 @@ class Gatherer extends Agent
         const data = terrain.nearest_intersection(...this.body.position, dx, dy);
         const blocktype = data[4];
 
-        // stroke(255);
-        // strokeWeight(4);
-        // line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
+        stroke(255);
+        strokeWeight(4);
+        line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
 
         if (blocktype == BLOCK_SILVER || blocktype == BLOCK_GOLD)
         {
@@ -298,20 +322,20 @@ class Gatherer extends Agent
 
                 this.materials[blocktype - BLOCK_SILVER] += 2*2*16;
                 this.holdings += 1;
-                // strokeWeight(8);
+                strokeWeight(8);
             }
 
             else
             {
                 this.body.applyForce(dx, dy, 0.001*deltaTime);
-                // stroke(255, 255, 255, 100);
-                // strokeWeight(1);
+                stroke(255, 255, 255, 100);
+                strokeWeight(1);
             }
 
             this.am_on_gold = true;
 
-            // line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
-            // strokeWeight(1);
+            line(...render.world_to_screen(...this.body.position), ...render.world_to_screen(data[0], data[1]));
+            strokeWeight(1);
         }
 
         else
@@ -335,64 +359,25 @@ class Gatherer extends Agent
 
 
 
-class Attacker extends Agent
+class Security extends Agent
 {
-    weapon_spread   = 0.3;
-    weapon_cooldown = 0.0;
-    reload_time     = 500.0;
+    weapon;
 
-    can_see_player()
+    constructor( sprite )
     {
-        const player = engine.getSystem("player");
-        const terrain = engine.getSystem("terrain");
+        super( sprite );
 
-        const dir = vec2_dir(player.position, this.body.position);
-        const intersection = terrain.nearest_intersection(...this.body.position, ...dir);
-
-        const x = intersection[0];
-        const y = intersection[1];
-
-        return distance2(...this.body.position, x, y) > distance2(...this.body.position, ...player.position);
-    };
-
+        this.weapon = engine.getSystem("weapon").createWeapon(WEAPON_RIFLE);
+    }
 
     behaviour()
     {
         const player = engine.getSystem("player");
         const terrain = engine.getSystem("terrain");
-        const bulletSys = engine.getSystem("bullet");
 
 
-        if (this.can_see_player())
-        {
-            this.sprite.image(guard3)
-        }
-
-        else
-        {
-            this.sprite.image(guard0)
-        }
-
-
-        if (this.weapon_cooldown > this.reload_time)
-        {
-            // raycast towards player to ensure they are visible to the security
-            if (this.can_see_player())
-            {
-                bulletSys.createBullet_startEnd(
-                    ...this.body.position,
-                    ...player.position,
-                    this.weapon_spread,
-                    ATTACKER_BULLET
-                );
-                this.weapon_cooldown = 0.0;
-                this.time_since_player = 0.0;
-            }
-
-        }
 
         this.time_since_player += deltaTime;
-        this.weapon_cooldown += deltaTime;
     };
 
 };
@@ -402,12 +387,24 @@ class Attacker extends Agent
 
 class Human extends Agent
 {
-    weapon = new Weapon(1500, 0.6, REE_BULLET);
-    timer  = 0.0;
+    weapon; // = new Weapon(1500, 0.6, FRIENDLY_BULLET);
 
     constructor( sprite )
     {
         super(sprite);
+        this.weapon = engine.getSystem("weapon").createWeapon(WEAPON_RIFLE);
+    };
+
+    subreset()
+    {
+        if (this.isFriendly())
+        {
+            this.weapon.bullet_type = FRIENDLY_BULLET;
+        }
+        else
+        {
+            this.weapon.bullet_type = ATTACKER_BULLET;
+        }
     };
 
 
@@ -425,27 +422,27 @@ class Human extends Agent
 
         if (this.health < 50.0 || this.retreating)
         {
-            this.retreat_and_return();
+            this.retreat_and_return(() => { return this.health >= 100.0; });
         }
-
-        this.timer += deltaTime;
     };
 
 
     attack( body )
     {
-        const player = engine.getSystem("player");
-        const dir = vec2_dir(body.position, this.body.position);
+        if (this.body_visible(body) == false)
+        {
+            return;
+        }
 
+        const dir = vec2_dir(body.position, this.body.position);
         const origin = vec2_add(this.body.position, vec2_mult(dir, 64.0));
         this.body.setRotation(vec2_angle(dir));
 
-        if (this.timer >= this.weapon.cooldown)
+        const shot = this.weapon.pew(...origin, ...dir);
+        
+        if (shot)
         {
-            this.weapon.pew(...origin, ...dir);
- 
-            this.weapon.cooldown = 500 * abs(basicallyNormalDistribution(2)) + 10;
-            this.timer = 0.0;
+            this.weapon.cooldown = 500 * (0.8 + abs(abnormalDist(2)));
         }
     };
 
@@ -460,12 +457,17 @@ class Human extends Agent
         
         for (let body of bodies)
         {
-            if (body.label != AGENT_REE || body == this.body)
+            if (body.label == "PLAYER")
             {
                 continue;
             }
 
-            if (body.generic_data.isFriendly() == false)
+            else if (body.label != AGENT_REE || body == this.body)
+            {
+                continue;
+            }
+
+            else if (body.generic_data.isFriendly() == false)
             {
                 if (this.body_visible(body))
                 {
@@ -487,7 +489,13 @@ class Human extends Agent
 
         for (let body of bodies)
         {
-            if ((body.label != AGENT_REE && body.label != "PLAYER") || body == this.body)
+            if (body.label == "PLAYER" && this.body_visible(body))
+            {
+                this.attack(body);
+                break;
+            }
+
+            if ((body.label != AGENT_REE) || body == this.body)
             {
                 continue;
             }

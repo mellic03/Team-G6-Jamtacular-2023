@@ -130,7 +130,7 @@ class TerrainSystem
     {
         this.pathfinder.refine(this);
 
-        if (this.is_devmode())
+        if (is_devmode())
         {
             this.__draw_devmode();
             return;
@@ -373,12 +373,6 @@ class TerrainSystem
     in_bounds( row, col )
     {
         return row >= 0 && row < SECTORS_Y && col >= 0 && col < SECTORS_X;
-    };
-
-
-    is_devmode()
-    {
-        return this.fidelity == 3;
     };
 
 

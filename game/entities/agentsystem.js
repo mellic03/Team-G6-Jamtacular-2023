@@ -48,7 +48,7 @@ class AgentSystem
 
         this.constructors[AGENT_GATHERER_IDX] = Gatherer;
         this.constructors[AGENT_GUARD_IDX]    = Guard;
-        this.constructors[AGENT_SECURITY_IDX] = Attacker;
+        this.constructors[AGENT_SECURITY_IDX] = Security;
         this.constructors[AGENT_REE_IDX]      = Human;
 
         for (let i=0; i<MAX_AGENTS; i++)
@@ -138,6 +138,11 @@ class AgentSystem
                 }
     
                 const collector = this.agents[i];
+
+                if (collector.isFriendly() == false)
+                {
+                    continue;
+                }
             
                 const px = collector.body.position[0];
                 const py = collector.body.position[1];
@@ -179,7 +184,7 @@ class AgentSystem
         const TYPE = type - AGENT_OFFSET;
 
         this.agents[id] = new this.constructors[TYPE](this.sprites[TYPE]);
-        this.agents[id].parent = parent;
+        this.agents[id].reset(this.sprites[TYPE], parent);
 
         if (parent != undefined)
         {

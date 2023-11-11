@@ -36,7 +36,7 @@ class SettingsModal
     {
         const terrain = engine.getSystem("terrain");
         const physics = engine.getSystem("physics");
-        // const player = engine.getSystem("player");
+        const player = engine.getSystem("player");
 
         if (this.visible == false)
         {
@@ -52,30 +52,37 @@ class SettingsModal
         ui.reset(3);
         ui.menuTitle("Settings", 1);
         ui.nextRow(3);
+        ui.nextRow(3);
 
         ui.menuTitle("Lighting Quality", 1);
+        ui.nextRow(6);
         ui.nextRow(6);
 
         ui.menuButton2(0, 1, "Low", () => {
             terrain.fidelity = 0;
+            set_devmode(false);
         }, terrain.fidelity == 0);
 
         ui.menuButton2(0, 2, "Med", () => {
             terrain.fidelity = 1;
+            set_devmode(false);
         }, terrain.fidelity == 1);
 
         ui.menuButton2(0, 3, "High", () => {
             terrain.fidelity = 2;
+            set_devmode(false);
         }, terrain.fidelity == 2);
     
         ui.menuButton2(0, 4, "Dev", () => {
             terrain.fidelity = 3;
-        }, terrain.fidelity == 3);
+            set_devmode(true);
+        }, is_devmode());
     
 
         ui.nextRow(3);
+        ui.nextRow(3);
         ui.menuTitle("Debugging", 1);
-
+        ui.nextRow(6);
         ui.nextRow(6);
         {
             ui.menuLabel(0, 1, "Quadtree");
@@ -114,6 +121,35 @@ class SettingsModal
                 physics.visualize_grid = true;
             }, physics.visualize_grid == true);
         }
+
+        ui.nextRow(3);
+        ui.nextRow(3);
+        ui.menuTitle("Fun", 1);
+        ui.nextRow(5);
+
+        ui.nextRow(6);
+        {
+            ui.menuButton2(0, 1, "Ammo", () => {
+                player.ammo = Infinity;
+            });
+            ui.menuButton2(0, 3, "Health", () => {
+                player.ammo = Infinity;
+            });
+        }
+    
+        ui.nextRow(6);
+        {
+            ui.menuLabel(0, 1, "Slow Bullets");
+
+            ui.menuButton2(0, 3, "No", () => {
+                physics.visualize_grid = false;
+            }, physics.visualize_grid == false);
+
+            ui.menuButton2(0, 4, "Yes", () => {
+                physics.visualize_grid = true;
+            }, physics.visualize_grid == true);
+        }
+
         ui.menuButton(-1, -1, "Close", () => { this.hide(); });
     };
 

@@ -69,3 +69,21 @@ function vec2_angle( v )
 {
     return atan2(v[1], v[0]);
 }
+
+function vec2_dir_from_angle( r )
+{
+    return [cos(r), sin(r)];
+}
+
+
+function vec2_point_to_line( point, start, end )
+{
+    const dir = vec2_dir(end, start);
+
+    let a = vec2_dot(vec2_sub(point, start), dir);
+    let b = vec2_dot(dir, dir);
+
+
+    return vec2_add(vec2_mult(dir, a/b), start);
+
+};

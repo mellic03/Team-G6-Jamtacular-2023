@@ -64,7 +64,7 @@ class RenderSystem
     setup( engine )
     {
         createCanvas(this.res_x, this.res_y);
-        frameRate(165);
+        frameRate(60);
         windowResized();
     };
 
@@ -94,7 +94,7 @@ class RenderSystem
     {
         let m = 1;
 
-        if (engine.getSystem("terrain").is_devmode())
+        if (is_devmode())
         {
             m = 4;
         }
@@ -113,7 +113,7 @@ class RenderSystem
     {
         let m = 1;
 
-        if (engine.getSystem("terrain").is_devmode())
+        if (is_devmode())
         {
             m = 4;
         }
@@ -132,7 +132,7 @@ class RenderSystem
     {
         let m = 1;
 
-        if (engine.getSystem("terrain").is_devmode())
+        if (is_devmode())
         {
             m = 4;
         }

@@ -2,13 +2,14 @@
 
 function type_is_bullet( e )
 {
-    return PLAYER_BULLET <= e && e <= REE_BULLET;
+    return PLAYER_BULLET <= e && e <= FRIENDLY_BULLET;
 }
 
 
 class BulletSystem
 {
     bodies   = [  ];
+    lengths  = [  ];
     types    = [  ];
     visible  = [  ];
 
@@ -16,31 +17,23 @@ class BulletSystem
     active  = 0;
 
     lightsource;
-    lightsource2;
+    muzzle_flash;
 
-    sounds = [  ];
     bullet_colors = [  ];
     hit_colors    = [  ];
 
 
     preload( engine )
     {
-        this.sounds[PLAYER_BULLET_IDX]   = loadSound("game/assets/weapon.mp3");
-        this.sounds[ATTACKER_BULLET_IDX] = loadSound("game/assets/pistol.mp3");
-        this.sounds[REE_BULLET_IDX]      = loadSound("game/assets/weapon.mp3");
-        this.sounds[PLAYER_BULLET_IDX].loop   = false;
-        this.sounds[ATTACKER_BULLET_IDX].loop = false;
-        this.sounds[REE_BULLET_IDX].loop      = false;
-
         this.bullet_colors[PLAYER_BULLET_IDX]   = [255, 255, 200];
         this.bullet_colors[GUARD_BULLET_IDX]    = [200, 200, 0];
-        this.bullet_colors[ATTACKER_BULLET_IDX] = [125, 255, 255];
-        this.bullet_colors[REE_BULLET_IDX]      = [255, 255, 200];
+        this.bullet_colors[ATTACKER_BULLET_IDX] = [255, 255, 200];
+        this.bullet_colors[FRIENDLY_BULLET_IDX] = [255, 255, 200];
 
         this.hit_colors[PLAYER_BULLET_IDX]   = [0.5, 0.5, 0.25];
         this.hit_colors[GUARD_BULLET_IDX]    = [1, 1, 0.5];
-        this.hit_colors[ATTACKER_BULLET_IDX] = [0.5, 1, 1];
-        this.hit_colors[REE_BULLET_IDX]      = [0.5, 0.5, 0.25];
+        this.hit_colors[ATTACKER_BULLET_IDX] = [0.5, 0.5, 0.25];
+        this.hit_colors[FRIENDLY_BULLET_IDX] = [0.5, 0.5, 0.25];
     };
 
 
@@ -49,32 +42,46 @@ class BulletSystem
         for (let i=0; i<MAX_BULLETS; i++)
         {
             this.bodies.push(new PhysicsBody(-1000, -1000, 8, 8, "bullet"));
+
+            this.bodies[i].body_resolution = (other) => {
+                if (other.label < PLAYER_BULLET || other.label > FRIENDLY_BULLET)
+                {
+                    this.destroyBullet(i, ...other.position);
+                }
+            };
+
+            this.bodies[i].terrain_resolution = (ix, iy, nx, ny, distSQ, blocktype) => {
+            
+                const x = ix - 16*Math.sign(this.bodies[i].velocity[0]);
+                const y = iy - 16*Math.sign(this.bodies[i].velocity[1]);
+                this.destroyBullet(i, x, y);
+
+                dowith_probability(blocktype_softness(blocktype), () => {
+                    engine.getSystem("terrain").placeSphere(ix, iy, BLOCK_AIR, 1, 16);
+                });
+            };
+
             this.types.push(PLAYER_BULLET_IDX);
         }
 
         const lightSys = engine.getSystem("light");
         this.lightsource = lightSys.getPointlight(2);
-        this.lightsource2 = lightSys.getPointlight(1);
+        this.muzzle_flash = lightSys.getPointlight(1);
 
     };
 
 
     draw( engine )
     {
+        const render  = engine.getSystem("render");
+
         this.lightsource.position = [-1000, -1000];
-        this.lightsource2.position = [-1000, -1000];
+        this.muzzle_flash.position = [-1000, -1000];
 
         if (this.active == 0)
         {
             return;
         }
-
-        const render = engine.getSystem("render");
-        const terrain = engine.getSystem("terrain");
-        const player = engine.getSystem("player");
-        const agentSys = engine.getSystem("agent");
-        const physics = engine.getSystem("physics");
-
 
         strokeWeight(4)
 
@@ -90,75 +97,53 @@ class BulletSystem
             const lpos = this.bodies[i].last_position;
             const vel  = this.bodies[i].velocity;
             const vmag = this.bodies[i].velocity_mag;
-
-            this.bodies[i].update();
+            const vdir = this.bodies[i].velocity_dir;
 
             stroke(this.bullet_colors[bullet_type]);
-            line(...render.world_to_screen(...pos), ...render.world_to_screen(...lpos));
-
-
-            const dir = vec2_normalize(vel);
-            const intersection = terrain.nearest_intersection(...pos, ...dir);
-            const ix = intersection[0];
-            const iy = intersection[1];
-            const blocktype = intersection[4];
-
-
-            this.bodies[i].resolution = (other) => {
-
-                if (other.label < PLAYER_BULLET || other.label > REE_BULLET)
-                {
-                    this.destroyBullet(i, ...other.position);
-                }
-            };
-
-
-            if (dist(...pos, ix, iy) <= deltaTime*vmag)
-            {
-                this.destroyBullet(i, ix - 16*Math.sign(vel[0]), iy - 16*Math.sign(vel[1]));
-
-                dowith_probability(blocktype_hardness(blocktype), () => {
-                    terrain.placeSphere(ix, iy, BLOCK_AIR, 1, 16);
-                });
-            }
+            line(
+                ...render.world_to_screen(...pos),
+                ...render.world_to_screen(...vec2_sub(pos, vec2_mult(vdir, this.lengths[i])))
+            );
         }
 
         strokeWeight(1)
     };
 
 
-    createBullet( x, y, dx, dy, spread=0.0, type=PLAYER_BULLET )
+    createBullet( x, y, dx, dy, spread=0.0, type=PLAYER_BULLET, length=1, speed=1 )
     {
         const terrain = engine.getSystem("terrain");
         const TYPE = type - BULLET_OFFSET;
 
-        this.lightsource2.position   = [x, y];
-        this.lightsource2.diffuse    = MUZZLE_FLASH_COLOR;
-        this.lightsource2.s_constant = 1000;
-        this.lightsource2.radius     = QUADTREE_SPAN;
+        this.muzzle_flash.position   = [x, y];
+        this.muzzle_flash.diffuse    = MUZZLE_FLASH_COLOR;
+        this.muzzle_flash.s_constant = 1000;
+        this.muzzle_flash.radius     = QUADTREE_SPAN;
 
         let tangent = vec2_tangent([dx, dy]);
-        let r = basicallyNormalDistribution(4);
+        let r = abnormalDist(4);
         tangent = vec2_mult(tangent, r*spread);
         let dir = vec2_add([dx, dy], tangent);
 
         const idx = this.current;
 
+        this.bodies[idx].last_position[0] = x;
+        this.bodies[idx].last_position[1] = y;
         this.bodies[idx].position[0] = x;
         this.bodies[idx].position[1] = y;
-        this.bodies[idx].velocity[0] = 3*dir[0];
-        this.bodies[idx].velocity[1] = 3*dir[1];
+        this.bodies[idx].velocity[0] = 2*speed*dir[0];
+        this.bodies[idx].velocity[1] = 2*speed*dir[1];
         this.bodies[idx].hasDrag = false;
         this.bodies[idx].label = type;
         this.bodies[idx].generic_data = 10;
+
+        this.lengths[idx] = length;
 
         this.types[idx] = TYPE;
         this.visible[idx] = true;
         this.active += 1;
 
         this.current = (this.current + 1) % MAX_BULLETS;
-
-        this.sounds[TYPE].play();
     };
 
 

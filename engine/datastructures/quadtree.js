@@ -16,14 +16,14 @@ const BLOCK_GOLD    = 5;
 const BLOCK_BEDROCK = 6;
 
 
-function blocktype_hardness( blocktype )
+function blocktype_softness( blocktype )
 {
     switch (blocktype)
     {
         case BLOCK_AIR:      return 0.0;
         case BLOCK_GRASS:    return 1.0;
         case BLOCK_DIRT:     return 1.0;
-        case BLOCK_STONE:    return 0.05;
+        case BLOCK_STONE:    return 0.3;
         case BLOCK_SILVER:   return 0.5;
         case BLOCK_GOLD:     return 0.8;
         case BLOCK_BEDROCK:  return 0.0;
@@ -408,10 +408,7 @@ class Quadtree
         if (length_h < length_v)
         {
             const sign_h = Math.sign(xdir);
-            nx = 1.0;
-            ny = 0.0;
-
-            return [ sign_h*(hdx+EPSILON), sign_h*(hdy+EPSILON), sign_h*nx, ny ];
+            return [ sign_h*(hdx+EPSILON), sign_h*(hdy+EPSILON), sign_h, 0.0 ];
         }
 
         else
@@ -420,7 +417,7 @@ class Quadtree
             nx = 0.0;
             ny = 1.0;
 
-            return [ sign_v*(vdx+EPSILON), sign_v*(vdy+EPSILON), nx, sign_v*ny ];
+            return [ sign_v*(vdx+EPSILON), sign_v*(vdy+EPSILON), 0.0, sign_v ];
         }
     };
 
@@ -465,8 +462,13 @@ class Quadtree
         let px = 1.0*x;
         let py = 1.0*y;
 
+
         if (blocktype > 0)
         {
+            const step = this.__next_step(px, py, xdir, ydir, cx, cy, span);
+            normalx = step[2];
+            normaly = step[3];
+
             return [px, py, Math.sign(normalx), Math.sign(normaly), blocktype];
         }
 

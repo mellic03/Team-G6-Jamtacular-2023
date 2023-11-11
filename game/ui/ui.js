@@ -68,7 +68,6 @@ class UISystem
 
         const factory = engine.getSystem("factory");
         factory.createFactory(FACTORY_PLAYER);
-
     };
 
 
@@ -85,6 +84,8 @@ class UISystem
             keylog.lockMouse();
         }
         // ----------------------------------------------------------------
+
+        stroke(0);
 
         // this.draw_sector_memusage(engine);
         this.draw_game_ui(engine);
@@ -116,15 +117,19 @@ class UISystem
 
         this.UIgrid.menuButton(row+1, 0, "Gun", () => {
             player.tool_mode = TOOL_WEAPON;
-            player.weapon_spread = 0.15;
-            player.weapon_cooldown = 500;
-        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.15);
+            player.active_weapon = WEAPON_RIFLE;
+        }, player.tool_mode == TOOL_WEAPON && player.active_weapon == WEAPON_RIFLE);
 
         this.UIgrid.menuButton(row+1, 1, "Gunnn", () => {
             player.tool_mode = TOOL_WEAPON;
-            player.weapon_spread = 0.3;
-            player.weapon_cooldown = 50;
-        }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.3);
+            player.active_weapon = WEAPON_SHOTGUN;
+        }, player.tool_mode == TOOL_WEAPON && player.active_weapon == WEAPON_SHOTGUN);
+
+        // this.UIgrid.menuButton(row+1, 1, "Gunnn", () => {
+        //     player.tool_mode = TOOL_WEAPON;
+        //     player.weapon_spread = 0.3;
+        //     player.weapon_cooldown = 50;
+        // }, player.tool_mode == TOOL_WEAPON && player.weapon_spread == 0.3);
 
 
 
@@ -136,6 +141,9 @@ class UISystem
             player.tool_mode = TOOL_SELECT;
         }, player.tool_mode == TOOL_SELECT);
 
+        this.UIgrid.menuButton(row+3, 0, "Control", () => {
+            player.tool_mode = TOOL_CONTROL;
+        }, player.tool_mode == TOOL_CONTROL);
 
 
         this.UIgrid.menuButton(row+4, 0, "Map", () => {

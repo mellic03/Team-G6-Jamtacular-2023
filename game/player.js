@@ -5,9 +5,10 @@ const TOOL_TERRAIN = 2;
 const TOOL_RECT    = 3;
 const TOOL_WEAPON  = 4;
 const TOOL_INSPECT = 5;
+const TOOL_CONTROL = 6;
 
-const TOOL_LIGHT_A = 6;
-const TOOL_LIGHT_B = 7;
+const TOOL_LIGHT_A = 7;
+const TOOL_LIGHT_B = 8;
 
 
 
@@ -27,10 +28,10 @@ class Player
 
     health = 100.0;
 
-    weapon_sound;
-    weapon_spread = 0.2;
-    weapon_cooldown = 100;
-    ammo = 100000;
+    weapons = [  ];
+    active_weapon = WEAPON_RIFLE;
+    ammo    = 100;
+    timer   = 0.0;
 
     tool_mode     = TOOL_TERRAIN;
     rect_w        = 128;
@@ -40,6 +41,7 @@ class Player
     position      = [0.0, 0.1];
     view_offset   = [0.0, 0.0];
     view_offset2  = [0.0, 0.0];
+    view_shake    = 0.0;
     velocity      = [0.0, 0.0];
 
     constructor()
@@ -56,34 +58,43 @@ class Player
 
     setup()
     {
+        const weaponSys = engine.getSystem("weapon");
+
         this.sprite = new BSprite(32, 32, 64, 64, allSprites);
         this.sprite.image(this.player_img);
-
         this.player_img.resize(128, 128);
 
-        this.body = new PhysicsBody(0, 0, 32, 32, "PLAYER");
+        this.weapons[WEAPON_RIFLE] = weaponSys.createWeapon(WEAPON_RIFLE);
+        this.weapons[WEAPON_RIFLE].hair_trigger = true;
+        this.weapons[WEAPON_SHOTGUN] = weaponSys.createWeapon(WEAPON_SHOTGUN);
+
+        this.body = new PhysicsBody(10, 10, 16, 16, "PLAYER");
+        this.body.fast_collisions = false;
+
+        this.body.body_resolution = (other) => {
+
+            if (other.label > PLAYER_BULLET && other.label <= FRIENDLY_BULLET)
+            {
+                const damage = other.generic_data;
+                this.health -= damage;
+            }
+        };
     };
 
 
     draw( engine )
     {
         const render = engine.getSystem("render");
-        const UIsys  = engine.getSystem("ui");
-        const viewport_w = render.res_x * (1.0 - UIsys.proportion_ui);
-        const viewport_h = render.res_y;
-
 
         const dir = vec2_dir(render.mouse_worldspace, this.position);
-
         this.sprite.setRotation(atan2(dir[1], dir[0]));
         this.sprite.draw(...this.position);
 
-        // fill(100, 255, 100);
-        // circle(...render.world_to_screen(...this.position), 10);
 
         const lightSys = engine.getSystem("light");
+        lightSys.getPointlight(0).diffuse  = [1, 2, 2];
         lightSys.getPointlight(0).position = this.position;
-        lightSys.getPointlight(0).quadratic   = 55.0;
+        lightSys.getPointlight(0).quadratic   = 100.0;
         lightSys.getPointlight(0).s_constant  = 50.0;
         lightSys.getPointlight(0).s_quadratic = 20.0;
 
@@ -92,31 +103,43 @@ class Player
 
         if (this.health <= 0)
         {
-            this.position = [0, 0];
-            this.velocity = [0, 0];
+            this.body.position = [0, 0];
+            this.body.velocity = [0, 0];
 
             this.health = 100;
         }
 
-        // const physics = engine.getSystem("physics");
+        this.timer += deltaTime;
 
-        // const cells = physics.grid.getNeighbours(
-        //     ...physics.grid.world_to_grid(...this.position),
-        //     3
-        // );
+        this.draw_health();
+    };
 
-        // fill(255, 0, 0, 25);
-        // rectMode(CENTER);
-        // const size = render.world_to_screen_dist(COLLISION_SECTOR_SPAN);
 
-        // for (let cell of cells)
-        // {
-        //     let worldspace = physics.grid.grid_to_world(cell[0], cell[1]);
-        //     let screenspace = render.world_to_screen(...worldspace);
+    draw_health()
+    {
+        const render  = engine.getSystem("render");
 
-        //     rect(...screenspace, size, size);
-        // }
+        let screenspace = render.world_to_screen(
+            this.body.position[0],
+            this.body.position[1] - 2*this.body.radius
+        );
 
+        const w = render.world_to_screen_dist(2*this.body.radius);
+        const h = render.world_to_screen_dist(8);
+
+        rectMode(CENTER);
+
+        fill(255, 0, 0);
+        rect(...screenspace, w, h);
+
+        fill(0, 255, 0);
+        rect(...screenspace, w*(this.health/100), h);
+    };
+
+    addBodies()
+    {
+        const physics = engine.getSystem("physics");
+        physics.grid.addBody(this.body);
     };
 
 
@@ -125,41 +148,16 @@ class Player
         const render  = engine.getSystem("render");
         const terrain = engine.getSystem("terrain");
 
-
         this.key_input(engine);
         this.mouse_input(engine);
 
-
-        if (terrain.is_devmode())
+        if (is_devmode())
         {
             this.acceleration = 0.2;
             return;
         }
 
         this.acceleration = 0.0125;
-
-
-        // Update position and velocity. Should use a PhysicsBody instead.
-        // -------------------------------------------------------------------------------------
-        const x = this.position[0];
-        const y = this.position[1];
-        let dx = this.velocity[0];
-        let dy = this.velocity[1];
-        let mag = Math.sqrt(dx**2 + dy**2);
-        let data = terrain.nearest_intersection(x, y, dx/mag, dy/mag);
-
-        const px = data[0];
-        const py = data[1];
-
-        const distance = dist(x, y, px, py);
-
-        if (distance < 1.0 * deltaTime)
-        {
-            this.velocity[0] -= (1.0 / distance) * Math.sign(this.velocity[0]);
-            this.velocity[1] -= (1.0 / distance) * Math.sign(this.velocity[1]);
-        }
-        // -------------------------------------------------------------------------------------
-
     };
 
 
@@ -317,47 +315,16 @@ class Player
     };
 
 
-    tool_inspect( engine )
-    {
-        const render = engine.getSystem("render");
-        const sprite = engine.getSystem("sprite");
-        const keylog = engine.getSystem("keylog");
-        const UIsys  = engine.getSystem("ui");
-        const factorySys = engine.getSystem("factory");
-        const factory = factorySys.player_factory;
-
-        if (dist(...factory.position, ...render.mouse_worldspace) < 32.0)
-        {
-            fill(0, 0, 0, 100);
-            rectMode(CENTER);
-            
-            let size = render.world_to_screen_dist(64);
-
-            rect(...render.world_to_screen(...factory.position), size, size);
-
-            if (keylog.mouseClicked())
-            {
-                UIsys.modals[MODAL_FACTORY].show();
-            }
-        }
-
-    };
-
-
-    flag   = true;
-    timer = 0;
-
     tool_weapon( engine )
     {
         const render = engine.getSystem("render");
         const keylog = engine.getSystem("keylog");
         const terrain = engine.getSystem("terrain");
-        const bulletSys = engine.getSystem("bullet");
 
         let dir = vec2_dir(render.mouse_worldspace, this.position);
         let tangent = vec2_tangent(dir);
         let origin = vec2_add(this.position, vec2_mult(tangent, 7));
-
+        // origin = vec2_sub(this.position, vec2_mult(dir, 64.0));
 
         const data = terrain.nearest_intersection(...origin, ...dir);
         const end = [data[0], data[1]];
@@ -367,26 +334,25 @@ class Player
         line(...render.world_to_screen(...origin), ...render.world_to_screen(...end));
         circle(...render.world_to_screen(...end), 10);
 
-        if (keylog.mouseDown())
+        const weapon = this.weapons[this.active_weapon];
+        let shot = false;
+
+        if (keylog.mouseDown() && this.ammo >= weapon.ammo_cost)
         {
-            if (this.timer >= this.weapon_cooldown && this.ammo > 0)
-            {
-
-                bulletSys.createBullet(...origin, ...dir, this.weapon_spread);
-                this.ammo -= 1;
-                this.view_offset2 = vec2_sub(this.view_offset2, vec2_mult(dir, 150/deltaTime));
-
-                this.timer = 0;
-            }
+            shot = weapon.pew(...origin, ...dir);
         }
 
-        else
+        if (shot)
         {
-            // this.sprite.image(this.player_img);
-            this.timer = this.weapon_cooldown;
-        }
+            this.ammo -= weapon.ammo_cost;
 
-        this.timer += deltaTime;
+            this.view_offset2 = vec2_sub(
+                this.view_offset2,
+                vec2_mult(dir, weapon.recoil/deltaTime)
+            );
+
+            this.view_shake += weapon.shake/deltaTime;
+        }
     };
 
 
@@ -405,7 +371,6 @@ class Player
             case TOOL_SELECT:  this.tool_select(engine);  break;
             case TOOL_TERRAIN: this.tool_terrain(engine); break;
             case TOOL_RECT:    this.tool_rect(engine);    break;
-            case TOOL_INSPECT: this.tool_inspect(engine); break;
             case TOOL_WEAPON:  this.tool_weapon(engine);  break;
 
         }
@@ -426,7 +391,6 @@ class Player
                     lightSys.getPointlight(1).position = render.mouse_worldspace;
                     break;
             }
-
         }
     
     };
@@ -439,53 +403,46 @@ class Player
 
         if (keyIsDown(KEYCODES.D))
         {
-            this.velocity[0] += this.acceleration;
+            this.body.applyForce(+this.acceleration, 0.0);
         }
     
         if (keyIsDown(KEYCODES.A))
         {
-            this.velocity[0] -= this.acceleration;
+            this.body.applyForce(-this.acceleration, 0.0);
         }
 
         if (keyIsDown(KEYCODES.S))
         {
-            this.velocity[1] += this.acceleration;
+            this.body.applyForce(0.0, +this.acceleration);
         }
     
         if (keyIsDown(KEYCODES.W))
         {
-            this.velocity[1] -= this.acceleration;
+            this.body.applyForce(0.0, -this.acceleration);
         }
+        this.position = this.body.position;
 
-
-        /*
-            Dampening scales exponentially with the magnitude of velocity.
-
-            --> y = (1 - drag) / (x + 1)
-        */
-
-        // const dampening = (1.0 - this.drag) / (this.velocity.magSq() + 1);
-        // this.velocity.mult(min(dampening, 0.9));
-
-        this.velocity = velocityDampening(this.drag, ...this.velocity);
-
-        this.position[0] += deltaTime * this.velocity[0];
-        this.position[1] += deltaTime * this.velocity[1];
 
         const mouse_worldspace = render.mouse_worldspace;
 
         let dir = vec2_sub(mouse_worldspace, this.position);
-        dir = vec2_mult(dir, 0.1);
-        
-        this.view_offset[0] = dir[0];
-        this.view_offset[1] = dir[1];
+        dir = vec2_mult(dir, 0.35);
+
+        const alpha = min(0.005*deltaTime, 0.9);
+
+        this.view_offset[0] = lerp(this.view_offset[0], dir[0], alpha);
+        this.view_offset[1] = lerp(this.view_offset[1], dir[1], alpha);
 
         this.view_offset2[0] *= 0.95;
         this.view_offset2[1] *= 0.95;
 
+        let shake_dir = [random(-1, +1), random(-1, +1)];
+        shake_dir = vec2_mult(shake_dir, this.view_shake);
+        this.view_shake *= 0.8;
+
         render.setView(
-            this.position[0] + this.view_offset[0] + this.view_offset2[0],
-            this.position[1] + this.view_offset[1] + this.view_offset2[1]
+            this.position[0] + this.view_offset[0] + this.view_offset2[0] + shake_dir[0],
+            this.position[1] + this.view_offset[1] + this.view_offset2[1] + shake_dir[1]
         );
     };
 

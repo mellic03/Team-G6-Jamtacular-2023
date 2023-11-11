@@ -3,6 +3,7 @@
 class BSprite
 {
     p5p_sprite;
+    img;
 
     constructor( x=0, y=0, w=128, h=128, spritegroup=undefined )
     {
@@ -27,11 +28,22 @@ class BSprite
     {
         const render = engine.getSystem("render");
         const screen_pos = render.world_to_screen(x, y);
+        const size = render.world_to_screen_dist(128);
 
         this.p5p_sprite.x = screen_pos[0];
         this.p5p_sprite.y = screen_pos[1];
 
         this.p5p_sprite.draw();
+
+        // translate(this.p5p().x, this.p5p().y);
+        // rotate(this.p5p().rotation);
+        // translate(-this.p5p().x, -this.p5p().y);
+
+        // image(this.img, ...screen_pos, size, size);
+
+        // translate(this.p5p().x, this.p5p().y);
+        // rotate(-this.p5p().rotation);
+        // translate(-this.p5p().x, -this.p5p().y);
     };
 
     p5p()
@@ -41,6 +53,7 @@ class BSprite
 
     image( img )
     {
+        this.img = img;
         this.p5p().image = img;
     };
 

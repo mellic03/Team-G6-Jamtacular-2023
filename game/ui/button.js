@@ -74,7 +74,7 @@ class MenuGrid
 
     originof( row, col )
     {
-        let r = this.current_row + valueof(row);
+        let r = row;
         let c = valueof(col);
 
         if (row < 0)
@@ -149,15 +149,15 @@ class MenuGrid
         let rectfill = 100;
         let textfill = 255;
 
-        rectMode(CENTER);
+        // rectMode(CENTER);
         stroke(0);
-        fill(rectfill);
-        rect(...position, width, height);
+        // fill(rectfill);
+        // rect(...position, width, height);
 
-        textAlign(CENTER, CENTER);
+        textAlign(LEFT, CENTER);
         fill(textfill);
         textSize(this.text_scale*0.85*this.row_height);
-        text(string, ...position);
+        text(string, position[0]-0.5*this.col_width, position[1]);
     };
 
     menuButton( row, col, string, callback, selected=false )
