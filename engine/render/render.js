@@ -64,7 +64,7 @@ class RenderSystem
     setup( engine )
     {
         createCanvas(this.res_x, this.res_y);
-        frameRate(60);
+        frameRate(180);
         windowResized();
     };
 

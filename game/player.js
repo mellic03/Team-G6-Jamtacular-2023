@@ -294,7 +294,6 @@ class Player
         translate(-screenspace[0], -screenspace[1]);
 
 
-
         if (mouseIsPressed)
         {
             const sinr = sin(this.rect_r);
@@ -312,7 +311,6 @@ class Player
             }
         }
 
-
     };
 
 
@@ -324,8 +322,8 @@ class Player
 
         let dir = vec2_dir(render.mouse_worldspace, this.position);
         let tangent = vec2_tangent(dir);
-        let origin = vec2_add(this.position, vec2_mult(tangent, 7));
-        // origin = vec2_sub(this.position, vec2_mult(dir, 64.0));
+        let origin = vec2_add(this.position, vec2_mult(dir, this.body.radius+1));
+        origin = vec2_add(origin, vec2_mult(tangent, 7));
 
         const data = terrain.nearest_intersection(...origin, ...dir);
         const end = [data[0], data[1]];

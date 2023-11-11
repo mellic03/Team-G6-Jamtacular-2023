@@ -35,6 +35,7 @@ class SettingsModal
     draw()
     {
         const terrain = engine.getSystem("terrain");
+        const bullet = engine.getSystem("bullet");
         const physics = engine.getSystem("physics");
         const player = engine.getSystem("player");
 
@@ -142,12 +143,12 @@ class SettingsModal
             ui.menuLabel(0, 1, "Slow Bullets");
 
             ui.menuButton2(0, 3, "No", () => {
-                physics.visualize_grid = false;
-            }, physics.visualize_grid == false);
+                set_bullet_speed(2.0);
+            }, get_bullet_speed() == 2.0);
 
             ui.menuButton2(0, 4, "Yes", () => {
-                physics.visualize_grid = true;
-            }, physics.visualize_grid == true);
+                set_bullet_speed(0.5);
+            }, get_bullet_speed() == 0.5);
         }
 
 

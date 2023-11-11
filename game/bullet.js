@@ -6,6 +6,18 @@ function type_is_bullet( t )
 }
 
 
+let __bullet_speed_mult = 2.0;
+
+function set_bullet_speed( s )
+{
+    __bullet_speed_mult = s;
+}
+
+function get_bullet_speed()
+{
+    return valueof(__bullet_speed_mult);
+}
+
 class BulletSystem
 {
     bodies   = [  ];
@@ -42,6 +54,7 @@ class BulletSystem
             this.bodies.push(new PhysicsBody(-1000, -1000, 8, 8, "bullet"));
 
             this.bodies[i].body_resolution = (other) => {
+
                 if (type_is_bullet(other.label) == false)
                 {
                     this.destroyBullet(i, ...other.position);
@@ -127,8 +140,8 @@ class BulletSystem
         this.bodies[idx].last_position[1] = y;
         this.bodies[idx].position[0] = x;
         this.bodies[idx].position[1] = y;
-        this.bodies[idx].velocity[0] = 2*speed*dir[0];
-        this.bodies[idx].velocity[1] = 2*speed*dir[1];
+        this.bodies[idx].velocity[0] = __bullet_speed_mult * speed*dir[0];
+        this.bodies[idx].velocity[1] = __bullet_speed_mult * speed*dir[1];
         this.bodies[idx].hasDrag = false;
         this.bodies[idx].label = type;
 
