@@ -38,6 +38,7 @@ class SettingsModal
         const bullet  = engine.getSystem("bullet");
         const physics = engine.getSystem("physics");
         const player  = engine.getSystem("player");
+        const factorySys = engine.getSystem("factory");
         const factory = engine.getSystem("factory").player_factory;
 
         if (this.visible == false)
@@ -139,6 +140,13 @@ class SettingsModal
 
             player.mega_shotgun = ui.toggleButton(
                 0, 2, "Big Shotgun", player.mega_shotgun
+            );
+        }
+
+        ui.nextRow(3);
+        {
+            factory_constant_attack = ui.toggleButton(
+                0, 2, "Always attack", factory_constant_attack
             );
         }
 

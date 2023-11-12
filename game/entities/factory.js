@@ -10,6 +10,9 @@ const INNER_RADIUS     = 224;
 const INNER_THICKNESS  = 4;
 
 
+let factory_constant_attack = false;
+
+
 /*
     Factories create entities like collectors.
 */
@@ -188,6 +191,22 @@ class Factory
     {
         const factorySys = engine.getSystem("factory");
 
+        if (factory_constant_attack)
+        {
+            if (this.timer > 1000 * 5)
+            {
+                dowith_probability(0.2, () => {
+    
+                    this.monies += 1000;
+                    this.launch_attack(factorySys.player_factory);
+                });
+    
+                this.timer = 0.0;
+            }
+    
+            return;
+        }
+
         if (this.timer > 1000 * 60)
         {
             dowith_probability(0.2, () => {
@@ -289,18 +308,21 @@ function enemy_factory_init()
     factorySys.player_factory = factorySys.createFactory(1200, -48, FACTORY_PLAYER);
     factorySys.player_factory.createAgent(AGENT_SOLDIER);
     factorySys.player_factory.createAgent(AGENT_GATHERER);
-    factorySys.player_factory.monies = 100; // (AGENT_GATHERER);
+    factorySys.player_factory.monies = 100;
 
     const player = engine.getSystem("player");
     player.body.position = vec2_valueof(factorySys.player_factory.position);
 
 
-    let enemy_positions = [ [64, 1504], [2000, 2856] ];
+    let enemy_positions = [ [64, 1504], [2000, 2856], [3000, 1000] ];
 
     for (let pos of enemy_positions)
     {
         const factory = factorySys.createFactory(...pos, FACTORY_ENEMY);
-        // factory.createAgent(AGENT_SOLDIER);
+
+        factory.monies += 400;
+        factory.createAgent(AGENT_SOLDIER);
+        factory.createAgent(AGENT_SOLDIER);
     }
 
 
@@ -311,8 +333,20 @@ function enemy_factory_init()
 
 
     factorySys.factories[1].monies += 1000;
-    const SEC = factorySys.factories[1].createAgent(AGENT_SECURITY);
+    let SEC = factorySys.factories[1].createAgent(AGENT_SECURITY);
     SEC.set_target([624, 1504]);
+
+
+    factorySys.factories[2].monies += 2000;
+    SEC = factorySys.factories[2].createAgent(AGENT_SECURITY);
+    SEC.set_target([2000, 2300]);
+    SEC = factorySys.factories[2].createAgent(AGENT_SECURITY);
+    SEC.set_target([1400, 2800]);
+
+
+    factorySys.factories[3].monies += 1000;
+    SEC = factorySys.factories[3].createAgent(AGENT_SECURITY);
+    SEC.set_target([3000, 1504]);
 
 };
 
