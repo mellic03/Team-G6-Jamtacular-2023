@@ -203,11 +203,9 @@ class Factory
     
                 this.timer = 0.0;
             }
-    
-            return;
         }
 
-        if (this.timer > 1000 * 120)
+        else if (this.timer > 1000 * 120)
         {
             dowith_probability(0.2, () => {
 
