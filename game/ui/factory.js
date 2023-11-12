@@ -114,9 +114,13 @@ class FactoryModal
         });
 
 
-        ui.nextRow(1);
-        ui.nextRow(1);
-        ui.menuButton2(0, 0, "Launch Attack", () => {
+        ui.nextRow(2);
+        ui.nextRow(2);
+        ui.menuLabel(0, 1, "$800", CENTER);
+        ui.nextRow(2);
+        ui.menuLabel(0, 0, "Special");
+
+        ui.menuButton2(0, 1, "Launch Attack", () => {
 
             if (factory == playerFactory)
             {
@@ -132,7 +136,7 @@ class FactoryModal
 
     
         ui.nextRow(4);
-        ui.menuButton(-1, -1, "Close", () => { this.hide(); });
+        ui.menuButton(-2, -1, "Close", () => { this.hide(); });
     };
     
 };

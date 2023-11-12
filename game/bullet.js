@@ -75,7 +75,7 @@ class BulletSystem
         const lightSys = engine.getSystem("light");
         this.lightsource = lightSys.getPointlight(2);
         this.lightsource.radius = QUADTREE_SPAN;
-        this.muzzle_flash = lightSys.getPointlight(1);
+        this.muzzle_flash = lightSys.getPointlight(0);
 
     };
 

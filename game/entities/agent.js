@@ -578,7 +578,7 @@ class Human extends Agent
         
         if (shot)
         {
-            this.weapon.cooldown = 500 * (0.8 + abs(abnormalDist(2)));
+            this.weapon.cooldown = 500 * Math.PI * (0.45 + abs(abnormalDist(2)));
         }
     };
 

@@ -111,7 +111,7 @@ class Factory
     enable_light()
     {
         const light = engine.getSystem("light");
-        light.getPointlight(3).copy(this.lightsource);
+        light.getPointlight(1).copy(this.lightsource);
     };
 
 
@@ -188,13 +188,13 @@ class Factory
     {
         const factorySys = engine.getSystem("factory");
 
-        if (this.timer > 1000 * 30)
+        if (this.timer > 1000 * 60)
         {
-            // dowith_probability(0.25, () => {
+            dowith_probability(0.2, () => {
 
-            //     this.monies += 1000;
-            //     this.launch_attack(factorySys.player_factory);
-            // });
+                this.monies += 1000;
+                this.launch_attack(factorySys.player_factory);
+            });
 
             this.timer = 0.0;
         }
@@ -214,6 +214,12 @@ class Factory
             [pos[0]+mid, pos[1]-mid],
             [pos[0]+mid, pos[1]+mid]
         ];
+
+        const cost = engine.getSystem("agent").costOf(AGENT_SOLDIER);
+        if (this.monies < 4*cost)
+        {
+            return;
+        }
 
         for (let i=0; i<4; i++)
         {
@@ -283,11 +289,10 @@ function enemy_factory_init()
     factorySys.player_factory = factorySys.createFactory(1200, -48, FACTORY_PLAYER);
     factorySys.player_factory.createAgent(AGENT_SOLDIER);
     factorySys.player_factory.createAgent(AGENT_GATHERER);
-    // factorySys.player_factory.monies = 100000; // (AGENT_GATHERER);
+    factorySys.player_factory.monies = 100; // (AGENT_GATHERER);
 
     const player = engine.getSystem("player");
     player.body.position = vec2_valueof(factorySys.player_factory.position);
-
 
 
     let enemy_positions = [ [64, 1504], [2000, 2856] ];

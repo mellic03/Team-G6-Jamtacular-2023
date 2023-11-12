@@ -20,7 +20,6 @@ struct Pointlight
 uniform Pointlight un_pointlight_0;
 uniform Pointlight un_pointlight_1;
 uniform Pointlight un_pointlight_2;
-uniform Pointlight un_pointlight_3;
 
 
 uniform int QUADTREE_BUFFER_WIDTH;
@@ -409,14 +408,12 @@ vec3 render_quadtree()
     float direct_0 = trace_direct_multiTree(worldspace, node, un_pointlight_0);
     float direct_1 = trace_direct_multiTree(worldspace, node, un_pointlight_1);
     float direct_2 = trace_direct_multiTree(worldspace, node, un_pointlight_2);
-    float direct_3 = trace_direct_multiTree(worldspace, node, un_pointlight_3);
 
     vec3 illumination_0 = direct_0 * un_pointlight_0.diffuse;
     vec3 illumination_1 = direct_1 * un_pointlight_1.diffuse;
     vec3 illumination_2 = direct_2 * un_pointlight_2.diffuse;
-    vec3 illumination_3 = direct_3 * un_pointlight_3.diffuse;
 
-    vec3 illumination = illumination_0 + illumination_1 + illumination_2 + illumination_3;
+    vec3 illumination = illumination_0 + illumination_1 + illumination_2;
 
     return illumination * (blocktype_color(node.blocktype) + intensity*variation);
 }

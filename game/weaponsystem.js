@@ -5,6 +5,7 @@ const WEAPON_SHOTGUN = 1;
 class WeaponSystem
 {
     sounds       = [  ];
+    play_sound   = [  ];
     constructors = [  ];
     weapons      = [  ];
     active       = [  ];
@@ -17,6 +18,9 @@ class WeaponSystem
 
         this.sounds[WEAPON_RIFLE].loop   = false;
         this.sounds[WEAPON_SHOTGUN].loop = false;
+
+        this.play_sound[WEAPON_RIFLE] = false;
+        this.play_sound[WEAPON_SHOTGUN] = false;
 
         this.constructors = [
             Rifle,
@@ -43,6 +47,16 @@ class WeaponSystem
                 weapon.timer = weapon.cooldown;
             }
         }
+
+        for (let i=0; i<this.play_sound.length; i++)
+        {
+            if (this.play_sound[i] == true)
+            {
+                this.sounds[i].play();
+            }
+
+            this.play_sound[i] = false;
+        }
     };
 
 
@@ -57,6 +71,13 @@ class WeaponSystem
 
         return weapon;
     };
+
+
+    playSound( weapon_type )
+    {
+        this.play_sound[weapon_type] = true;
+    };
+
 };
 
 

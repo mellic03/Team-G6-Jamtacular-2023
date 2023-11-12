@@ -61,7 +61,7 @@ class Pointlight
 };
 
 
-const NUM_POINTLIGHTS = 4;
+const NUM_POINTLIGHTS = 3;
 
 class LightSystem
 {
@@ -77,8 +77,8 @@ class LightSystem
         this.pointlights[0].diffuse  = [1, 2, 2];
         this.pointlights[0].position = [0, -1];
 
-        this.pointlights[3].diffuse  = [2, 2, 1];
-        this.pointlights[3].position = [0, -1];
+        this.pointlights[1].diffuse  = [2, 2, 1];
+        this.pointlights[1].position = [0, -1];
     };
 
 

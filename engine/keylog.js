@@ -27,7 +27,7 @@ const MOUSE_CLICKED  = 2;
 const MOUSE_CLICKED2 = 3;
 const MOUSE_DRAGGED  = 4;
 
-const CLICK_MS = 100;
+const CLICK_MS = 200;
 
 let states      = [ false, false, false, false, false ];
 let last_states = [ false, false, false, false, false ];

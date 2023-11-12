@@ -80,7 +80,7 @@ class SettingsModal
             set_devmode(false);
         }, terrain.fidelity == 2);
 
-        ui.menuButton2(0, 4, "Blazed", () => {
+        ui.menuButton2(0, 4, "HIGH", () => {
             terrain.fidelity = 4;
             set_devmode(false);
         }, terrain.fidelity == 4);
@@ -143,7 +143,7 @@ class SettingsModal
         }
 
 
-        ui.menuButton(-1, -1, "Close", () => { this.hide(); });
+        ui.menuButton(-2, -1, "Close", () => { this.hide(); });
     };
 
 

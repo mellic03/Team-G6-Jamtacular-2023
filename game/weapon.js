@@ -61,7 +61,11 @@ class Rifle extends Weapon
                 this.spread, this.bullet_type,
                 RIFLE_BULLET_LENGTH
             );
+
+            const d = dist(x, y, ...engine.getSystem("player").position) / 256;
+            this.sound.setVolume(clamp(1.0 / d, 0.0, 1.0));
             this.sound.play();
+
             return true;
         }
 
@@ -106,6 +110,9 @@ class Shotgun extends Weapon
                     random(0.8, 1.2)
                 );
             }
+
+            const d = dist(x, y, ...engine.getSystem("player").position) / 256;
+            this.sound.setVolume(clamp(1.0 / d, 0.0, 1.0));
             this.sound.play();
 
             return true;

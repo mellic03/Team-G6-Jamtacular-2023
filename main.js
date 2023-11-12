@@ -44,6 +44,21 @@ function draw()
     const viewport_h = render.viewport_h;
 
 
+    if (engine.getSystem("factory").player_factory.health <= 0)
+    {
+        rectMode(CORNERS);
+        fill(0, 0, 0, 2);
+        rect(0, 0, render.res_x, render.res_y);
+        
+        textAlign(CENTER, CENTER);
+        textSize(64);
+        stroke(255);
+        text("DEAD 😩 🪦 😭", render.res_x/2, render.res_y/2);
+
+        return;
+    }
+
+
     engine.getSystem("bullet").addBodies();
     engine.getSystem("agent").addBodies();
     engine.getSystem("player").addBodies();
@@ -64,6 +79,7 @@ function draw()
 
     // engine.getSystem("physics").grid.draw();
 
+    textAlign(LEFT, TOP);
     avg = (164/165)*avg + (1/165)*frameRate();
-    text(avg, 300, 100);
+    text(int(avg), 0, 0);
 }
