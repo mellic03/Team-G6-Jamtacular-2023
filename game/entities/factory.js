@@ -106,7 +106,7 @@ class Factory
         this.lightsource.s_constant  = 0.0;
         this.lightsource.s_linear    = 0.5;
         this.lightsource.s_quadratic = 0.5;
-        this.lightsource.s_radius    = 64.0;
+        this.lightsource.s_radius    = 32.0;
 
     };
 
@@ -308,7 +308,7 @@ function enemy_factory_init()
     factorySys.player_factory = factorySys.createFactory(1200, -48, FACTORY_PLAYER);
     factorySys.player_factory.createAgent(AGENT_SOLDIER);
     factorySys.player_factory.createAgent(AGENT_GATHERER);
-    factorySys.player_factory.monies = 100;
+    factorySys.player_factory.monies = 20;
 
     const player = engine.getSystem("player");
     player.body.position = vec2_valueof(factorySys.player_factory.position);
@@ -347,6 +347,14 @@ function enemy_factory_init()
     factorySys.factories[3].monies += 1000;
     SEC = factorySys.factories[3].createAgent(AGENT_SECURITY);
     SEC.set_target([3000, 1504]);
+
+
+    const pfactory = factorySys.player_factory;
+    pfactory.monies += 400;
+    let sec = pfactory.createAgent(AGENT_SOLDIER);
+    sec.set_target([1200, 400]);
+    sec = pfactory.createAgent(AGENT_SOLDIER);
+    sec.set_target([800, -50]);
 
 };
 

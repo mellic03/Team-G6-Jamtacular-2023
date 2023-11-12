@@ -77,8 +77,6 @@ function draw()
     engine.draw();
     terrain.lock();
 
-    // engine.getSystem("physics").grid.draw();
-
     textAlign(LEFT, TOP);
     avg = (164/165)*avg + (1/165)*frameRate();
     text(int(avg), 0, 0);
