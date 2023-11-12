@@ -50,7 +50,7 @@ function draw()
         fill(0, 0, 0, 2);
         rect(0, 0, render.res_x, render.res_y);
         
-        textAlign(CENTER, CENTER);
+        textAlign(LEFT, CENTER);
         textSize(64);
         stroke(255);
         text("DEAD 😩 🪦 😭", render.res_x/2, render.res_y/2);
