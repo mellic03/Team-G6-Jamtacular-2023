@@ -472,7 +472,7 @@ class Quadtree
             return [px, py, Math.sign(normalx), Math.sign(normaly), blocktype];
         }
 
-        for (let i=0; i<20; i++)
+        for (let i=0; i<64; i++)
         {
             const step = this.__next_step(px, py, xdir, ydir, cx, cy, span);
 
