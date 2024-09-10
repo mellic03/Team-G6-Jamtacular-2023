@@ -23,6 +23,9 @@ uniform Pointlight un_pointlight_1;
 uniform Pointlight un_pointlight_2;
 
 
+uniform sampler2D un_quadtrees[4];
+uniform vec2 un_quadtree_poss[4];
+
 uniform int QUADTREE_BUFFER_WIDTH;
 uniform int QUADTREE_SPAN;
 uniform int QUADTREE_HALF_SPAN;
@@ -165,15 +168,16 @@ QuadNode node_from_texture( int group_id, int quadrant, int quadtree_idx )
     int idx = 4*group_id + quadrant;
     ivec2 uv = xy_from_idx(idx);
 
-    vec4 data;
+    vec4 data; // = texelFetch(un_quadtrees[quadtree_idx], uv, 0);
+
 
     switch (quadtree_idx)
     {
         default:
-        case 0: data = texelFetch(un_quadtree0, uv, 0); break;
-        case 1: data = texelFetch(un_quadtree1, uv, 0); break;
-        case 2: data = texelFetch(un_quadtree2, uv, 0); break;
-        case 3: data = texelFetch(un_quadtree3, uv, 0); break;
+        case 0: data = texelFetch(un_quadtrees[0], uv, 0); break;
+        case 1: data = texelFetch(un_quadtrees[1], uv, 0); break;
+        case 2: data = texelFetch(un_quadtrees[2], uv, 0); break;
+        case 3: data = texelFetch(un_quadtrees[3], uv, 0); break;
     }
 
     QuadNode node;

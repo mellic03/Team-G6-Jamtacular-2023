@@ -1,13 +1,13 @@
 let map = null;
 
-let noiseScale = 1 / 25;
+let noiseScale = 1 / 64;
 
-let ocean = 250; // [0, 0, 0];
-let shore = 200; // [50, 50, 50];
-let sand  = 150; // [100, 100, 100];
+let ocean = 0; // [0, 0, 0];
+let shore = 25; // [50, 50, 50];
+let sand  = 50; // [100, 100, 100];
 let grass = 100; // [150];
-let stone = 50; // [100, 100, 100];
-let snow  = 0; // [255, 255, 255];
+let stone = 200; // [100, 100, 100];
+let snow  = 250; // [255, 255, 255];
 
 
 function makeMap() {
@@ -84,13 +84,13 @@ function drawMap() {
 }
 
 function setup() {
-    createCanvas(512, 512);
+    createCanvas(1024, 1024);
 
     noStroke();
 
     background(0);
 
-    noiseDetail(10, 0.62);
+    noiseDetail(10, 0.5);
 
     makeMap();
 
