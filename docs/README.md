@@ -11,6 +11,7 @@ A small RTS game written during a game jam.
 Features:
 - Ray traced lighting.
 - Destructible quadtree-based terrain.
+- Various levels of detail for efficient collisions.
 - Autonomous NPC behaviours:
     - Pathfinding.
     - Raycasting for resource detection and collection.
